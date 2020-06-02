@@ -1,6 +1,6 @@
 #GCC Compilers:
-CC  = gcc-9
-CPP = g++-9
+CC  = gcc
+CPP = g++
 CFLAGS   = -g -Ofast -fopenmp -std=c99 
 CPPFLAGS = -g -Ofast -fopenmp -std=c++11
 #-Ofast
