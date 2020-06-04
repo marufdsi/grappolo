@@ -47,6 +47,16 @@
 #include <sys/stat.h>
 using namespace std;
 
+std::vector<std::string> split(std::string str, char delim) {
+    std::stringstream ss(str);
+    std::string token;
+    std::vector<std::string>tokens;
+    while (std::getline(ss, token, delim)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
 //WARNING: This will overwrite the original graph data structure to
 //         minimize memory footprint
 // Return: C_orig will hold the cluster ids for vertices in the original graph
@@ -148,6 +158,7 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
         }
 
     } //End of while(1)
+    std::vector<std::string> parts = split(graphName.c_str(), '/');
     std::ofstream resultCSV;
     std::string folderName = "results/";
     std::string fileName = "Grappolo_Lovain_Result.csv";
@@ -164,7 +175,7 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
                 << std::endl;
     }
     infile.close();
-    resultCSV << graphName << "," << numThreads << "," << phase << "," << totItr << "," << numClusters << "," << prevMod
+    resultCSV << split(parts[parts.size()-1], '.')[0] << "," << numThreads << "," << phase << "," << totItr << "," << numClusters << "," << prevMod
               << "," << totTimeClustering << "," << totTimeBuildingPhase << ","
               << totTimeClustering + totTimeBuildingPhase + totTimeColoring << "," << threshold << "," << std::endl;
     resultCSV.close();
