@@ -1,4 +1,3 @@
-# grappolo 
 
 set( IO_HEADERS
   ${CMAKE_SOURCE_DIR}/DefineStructure
