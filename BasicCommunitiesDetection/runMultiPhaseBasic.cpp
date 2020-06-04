@@ -158,11 +158,11 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
         }
 
     } //End of while(1)
-    std::vector<std::string> parts = split(graphName.c_str(), '/');
+    std::vector<std::string> parts = split(std::string(graphName), '/');
     std::ofstream resultCSV;
     std::string folderName = "results/";
     std::string fileName = "Grappolo_Lovain_Result.csv";
-    if (mkdir(std::string(folderName), 0777) == -1)
+    if (mkdir(folderName.c_str(), 0777) == -1)
         std::cout << "Directory " << folderName << " is already exist" << std::endl;
     else
         std::cout << "Directory " << folderName << " created" << std::endl;
