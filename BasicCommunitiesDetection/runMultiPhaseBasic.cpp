@@ -42,7 +42,9 @@
 #include "defs.h"
 #include "basic_comm.h"
 #include "basic_util.h"
-
+#include <sstream>
+#include <fstream>
+#include <sys/stat.h>
 using namespace std;
 
 //WARNING: This will overwrite the original graph data structure to
