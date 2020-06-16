@@ -12,7 +12,7 @@ done
 
 snapf=8
 
-for g in "Amazon0505.txt" "as-skitter.txt" "ca-HepPh.txt" "ca-HepTh.txt" "cit-Patents.txt" "com-lj.ungraph.txt" "com-youtube.ungraph.txt" "roadNet-CA.txt" "web-Google.txt" "com-orkut.ungraph.txt" "soc-LiveJournal1" "wiki-Talk" "web-Stanford"
+for g in "Amazon0505.txt" "as-skitter.txt" "ca-HepPh.txt" "ca-HepTh.txt" "cit-Patents.txt" "com-lj.ungraph.txt" "com-youtube.ungraph.txt" "roadNet-CA.txt" "web-Google.txt" "com-orkut.ungraph.txt" "soc-LiveJournal1.txt" "wiki-Talk.txt" "web-Stanford.txt"
 do
     ./driverForGraphClustering -f $snapf  $dr"/"$g -b 0
 done
