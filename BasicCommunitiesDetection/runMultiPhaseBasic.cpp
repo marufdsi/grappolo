@@ -177,7 +177,7 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
     infile.close();
     resultCSV << split(parts[parts.size()-1], '.')[0] << "," << numThreads << "," << phase << "," << totItr << "," << numClusters << "," << prevMod
               << "," << totTimeClustering << "," << totTimeBuildingPhase << ","
-              << totTimeClustering + totTimeBuildingPhase + totTimeColoring << "," << threshold << "," << std::endl;
+              << totTimeClustering + totTimeBuildingPhase + totTimeColoring << "," << threshold << std::endl;
     resultCSV.close();
     printf("********************************************\n");
     printf("*********    Compact Summary   *************\n");
