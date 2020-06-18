@@ -19,7 +19,7 @@ void runMultiPhaseBasicApprox(graph *G, long *C_orig, int basicOpt, long minGrap
 
 // Define in parallelLouvianMethod.cpp
 double parallelLouvianMethod(graph *G, long *C, int nThreads, double Lower, 
-				double thresh, double *totTime, int *numItr);
+				double thresh, double *totTime, int *numItr, bool *change=NULL);
 
 // Define in parallelLouvianMethodApprox.cpp
 double parallelLouvianMethodApprox(graph *G, long *C, int nThreads, double Lower, 

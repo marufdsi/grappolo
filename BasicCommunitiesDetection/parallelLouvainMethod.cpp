@@ -45,7 +45,7 @@
 using namespace std;
 
 double parallelLouvianMethod(graph *G, long *C, int nThreads, double Lower,
-                             double thresh, double *totTime, int *numItr) {
+                             double thresh, double *totTime, int *numItr, bool *change) {
 
 #ifdef PRINT_DETAILED_STATS_
     printf("Within parallelLouvianMethod()\n");
@@ -141,7 +141,8 @@ double parallelLouvianMethod(graph *G, long *C, int nThreads, double Lower,
             cUpdate[i].degree =0;
             cUpdate[i].size =0;
         }
-        
+
+        bool moved = false;
 #pragma omp parallel for
         for (long i=0; i<NV; i++) {
             long adj1 = vtxPtr[i];
@@ -168,6 +169,7 @@ double parallelLouvianMethod(graph *G, long *C, int nThreads, double Lower,
             
             //Update
             if(targetCommAss[i] != currCommAss[i]  && targetCommAss[i] != -1) {
+                moved = true;
 #pragma omp atomic update
                 cUpdate[targetCommAss[i]].degree += vDegree[i];
 #pragma omp atomic update
@@ -207,9 +209,12 @@ reduction(+:e_xx) reduction(+:a2_x)
 #ifdef PRINT_TERSE_STATS_
         printf("%d \t %lf \t %3.3lf  \t %3.3lf\n",numItrs, currMod, totItr, total);
 #endif
-        
+
+        if(moved)
+            *change = true;
+
         //Break if modularity gain is not sufficient
-        if((currMod - prevMod) < thresMod) {
+        if(!moved || numItrs > 25/*(currMod - prevMod) < thresMod*/) {
             break;
         }
         
