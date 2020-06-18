@@ -106,6 +106,7 @@ void runMultiPhaseColoring(graph *G, long *C_orig, int coloring, int numColors, 
         printf("Phase %ld\n", phase);
         printf("===============================\n");
         prevMod = currMod;
+        bool change = false;
         //Compute clusters
         if(nonColor == false) {
 			//Use higher modularity for the first few iterations when graph is big enough
@@ -119,7 +120,7 @@ void runMultiPhaseColoring(graph *G, long *C_orig, int coloring, int numColors, 
 			if (replaceMap == 1)
 		    	currMod = parallelLouvianMethodNoMap(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
         	else
-            	currMod = parallelLouvianMethod(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
+            	currMod = parallelLouvianMethod(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr, &change);
             totTimeClustering += tmpTime;
             totItr += tmpItr;
             nonColor = true;

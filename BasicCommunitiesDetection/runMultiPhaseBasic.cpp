@@ -89,11 +89,11 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
         printf("===============================\n");
         prevMod = currMod;
 
-
+        bool change = false;
         if (basicOpt == 1) {
             currMod = parallelLouvianMethodNoMap(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
         } else if (threadsOpt == 1) {
-            currMod = parallelLouvianMethod(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
+            currMod = parallelLouvianMethod(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr, &change);
             //currMod = parallelLouvianMethodApprox(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
         } else {
             currMod = parallelLouvianMethodScale(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
@@ -130,7 +130,7 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
 
         //Check for modularity gain and build the graph for next phase
         //In case coloring is used, make sure the non-coloring routine is run at least once
-        if ((currMod - prevMod) > threshold) {
+        if (change /*(currMod - prevMod) > threshold*/) {
             Gnew = (graph *) malloc(sizeof(graph));
             assert(Gnew != 0);
             tmpTime = buildNextLevelGraphOpt(G, Gnew, C, numClusters, numThreads);
@@ -224,12 +224,13 @@ void runMultiPhaseBasicOnce(graph *G, long *C_orig, int basicOpt, long minGraphS
 
     // Run just one phase
     {
+        bool change = false;
         prevMod = currMod;
 
         if (basicOpt == 1) {
             currMod = parallelLouvianMethodNoMap(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
         } else if (threadsOpt == 1) {
-            currMod = parallelLouvianMethod(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
+            currMod = parallelLouvianMethod(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr, &change);
             //currMod = parallelLouvianMethodApprox(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
         } else {
             currMod = parallelLouvianMethodScale(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
@@ -251,7 +252,7 @@ void runMultiPhaseBasicOnce(graph *G, long *C_orig, int basicOpt, long minGraphS
 
         //Check for modularity gain and build the graph for next phase
         //In case coloring is used, make sure the non-coloring routine is run at least once
-        if ((currMod - prevMod) > threshold) {
+        if (change /*(currMod - prevMod) > threshold*/) {
             Gnew = (graph *) malloc(sizeof(graph));
             assert(Gnew != 0);
             tmpTime = buildNextLevelGraphOpt(G, Gnew, C, numClusters, numThreads);
