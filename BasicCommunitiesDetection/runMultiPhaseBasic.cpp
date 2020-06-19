@@ -161,7 +161,7 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
     std::vector<std::string> parts = split(std::string(graphName), '/');
     std::ofstream resultCSV;
     std::string folderName = "results/";
-    std::string fileName = "Grappolo_Lovain_Result.csv";
+    std::string fileName = "Grappolo_Lovain_Result_Max_Iter.csv";
     if (mkdir(folderName.c_str(), 0777) == -1)
         std::cout << "Directory " << folderName << " is already exist" << std::endl;
     else
