@@ -43,10 +43,10 @@
 #include "utilityClusteringFunctions.h"
 #include "basic_comm.h"
 using namespace std;
-
+int phase = 0;
 f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower,
                                f_weight thresh, double *totTime, int *numItr, bool *change) {
-
+phase++;
 #ifdef PRINT_DETAILED_STATS_
     printf("Within parallelLouvianMethod()\n");
 #endif
@@ -169,7 +169,8 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
             
             //Update
             if(targetCommAss[i] != currCommAss[i]  && targetCommAss[i] != -1) {
-                cout<< i << " moved from " << currCommAss[i] << " to " << targetCommAss[i] << endl;
+                if(phase > 4)
+                    cout<< i << " moved from " << currCommAss[i] << " to " << targetCommAss[i] << endl;
                 moved = true;
 #pragma omp atomic update
                 cUpdate[targetCommAss[i]].degree += vDegree[i];
