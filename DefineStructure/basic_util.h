@@ -4,6 +4,7 @@
 // Define in buildNextPhase.cpp
 long renumberClustersContiguously(long *C, long size);
 double buildNextLevelGraphOpt(graph *Gin, graph *Gout, long *C, long numUniqueClusters, int nThreads);
+double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniqueClusters, int nThreads);
 void buildNextLevelGraph(graph *Gin, graph *Gout, long *C, long numUniqueClusters);
 long buildCommunityBasedOnVoltages(graph *G, long *Volts, long *C, long *Cvolts);
 void segregateEdgesBasedOnVoltages(graph *G, long *Volts);

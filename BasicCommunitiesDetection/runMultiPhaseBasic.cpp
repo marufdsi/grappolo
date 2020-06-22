@@ -279,7 +279,7 @@ void runMultiPhaseBasic_sfp(graph *G, long *C_orig, int basicOpt, long minGraphS
         if (change /*(currMod - prevMod) > threshold*/) {
             Gnew = (graph *) malloc(sizeof(graph));
             assert(Gnew != 0);
-            tmpTime = buildNextLevelGraphOpt(G, Gnew, C, numClusters, numThreads);
+            tmpTime = buildNextLevelGraphOpt_SFP(G, Gnew, C, numClusters, numThreads);
             totTimeBuildingPhase += tmpTime;
             //Free up the previous graph
             free(G->edgeListPtrs);
