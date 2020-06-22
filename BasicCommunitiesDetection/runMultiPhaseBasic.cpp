@@ -160,8 +160,8 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
     } //End of while(1)
     std::vector<std::string> parts = split(std::string(graphName), '/');
     std::ofstream resultCSV;
-    std::string folderName = "results/";
-    std::string fileName = "Grappolo_Lovain_Result_Max_Iter.csv";
+    std::string folderName = "Results/";
+    std::string fileName = "Grappolo_Lovain_Result_SFP.csv";
     if (mkdir(folderName.c_str(), 0777) == -1)
         std::cout << "Directory " << folderName << " is already exist" << std::endl;
     else
@@ -171,13 +171,13 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
 
     if (!infile.good()) {
         resultCSV
-                << "GraphName,Threads,Phases,TotalIterations,Clusters,Modularity,ClusteringTIme,CoarseningTime,TotalTime,Threshold"
+                << "GraphName,Threads,Phases,TotalIterations,Clusters,Modularity,ClusteringTIme,CoarseningTime,TotalTime,Threshold,DataType"
                 << std::endl;
     }
     infile.close();
     resultCSV << split(parts[parts.size()-1], '.')[0] << "," << numThreads << "," << phase << "," << totItr << "," << numClusters << "," << prevMod
               << "," << totTimeClustering << "," << totTimeBuildingPhase << ","
-              << totTimeClustering + totTimeBuildingPhase + totTimeColoring << "," << threshold << std::endl;
+              << totTimeClustering + totTimeBuildingPhase + totTimeColoring << "," << threshold << "," << sizeof(f_weight) << std::endl;
     resultCSV.close();
     printf("********************************************\n");
     printf("*********    Compact Summary   *************\n");
