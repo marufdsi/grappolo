@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     if (!opts.parse(argc, argv)) {
         return -1;
     }
-    printf("Threshold: %f \n", opts.threshold);
+    printf("Threshold: %lf \n", opts.threshold);
     int nT = 1; //Default is one thread
 #pragma omp parallel
     {
