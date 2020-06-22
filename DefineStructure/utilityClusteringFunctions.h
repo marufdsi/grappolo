@@ -48,7 +48,13 @@ using namespace std;
 
 void sumVertexDegree(edge* vtxInd, long* vtxPtr, double* vDegree, long NV, Comm* cInfo);
 
+/// Single floating point version
+void sumVertexDegree_sfp(edge* vtxInd, long* vtxPtr, f_weight* vDegree, long NV, Comm* cInfo);
+
 double calConstantForSecondTerm(double* vDegree, long NV);
+
+/// Single floating point version
+f_weight calConstantForSecondTerm_sfp(f_weight* vDegree, long NV);
 
 void initCommAss(long* pastCommAss, long* currCommAss, long NV);
 

@@ -81,6 +81,22 @@ void sumVertexDegree(edge* vtxInd, long* vtxPtr, double* vDegree, long NV, Comm*
   }
 }//End of sumVertexDegree()
 
+/// Single floating point version
+void sumVertexDegree_sfp(edge* vtxInd, long* vtxPtr, f_weight* vDegree, long NV, Comm* cInfo) {
+#pragma omp parallel for
+  for (long i=0; i<NV; i++) {
+    long adj1 = vtxPtr[i];	    //Begin
+    long adj2 = vtxPtr[i+1];	//End
+      f_weight totalWt = 0;
+    for(long j=adj1; j<adj2; j++) {
+      totalWt += vtxInd[j].weight;
+    }
+    vDegree[i] = totalWt;	//Degree of each node
+    cInfo[i].degree = totalWt;	//Initialize the community
+    cInfo[i].size = 1;
+  }
+}//End of sumVertexDegree()
+
 double calConstantForSecondTerm(double* vDegree, long NV) {
   double totalEdgeWeightTwice = 0;
   #pragma omp parallel for reduction(+:totalEdgeWeightTwice)
@@ -88,6 +104,16 @@ double calConstantForSecondTerm(double* vDegree, long NV) {
       totalEdgeWeightTwice += vDegree[i];
   }
   return (double)1/totalEdgeWeightTwice;
+}//End of calConstantForSecondTerm()
+
+/// Single floating point version
+f_weight calConstantForSecondTerm_sfp(f_weight* vDegree, long NV) {
+    f_weight totalEdgeWeightTwice = 0;
+  #pragma omp parallel for reduction(+:totalEdgeWeightTwice)
+  for (long i=0; i<NV; i++) {
+      totalEdgeWeightTwice += vDegree[i];
+  }
+  return (f_weight)1/totalEdgeWeightTwice;
 }//End of calConstantForSecondTerm()
 
 void initCommAss(long* pastCommAss, long* currCommAss, long NV) {
