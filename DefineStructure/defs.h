@@ -63,23 +63,25 @@
 #define PRINT_DETAILED_STATS_
 //#define PRINT_TERSE_STATS_
 
+typedef float f_weight;
+
 typedef struct comm
 {
     long size;
-    double degree;
+    f_weight degree;
 }Comm;
 
 typedef struct
 {
     long cid;       //community ID
-    double Counter; //Weight relative to that community
+    f_weight Counter; //Weight relative to that community
 } mapElement;
 
 typedef struct /* the edge data structure */
 {
     long head;
     long tail;
-    double weight;
+    f_weight weight;
 } edge;
 
 typedef struct /* the graph data structure */
