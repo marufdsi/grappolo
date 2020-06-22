@@ -188,6 +188,31 @@ double buildLocalMapCounter(long adj1, long adj2, map<long, long> &clusterLocalM
   return selfLoop;
 }//End of buildLocalMapCounter()
 
+
+f_weight buildLocalMapCounter_sfp(long adj1, long adj2, map<long, long> &clusterLocalMap,
+			 vector<f_weight> &Counter, edge* vtxInd, long* currCommAss, long me) {
+
+  map<long, long>::iterator storedAlready;
+  long numUniqueClusters = 1;
+    f_weight selfLoop = 0;
+  for(long j=adj1; j<adj2; j++) {
+    if(vtxInd[j].tail == me) {	// SelfLoop need to be recorded
+      selfLoop += vtxInd[j].weight;
+    }
+
+    storedAlready = clusterLocalMap.find(currCommAss[vtxInd[j].tail]); //Check if it already exists
+    if( storedAlready != clusterLocalMap.end() ) {	//Already exists
+      Counter[storedAlready->second]+= vtxInd[j].weight; //Increment the counter with weight
+    } else {
+      clusterLocalMap[currCommAss[vtxInd[j].tail]] = numUniqueClusters; //Does not exist, add to the map
+      Counter.push_back(vtxInd[j].weight); //Initialize the count
+      numUniqueClusters++;
+    }
+  }//End of for(j)
+
+  return selfLoop;
+}//End of buildLocalMapCounter()
+
 //Build the local-map data structure using vectors
 double buildLocalMapCounterNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
                                long* currCommAss, long &numUniqueClusters) {
@@ -251,6 +276,41 @@ long max(map<long, long> &clusterLocalMap, vector<double> &Counter,
     }
     
     return maxIndex;		
+}//End max()
+
+long max_sfp(map<long, long> &clusterLocalMap, vector<f_weight> &Counter,
+             f_weight selfLoop, Comm* cInfo, f_weight degree, long sc, f_weight constant ) {
+
+    map<long, long>::iterator storedAlready;
+    long maxIndex = sc;	//Assign the initial value as self community
+    double curGain = 0;
+    double maxGain = 0;
+    double eix = Counter[0] - selfLoop;
+    double ax = cInfo[sc].degree - degree;
+    double eiy = 0;
+    double ay = 0;
+
+    storedAlready = clusterLocalMap.begin();
+    do {
+        if(sc != storedAlready->first) {
+            ay = cInfo[storedAlready->first].degree; // degree of cluster y
+            eiy = Counter[storedAlready->second]; 	//Total edges incident on cluster y
+            curGain = 2*(eiy - eix) - 2*degree*(ay - ax)*constant;
+
+            if( (curGain > maxGain) ||
+               ((curGain==maxGain) && (curGain != 0) && (storedAlready->first < maxIndex)) ) {
+                maxGain = curGain;
+                maxIndex = storedAlready->first;
+            }
+        }
+        storedAlready++; //Go to the next cluster
+    } while ( storedAlready != clusterLocalMap.end() );
+
+    if(cInfo[maxIndex].size == 1 && cInfo[sc].size ==1 && maxIndex > sc) { //Swap protection
+        maxIndex = sc;
+    }
+
+    return maxIndex;
 }//End max()
 
 

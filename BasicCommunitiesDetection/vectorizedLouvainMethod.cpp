@@ -44,8 +44,8 @@
 #include "basic_comm.h"
 using namespace std;
 
-double vectorizedLouvianMethod(graph *G, long *C, int nThreads, double Lower,
-                             double thresh, double *totTime, int *numItr, bool *change) {
+f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower,
+                               f_weight thresh, double *totTime, int *numItr, bool *change) {
 
 #ifdef PRINT_DETAILED_STATS_
     printf("Within parallelLouvianMethod()\n");
@@ -75,23 +75,23 @@ double vectorizedLouvianMethod(graph *G, long *C, int nThreads, double Lower,
     
     /* Variables for computing modularity */
     long totalEdgeWeightTwice;
-    double constantForSecondTerm;
-    double prevMod=-1;
-    double currMod=-1;
+    f_weight constantForSecondTerm;
+    f_weight prevMod=-1;
+    f_weight currMod=-1;
     //double thresMod = 0.000001;
-    double thresMod = thresh; //Input parameter
+    f_weight thresMod = thresh; //Input parameter
     int numItrs = 0;
     
     /********************** Initialization **************************/
     time1 = omp_get_wtime();
     //Store the degree of all vertices
-    double* vDegree = (double *) malloc (NV * sizeof(double)); assert(vDegree != 0);
+    f_weight * vDegree = (f_weight *) malloc (NV * sizeof(f_weight)); assert(vDegree != 0);
     //Community info. (ai and size)
     Comm *cInfo = (Comm *) malloc (NV * sizeof(Comm)); assert(cInfo != 0);
     //use for updating Community
     Comm *cUpdate = (Comm*)malloc(NV*sizeof(Comm)); assert(cUpdate != 0);
     //use for Modularity calculation (eii)
-    double* clusterWeightInternal = (double*) malloc (NV*sizeof(double)); assert(clusterWeightInternal != 0);
+    f_weight* clusterWeightInternal = (f_weight*) malloc (NV*sizeof(f_weight)); assert(clusterWeightInternal != 0);
     
     sumVertexDegree(vtxInd, vtxPtr, vDegree, NV , cInfo);	// Sum up the vertex degree
     
@@ -147,21 +147,21 @@ double vectorizedLouvianMethod(graph *G, long *C, int nThreads, double Lower,
         for (long i=0; i<NV; i++) {
             long adj1 = vtxPtr[i];
             long adj2 = vtxPtr[i+1];
-            double selfLoop = 0;
+            f_weight selfLoop = 0;
             //Build a datastructure to hold the cluster structure of its neighbors
             map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
             map<long, long>::iterator storedAlready;
-            vector<double> Counter; //Number of edges in each unique cluster
+            vector<f_weight> Counter; //Number of edges in each unique cluster
             //Add v's current cluster:
             if(adj1 != adj2){
                 clusterLocalMap[currCommAss[i]] = 0;
                 Counter.push_back(0); //Initialize the counter to ZERO (no edges incident yet)
                 //Find unique cluster ids and #of edges incident (eicj) to them
-                selfLoop = buildLocalMapCounter(adj1, adj2, clusterLocalMap, Counter, vtxInd, currCommAss, i);
+                selfLoop = buildLocalMapCounter_sfp(adj1, adj2, clusterLocalMap, Counter, vtxInd, currCommAss, i);
                 // Update delta Q calculation
                 clusterWeightInternal[i] += Counter[0]; //(e_ix)
                 //Calculate the max
-                targetCommAss[i] = max(clusterLocalMap, Counter, selfLoop, cInfo, vDegree[i], currCommAss[i], constantForSecondTerm);
+                targetCommAss[i] = max_sfp(clusterLocalMap, Counter, selfLoop, cInfo, vDegree[i], currCommAss[i], constantForSecondTerm);
                 //assert((targetCommAss[i] >= 0)&&(targetCommAss[i] < NV));
             } else {
                 targetCommAss[i] = -1;
@@ -189,8 +189,8 @@ double vectorizedLouvianMethod(graph *G, long *C, int nThreads, double Lower,
         time2 = omp_get_wtime();
         
         time3 = omp_get_wtime();
-        double e_xx = 0;
-        double a2_x = 0;
+        f_weight e_xx = 0;
+        f_weight a2_x = 0;
         
 #pragma omp parallel for \
 reduction(+:e_xx) reduction(+:a2_x)
@@ -200,7 +200,7 @@ reduction(+:e_xx) reduction(+:a2_x)
         }
         time4 = omp_get_wtime();
         
-        currMod = (e_xx*(double)constantForSecondTerm) - (a2_x*(double)constantForSecondTerm*(double)constantForSecondTerm);
+        currMod = (e_xx*(f_weight)constantForSecondTerm) - (a2_x*(f_weight)constantForSecondTerm*(f_weight)constantForSecondTerm);
         totItr = (time2-time1) + (time4-time3);
         total += totItr;
 #ifdef PRINT_DETAILED_STATS_
