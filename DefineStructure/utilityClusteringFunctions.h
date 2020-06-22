@@ -65,7 +65,7 @@ void initCommAssOpt(long* pastCommAss, long* currCommAss, long NV,
 double buildLocalMapCounter(long adj1, long adj2, map<long, long> &clusterLocalMap, 
 						  vector<double> &Counter, edge* vtxInd, long* currCommAss, long me);
 /// Single floating point version
-double buildLocalMapCounter_sfp(long adj1, long adj2, map<long, long> &clusterLocalMap,
+f_weight buildLocalMapCounter_sfp(long adj1, long adj2, map<long, long> &clusterLocalMap,
 						  vector<f_weight> &Counter, edge* vtxInd, long* currCommAss, long me);
 
 double buildLocalMapCounterNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
