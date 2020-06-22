@@ -18,7 +18,7 @@
  **/
 void loadMetisFileFormat(graph *G, const char* filename) {
     long i, j, value, neighbor,  mNVer=0,  mNEdge=0;
-    double edgeWeight, vertexWeight;
+    f_weight edgeWeight, vertexWeight;
     std::string oneLine, myDelimiter(" "); //Delimiter is a blank space
     ifstream fin;
     char comment;
@@ -146,7 +146,8 @@ void loadMetisFileFormat(graph *G, const char* filename) {
                     if(i == neighbor-1){
                         std::cout<< "self-edge removed"<<std::endl;
                         char test;
-                        printf("%d %d %d %lf\n", i, IndPos,neighbor,edgeWeight);
+//                        printf("%d %d %d %lf\n", i, IndPos,neighbor,edgeWeight);
+                        printf("%d %d %d %f\n", i, IndPos,neighbor,edgeWeight);
                         //scanf("%c",&test);
                         continue;
                     }
