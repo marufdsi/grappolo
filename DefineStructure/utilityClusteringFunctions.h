@@ -69,7 +69,7 @@ long max(map<long, long> &clusterLocalMap, vector<double> &Counter,
 		 double selfLoop, Comm* cInfo, double degree, long sc, double constant ) ;
 
 /// Single floating point version
-long max(map<long, long> &clusterLocalMap, vector<f_weight> &Counter,
+long max_sfp(map<long, long> &clusterLocalMap, vector<f_weight> &Counter,
          f_weight selfLoop, Comm* cInfo, f_weight degree, long sc, f_weight constant ) ;
 
 long maxNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, double selfLoop, Comm* cInfo, double degree,
