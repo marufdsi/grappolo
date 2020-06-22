@@ -205,5 +205,6 @@ bool clustering_parameters::parse(int argc, char *argv[]) {
     cout << "********************************************"<< endl;
 #endif
 
+    cout<< "Check threshold in parser: " << threshold << endl;
     return true;
 }
