@@ -21,6 +21,10 @@ void runMultiPhaseBasicApprox(graph *G, long *C_orig, int basicOpt, long minGrap
 double parallelLouvianMethod(graph *G, long *C, int nThreads, double Lower, 
 				double thresh, double *totTime, int *numItr, bool *change);
 
+/// Single floating point vectorized version
+f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower,
+                               f_weight thresh, double *totTime, int *numItr, bool *change);
+
 // Define in parallelLouvianMethodApprox.cpp
 double parallelLouvianMethodApprox(graph *G, long *C, int nThreads, double Lower, 
 				double thresh, double *totTime, int *numItr, int percentage);

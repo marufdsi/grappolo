@@ -70,8 +70,8 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
 
 
     /* Step 1: Find communities */
-    double prevMod = -1;
-    double currMod = -1;
+    f_weight prevMod = -1;
+    f_weight currMod = -1;
     long phase = 1;
 
     graph *Gnew; //To build new hierarchical graphs
@@ -93,7 +93,7 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
         if (basicOpt == 1) {
             currMod = parallelLouvianMethodNoMap(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
         } else if (threadsOpt == 1) {
-            currMod = parallelLouvianMethod(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr, &change);
+            currMod = vectorizedLouvianMethod(G, C, numThreads, currMod, (f_weight)threshold, &tmpTime, &tmpItr, &change);
             //currMod = parallelLouvianMethodApprox(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
         } else {
             currMod = parallelLouvianMethodScale(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
