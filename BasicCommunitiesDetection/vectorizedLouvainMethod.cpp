@@ -169,6 +169,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
             
             //Update
             if(targetCommAss[i] != currCommAss[i]  && targetCommAss[i] != -1) {
+                cout<< i << " moved from " << currCommAss[i] << " to " << targetCommAss[i] << endl;
                 moved = true;
 #pragma omp atomic update
                 cUpdate[targetCommAss[i]].degree += vDegree[i];
