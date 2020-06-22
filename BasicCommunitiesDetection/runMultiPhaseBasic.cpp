@@ -161,7 +161,7 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
     std::vector<std::string> parts = split(std::string(graphName), '/');
     std::ofstream resultCSV;
     std::string folderName = "Results/";
-    std::string fileName = "Grappolo_Lovain_Result_SFP.csv";
+    std::string fileName = "Grappolo_Lovain_Result_DFP.csv";
     if (mkdir(folderName.c_str(), 0777) == -1)
         std::cout << "Directory " << folderName << " is already exist" << std::endl;
     else
@@ -209,7 +209,6 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
 //WARNING: Graph G will be destroyed at the end of this routine
 void runMultiPhaseBasic_sfp(graph *G, long *C_orig, int basicOpt, long minGraphSize,
                         f_weight threshold, f_weight C_threshold, int numThreads, int threadsOpt, char *graphName) {
-    printf("single floating point version called, threshold: %f \n", threshold);
     double totTimeClustering = 0, totTimeBuildingPhase = 0, totTimeColoring = 0, tmpTime = 0;
     int tmpItr = 0, totItr = 0;
     long NV = G->numVertices;

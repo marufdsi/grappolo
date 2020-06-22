@@ -76,7 +76,7 @@ void parse_SNAP(graph * G, char *fileName) {
     
     //Parse the first edge already read from the file and stored in oneLine
     long i=0;
-    double wt = 1.0;
+    f_weight wt = 1.0;
     do {
         StringTokenizer* ST = new StringTokenizer(oneLine, myDelimiter2);
         if ( ST->HasMoreTokens() )
@@ -163,7 +163,7 @@ void parse_SNAP(graph * G, char *fileName) {
     for(long i=0; i<NE; i++) {
         long head      = tmpEdgeList[i].head;
         long tail      = tmpEdgeList[i].tail;
-        double weight  = tmpEdgeList[i].weight;
+        f_weight weight  = tmpEdgeList[i].weight;
         
         long Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
         edgeList[Where].head = head;
