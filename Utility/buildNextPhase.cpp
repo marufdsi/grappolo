@@ -407,9 +407,11 @@ double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniq
 #endif
     // Set the pointers
     Gout->numVertices  = NV_out;
+    cout<<"Number of vertices: " << NV_out << endl;
     Gout->sVertices    = NV_out;
     //Note: Self-loops are represented ONCE, but others appear TWICE
     Gout->numEdges     = realEdges; //Add self loops to the #edges
+    cout<<"Number of edges: " << realEdges << endl;
     Gout->edgeListPtrs = vtxPtrOut;
     Gout->edgeList     = vtxIndOut;
 
