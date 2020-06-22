@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
         }else if(opts.syncType != 0){
             runMultiPhaseSyncType(G, C_orig, opts.syncType, opts.minGraphSize, opts.threshold, opts.C_thresh, nT,threadsOpt);
         }else{
-            runMultiPhaseBasic(G, C_orig, opts.basicOpt, opts.minGraphSize, opts.threshold, opts.C_thresh, nT,threadsOpt, inFile);
+            runMultiPhaseBasic_sfp(G, C_orig, opts.basicOpt, opts.minGraphSize, opts.threshold, opts.C_thresh, nT,threadsOpt, inFile);
         }
     }
     

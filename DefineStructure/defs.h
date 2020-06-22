@@ -119,9 +119,9 @@ struct clustering_parameters
     int syncType; // Type of synchronization method
     int basicOpt; //If map data structure is replaced with a vector
     bool threadsOpt;
-    double C_thresh; //Threshold with coloring on
+    f_weight C_thresh; //Threshold with coloring on
     long minGraphSize; //Min |V| to enable coloring
-    double threshold; //Value of threshold
+    f_weight threshold; //Value of threshold
     int percentage;
     bool compute_metrics;
 

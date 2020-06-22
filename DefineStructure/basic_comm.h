@@ -5,6 +5,10 @@
 void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
 			double threshold, double C_threshold, int numThreads, int threadsOpt, char * graphName = "");
 
+/// Single floating point version
+void runMultiPhaseBasic_sfp(graph *G, long *C_orig, int basicOpt, long minGraphSize,
+                            f_weight threshold, f_weight C_threshold, int numThreads, int threadsOpt, char * graphName = "");
+
 // same as above, but runs exactly one phase
 void runMultiPhaseBasicOnce(graph *G, long *C_orig, int basicOpt, long minGraphSize,
 			double threshold, double C_threshold, int numThreads, int threadsOpt);
