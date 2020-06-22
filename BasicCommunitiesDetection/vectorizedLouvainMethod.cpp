@@ -93,10 +93,10 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     //use for Modularity calculation (eii)
     f_weight* clusterWeightInternal = (f_weight*) malloc (NV*sizeof(f_weight)); assert(clusterWeightInternal != 0);
     
-    sumVertexDegree(vtxInd, vtxPtr, vDegree, NV , cInfo);	// Sum up the vertex degree
+    sumVertexDegree_sfp(vtxInd, vtxPtr, vDegree, NV , cInfo);	// Sum up the vertex degree
     
     /*** Compute the total edge weight (2m) and 1/2m ***/
-    constantForSecondTerm = calConstantForSecondTerm(vDegree, NV); // 1 over sum of the degree
+    constantForSecondTerm = calConstantForSecondTerm_sfp(vDegree, NV); // 1 over sum of the degree
     
     //cout<<"CHECK THIS:              "<<constantForSecondTerm<<endl;
     //Community assignments:
