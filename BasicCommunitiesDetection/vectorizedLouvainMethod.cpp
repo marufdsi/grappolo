@@ -169,7 +169,7 @@ phase++;
             
             //Update
             if(targetCommAss[i] != currCommAss[i]  && targetCommAss[i] != -1) {
-                if(phase > 4)
+                if(phase > 6)
                     cout<< i << " moved from " << currCommAss[i] << " to " << targetCommAss[i] << endl;
                 moved = true;
 #pragma omp atomic update
@@ -256,7 +256,8 @@ reduction(+:e_xx) reduction(+:a2_x)
     //Note: No matter when the while loop exits, we are interested in the previous assignment
 #pragma omp parallel for 
     for (long i=0; i<NV; i++) {
-        C[i] = pastCommAss[i];
+//        C[i] = pastCommAss[i];
+        C[i] = currCommAss[i];
     }
     //Cleanup
     free(pastCommAss);
