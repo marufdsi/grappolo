@@ -28,6 +28,8 @@ double parallelLouvianMethod(graph *G, long *C, int nThreads, double Lower,
 /// Single floating point vectorized version
 f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower,
                                f_weight thresh, double *totTime, int *numItr, bool *change);
+f_weight parallelLouvianMethod_SFP(graph *G, long *C, int nThreads, f_weight Lower,
+                               f_weight thresh, double *totTime, int *numItr, bool *change);
 
 // Define in parallelLouvianMethodApprox.cpp
 double parallelLouvianMethodApprox(graph *G, long *C, int nThreads, double Lower, 

@@ -93,7 +93,7 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
         if (basicOpt == 1) {
             currMod = parallelLouvianMethodNoMap(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
         } else if (threadsOpt == 1) {
-            currMod = vectorizedLouvianMethod(G, C, numThreads, currMod, (f_weight)threshold, &tmpTime, &tmpItr, &change);
+            currMod = parallelLouvianMethod_SFP(G, C, numThreads, currMod, (f_weight)threshold, &tmpTime, &tmpItr, &change);
             //currMod = parallelLouvianMethodApprox(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
         } else {
             currMod = parallelLouvianMethodScale(G, C, numThreads, currMod, threshold, &tmpTime, &tmpItr);
@@ -161,7 +161,7 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
     std::vector<std::string> parts = split(std::string(graphName), '/');
     std::ofstream resultCSV;
     std::string folderName = "Results/";
-    std::string fileName = "Grappolo_Lovain_Result_DFP.csv";
+    std::string fileName = "Grappolo_Lovain_Result.csv";
     if (mkdir(folderName.c_str(), 0777) == -1)
         std::cout << "Directory " << folderName << " is already exist" << std::endl;
     else
@@ -171,11 +171,11 @@ void runMultiPhaseBasic(graph *G, long *C_orig, int basicOpt, long minGraphSize,
 
     if (!infile.good()) {
         resultCSV
-                << "GraphName,Threads,Phases,TotalIterations,Clusters,Modularity,ClusteringTIme,CoarseningTime,TotalTime,Threshold,DataType"
+                << "GraphName,Version,Threads,Phases,TotalIterations,Clusters,Modularity,ClusteringTIme,CoarseningTime,TotalTime,Threshold,DataType"
                 << std::endl;
     }
     infile.close();
-    resultCSV << split(parts[parts.size()-1], '.')[0] << "," << numThreads << "," << phase << "," << totItr << "," << numClusters << "," << prevMod
+    resultCSV << split(parts[parts.size()-1], '.')[0] << "," << "Parallel" << numThreads << "," << phase << "," << totItr << "," << numClusters << "," << prevMod
               << "," << totTimeClustering << "," << totTimeBuildingPhase << ","
               << totTimeClustering + totTimeBuildingPhase + totTimeColoring << "," << threshold << "," << sizeof(f_weight) << std::endl;
     resultCSV.close();
@@ -306,7 +306,7 @@ void runMultiPhaseBasic_sfp(graph *G, long *C_orig, int basicOpt, long minGraphS
     std::vector<std::string> parts = split(std::string(graphName), '/');
     std::ofstream resultCSV;
     std::string folderName = "Results/";
-    std::string fileName = "Grappolo_Lovain_Result_SFP.csv";
+    std::string fileName = "Grappolo_Lovain_Result.csv";
     if (mkdir(folderName.c_str(), 0777) == -1)
         std::cout << "Directory " << folderName << " is already exist" << std::endl;
     else
@@ -316,11 +316,11 @@ void runMultiPhaseBasic_sfp(graph *G, long *C_orig, int basicOpt, long minGraphS
 
     if (!infile.good()) {
         resultCSV
-                << "GraphName,Threads,Phases,TotalIterations,Clusters,Modularity,ClusteringTIme,CoarseningTime,TotalTime,Threshold,DataType"
+                << "GraphName,Version,Threads,Phases,TotalIterations,Clusters,Modularity,ClusteringTIme,CoarseningTime,TotalTime,Threshold,DataType"
                 << std::endl;
     }
     infile.close();
-    resultCSV << split(parts[parts.size()-1], '.')[0] << "," << numThreads << "," << phase << "," << totItr << "," << numClusters << "," << prevMod
+    resultCSV << split(parts[parts.size()-1], '.')[0] << "," << "Vectorized" << "," << numThreads << "," << phase << "," << totItr << "," << numClusters << "," << prevMod
               << "," << totTimeClustering << "," << totTimeBuildingPhase << ","
               << totTimeClustering + totTimeBuildingPhase + totTimeColoring << "," << threshold << "," << sizeof(f_weight) << std::endl;
     resultCSV.close();
