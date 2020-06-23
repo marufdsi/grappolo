@@ -64,6 +64,7 @@
 //#define PRINT_TERSE_STATS_
 
 typedef float f_weight;
+typedef long comm_type;
 
 typedef struct comm
 {

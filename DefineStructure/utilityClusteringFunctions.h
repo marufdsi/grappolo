@@ -58,6 +58,9 @@ f_weight calConstantForSecondTerm_sfp(f_weight* vDegree, long NV);
 
 void initCommAss(long* pastCommAss, long* currCommAss, long NV);
 
+/// Single floating point version
+void initCommAss_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV);
+
 void initCommAssOpt(long* pastCommAss, long* currCommAss, long NV, 
 		    mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
 		    Comm* cInfo, double constant, double* vDegree );

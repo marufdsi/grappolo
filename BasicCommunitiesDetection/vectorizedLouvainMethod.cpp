@@ -90,11 +90,17 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     posix_memalign((void **) &vDegree, alignment, NV * sizeof(f_weight));
     assert(vDegree != 0);
     //Community info. (ai and size)
-    Comm *cInfo = (Comm *) malloc (NV * sizeof(Comm)); assert(cInfo != 0);
+    Comm *cInfo; // = (Comm *) malloc (NV * sizeof(Comm));
+    posix_memalign((void **) &cInfo, alignment, NV * sizeof(Comm));
+    assert(cInfo != 0);
     //use for updating Community
-    Comm *cUpdate = (Comm*)malloc(NV*sizeof(Comm)); assert(cUpdate != 0);
+    Comm *cUpdate; // = (Comm*)malloc(NV*sizeof(Comm));
+    posix_memalign((void **) &cUpdate, alignment, NV * sizeof(Comm));
+    assert(cUpdate != 0);
     //use for Modularity calculation (eii)
-    f_weight* clusterWeightInternal = (f_weight*) malloc (NV*sizeof(f_weight)); assert(clusterWeightInternal != 0);
+    f_weight* clusterWeightInternal; // = (f_weight*) malloc (NV*sizeof(f_weight));
+    posix_memalign((void **) &clusterWeightInternal, alignment, NV * sizeof(f_weight));
+    assert(clusterWeightInternal != 0);
     
     sumVertexDegree_sfp(vtxInd, vtxPtr, vDegree, NV , cInfo);	// Sum up the vertex degree
     
@@ -104,11 +110,17 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     //cout<<"CHECK THIS:              "<<constantForSecondTerm<<endl;
     //Community assignments:
     //Store previous iteration's community assignment
-    long* pastCommAss = (long *) malloc (NV * sizeof(long)); assert(pastCommAss != 0);
+    comm_type* pastCommAss; // = (long *) malloc (NV * sizeof(long));
+    posix_memalign((void **) &pastCommAss, alignment, NV * sizeof(comm_type));
+    assert(pastCommAss != 0);
     //Store current community assignment
-    long* currCommAss = (long *) malloc (NV * sizeof(long)); assert(currCommAss != 0);
+    comm_type* currCommAss; // = (long *) malloc (NV * sizeof(long));
+    posix_memalign((void **) &currCommAss, alignment, NV * sizeof(comm_type));
+    assert(currCommAss != 0);
     //Store the target of community assignment
-    long* targetCommAss = (long *) malloc (NV * sizeof(long)); assert(targetCommAss != 0);
+    comm_type* targetCommAss; // = (long *) malloc (NV * sizeof(long));
+    posix_memalign((void **) &targetCommAss, alignment, NV * sizeof(comm_type));
+    assert(targetCommAss != 0);
     
     //Vectors used in place of maps: Total size = |V|+2*|E| -- The |V| part takes care of self loop
     //  mapElement* clusterLocalMapX = (mapElement *) malloc ((NV + 2*NE) * sizeof(mapElement)); assert(clusterLocalMapX != 0);

@@ -82,13 +82,13 @@ void sumVertexDegree(edge* vtxInd, long* vtxPtr, double* vDegree, long NV, Comm*
 }//End of sumVertexDegree()
 
 /// Single floating point version
-void sumVertexDegree_sfp(edge* vtxInd, long* vtxPtr, f_weight* vDegree, long NV, Comm* cInfo) {
+void sumVertexDegree_sfp(edge* vtxInd, comm_type* vtxPtr, f_weight* vDegree, comm_type NV, Comm* cInfo) {
 #pragma omp parallel for
-  for (long i=0; i<NV; i++) {
-    long adj1 = vtxPtr[i];	    //Begin
-    long adj2 = vtxPtr[i+1];	//End
+  for (comm_type i=0; i<NV; i++) {
+      comm_type adj1 = vtxPtr[i];	    //Begin
+      comm_type adj2 = vtxPtr[i+1];	//End
       f_weight totalWt = 0;
-    for(long j=adj1; j<adj2; j++) {
+    for(comm_type j=adj1; j<adj2; j++) {
       totalWt += vtxInd[j].weight;
     }
     vDegree[i] = totalWt;	//Degree of each node
@@ -107,10 +107,10 @@ double calConstantForSecondTerm(double* vDegree, long NV) {
 }//End of calConstantForSecondTerm()
 
 /// Single floating point version
-f_weight calConstantForSecondTerm_sfp(f_weight* vDegree, long NV) {
+f_weight calConstantForSecondTerm_sfp(f_weight* vDegree, comm_type NV) {
     f_weight totalEdgeWeightTwice = 0;
   #pragma omp parallel for reduction(+:totalEdgeWeightTwice)
-  for (long i=0; i<NV; i++) {
+  for (comm_type i=0; i<NV; i++) {
       totalEdgeWeightTwice += vDegree[i];
   }
   return (f_weight)1/totalEdgeWeightTwice;
@@ -119,6 +119,15 @@ f_weight calConstantForSecondTerm_sfp(f_weight* vDegree, long NV) {
 void initCommAss(long* pastCommAss, long* currCommAss, long NV) {
 #pragma omp parallel for
   for (long i=0; i<NV; i++) {
+    pastCommAss[i] = i; //Initialize each vertex to its cluster
+    currCommAss[i] = i;
+  }
+}//End of initCommAss()
+
+/// Single floating point version
+void initCommAss_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV) {
+#pragma omp parallel for
+  for (comm_type i=0; i<NV; i++) {
     pastCommAss[i] = i; //Initialize each vertex to its cluster
     currCommAss[i] = i;
   }
