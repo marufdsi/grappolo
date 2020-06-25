@@ -561,6 +561,12 @@ reduction(+:e_xx) reduction(+:a2_x)
 //        C[i] = pastCommAss[i];
         C[i] = currCommAss[i];
     }
+
+    for (int i = 0; i < 2 * NE; ++i) {
+        vtxInd[i].head = head[i];
+        vtxInd[i].tail = tail[i];
+        vtxInd[i].weight = weights[i];
+    }
     //Cleanup
     free(pastCommAss);
     free(currCommAss);
