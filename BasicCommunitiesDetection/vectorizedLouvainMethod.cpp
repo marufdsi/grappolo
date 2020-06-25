@@ -573,7 +573,7 @@ reduction(+:e_xx) reduction(+:a2_x)
         C[i] = currCommAss[i];
     }
 
-    for (int i = 0; i < 2 * NE; ++i) {
+    for (int i = 0; i < nnz; ++i) {
         vtxInd[i].head = head[i];
         vtxInd[i].tail = tail[i];
         vtxInd[i].weight = weights[i];
