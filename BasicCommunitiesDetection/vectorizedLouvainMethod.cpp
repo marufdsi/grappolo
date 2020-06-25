@@ -333,10 +333,26 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     Comm *cInfo; // = (Comm *) malloc (NV * sizeof(Comm));
     posix_memalign((void **) &cInfo, alignment, NV * sizeof(Comm));
     assert(cInfo != 0);
+    /// replace cInfo by the following cInfo_size and cInfo_degree
+    comm_type* cInfo_size;
+    posix_memalign((void **) &cInfo_size, alignment, NV * sizeof(comm_type));
+    assert(cInfo_size != 0);
+    f_weight* cInfo_degree;
+    posix_memalign((void **) &cInfo_degree, alignment, NV * sizeof(f_weight));
+    assert(cInfo_degree != 0);
+
     //use for updating Community
     Comm *cUpdate; // = (Comm*)malloc(NV*sizeof(Comm));
     posix_memalign((void **) &cUpdate, alignment, NV * sizeof(Comm));
     assert(cUpdate != 0);
+    /// replace cUpdate by the following cUpdate_size and cUpdate_degree
+    comm_type* cUpdate_size;
+    posix_memalign((void **) &cUpdate_size, alignment, NV * sizeof(comm_type));
+    assert(cUpdate_size != 0);
+    f_weight* cUpdate_degree;
+    posix_memalign((void **) &cUpdate_degree, alignment, NV * sizeof(f_weight));
+    assert(cUpdate_degree != 0);
+
     //use for Modularity calculation (eii)
     f_weight* clusterWeightInternal; // = (f_weight*) malloc (NV*sizeof(f_weight));
     posix_memalign((void **) &clusterWeightInternal, alignment, NV * sizeof(f_weight));
@@ -394,7 +410,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
 
     //Initialize each vertex to its own cluster
 //    initCommAss_SFP(pastCommAss, currCommAss, NV);
-    initCommAssOptVec_SFP(pastCommAss, currCommAss, NV, clusterLocalMap, vtxPtr, vtxInd, cInfo, constantForSecondTerm, vDegree);
+    initCommAssOptVec_SFP(pastCommAss, currCommAss, NV, cid, Counter, vtxPtr, head, tail, weights, cInfo_size, cInfo_degree, constantForSecondTerm, vDegree);
 
     time2 = omp_get_wtime();
     printf("Time to initialize: %3.3lf\n", time2-time1);
