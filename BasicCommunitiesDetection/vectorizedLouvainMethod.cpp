@@ -316,6 +316,15 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     long    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
 
+    comm_type nnz = 0;
+    for (long i=0; i<NV; i++) {
+        long adj1 = vtxPtr[i];        //Begin
+        long adj2 = vtxPtr[i + 1];    //End
+        for (long j = adj1; j < adj2; j++) {
+            nnz++;
+        }
+    }
+    cout << "NNZ: " << nnz << " NE: " << NE << " twice NE: " << (2*NE) << endl;
     /* Variables for computing modularity */
     long totalEdgeWeightTwice;
     f_weight constantForSecondTerm;
@@ -381,15 +390,15 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     assert(targetCommAss != 0);
     cout << "test 6" << endl;
     comm_type* head;
-    posix_memalign((void **) &head, alignment, ((2*NE) * sizeof(comm_type)));
+    posix_memalign((void **) &head, alignment, (nnz * sizeof(comm_type)));
     assert(head != 0);
     comm_type* tail;
-    posix_memalign((void **) &tail, alignment, ((2*NE) * sizeof(comm_type)));
+    posix_memalign((void **) &tail, alignment, (nnz * sizeof(comm_type)));
     assert(tail != 0);
     f_weight* weights;
-    posix_memalign((void **) &weights, alignment, ((2*NE) * sizeof(f_weight)));
+    posix_memalign((void **) &weights, alignment, (nnz * sizeof(f_weight)));
     assert(weights != 0);
-    for (int i = 0; i < 2 * NE; ++i) {
+    for (int i = 0; i < nnz; ++i) {
         head[i] = vtxInd[i].head;
         tail[i] = vtxInd[i].tail;
         weights[i] = vtxInd[i].weight;
