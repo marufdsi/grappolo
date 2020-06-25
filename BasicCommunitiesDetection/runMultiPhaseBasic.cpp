@@ -316,13 +316,14 @@ void runMultiPhaseBasic_sfp(graph *G, long *C_orig, int basicOpt, long minGraphS
 
     if (!infile.good()) {
         resultCSV
-                << "GraphName,Version,Threads,Phases,TotalIterations,Clusters,Modularity,ClusteringTIme,CoarseningTime,TotalTime,Threshold,DataType"
+                << "GraphName,Version,Threads,Phases,TotalIterations,Clusters,Modularity,ClusteringTIme,CoarseningTime,TotalTime,Threshold,DataType,Phases"
                 << std::endl;
     }
     infile.close();
     resultCSV << split(parts[parts.size()-1], '.')[0] << "," << "Vectorized" << "," << numThreads << "," << phase << "," << totItr << "," << numClusters << "," << prevMod
-              << "," << totTimeClustering << "," << totTimeBuildingPhase << ","
-              << totTimeClustering + totTimeBuildingPhase + totTimeColoring << "," << threshold << "," << sizeof(f_weight) << std::endl;
+              << "," << totTimeClustering << "," << totTimeBuildingPhase << "," <<
+              totTimeClustering + totTimeBuildingPhase + totTimeColoring << "," << threshold << "," << sizeof(f_weight)
+              << "," << phase << std::endl;
     resultCSV.close();
     printf("********************************************\n");
     printf("*********    Compact Summary   *************\n");
