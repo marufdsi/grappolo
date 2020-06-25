@@ -61,28 +61,43 @@ void initCommAss(long* pastCommAss, long* currCommAss, long NV);
 /// Single floating point version
 void initCommAss_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV);
 
-void initCommAssOpt(long* pastCommAss, long* currCommAss, long NV, 
+/// Single floating point version
+void initCommAssOpt(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV,
+		    mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
+		    Comm* cInfo, f_weight constant, f_weight* vDegree );
+
+void initCommAssOpt_SFP(long* pastCommAss, long* currCommAss, long NV,
 		    mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
 		    Comm* cInfo, double constant, double* vDegree );
 
 double buildLocalMapCounter(long adj1, long adj2, map<long, long> &clusterLocalMap, 
 						  vector<double> &Counter, edge* vtxInd, long* currCommAss, long me);
 /// Single floating point version
-f_weight buildLocalMapCounter_sfp(long adj1, long adj2, map<long, long> &clusterLocalMap,
-						  vector<f_weight> &Counter, edge* vtxInd, long* currCommAss, long me);
+f_weight buildLocalMapCounter_sfp(comm_type adj1, comm_type adj2, map<comm_type, comm_type> &clusterLocalMap,
+						  vector<f_weight> &Counter, edge* vtxInd, comm_type* currCommAss, comm_type me);
 
 double buildLocalMapCounterNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
                                long* currCommAss, long &numUniqueClusters);
+/// Single floating point version
+f_weight buildLocalMapCounterNoMap_SFP(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
+                                     comm_type* currCommAss, comm_type &numUniqueClusters);
+/// Single floating point version
+f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, comm_type* head,
+                                     comm_type* tail, f_weight* weights, comm_type* currCommAss,
+                                     comm_type &numUniqueClusters);
 
-long max(map<long, long> &clusterLocalMap, vector<double> &Counter, 
+long max(map<long, long> &clusterLocalMap, vector<double> &Counter,
 		 double selfLoop, Comm* cInfo, double degree, long sc, double constant ) ;
 
 /// Single floating point version
-long max_sfp(map<long, long> &clusterLocalMap, vector<f_weight> &Counter,
+comm_type max_sfp(map<long, long> &clusterLocalMap, vector<f_weight> &Counter,
          f_weight selfLoop, Comm* cInfo, f_weight degree, long sc, f_weight constant ) ;
 
 long maxNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, double selfLoop, Comm* cInfo, double degree,
               long sc, double constant, long numUniqueClusters );
+/// Single floating point version
+comm_type maxNoMap_SFP(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, f_weight selfLoop, Comm* cInfo,
+        f_weight degree, comm_type sc, f_weight constant, comm_type numUniqueClusters );
 
 void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, long N2);
 

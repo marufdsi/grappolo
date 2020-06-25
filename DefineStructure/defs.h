@@ -68,20 +68,20 @@ typedef long comm_type;
 
 typedef struct comm
 {
-    long size;
+    comm_type size;
     f_weight degree;
 }Comm;
 
 typedef struct
 {
-    long cid;       //community ID
+    comm_type cid;       //community ID
     f_weight Counter; //Weight relative to that community
 } mapElement;
 
 typedef struct /* the edge data structure */
 {
-    long head;
-    long tail;
+    comm_type head;
+    comm_type tail;
     f_weight weight;
 } edge;
 
