@@ -45,7 +45,8 @@ using namespace std;
 
 clustering_parameters::clustering_parameters()
 : ftype(7), strongScaling(false), output(false), VF(false), coloring(0), numColors(16), percentage(100), syncType(0),
-threadsOpt(false), basicOpt(0), C_thresh(0.01), minGraphSize(100000), threshold(0.000001), compute_metrics(false)
+threadsOpt(false), basicOpt(0), C_thresh(0.01), minGraphSize(100000), threshold(0.000001), compute_metrics(false),
+intrinsic(false)
 {}
 
 void clustering_parameters::usage() {
@@ -64,6 +65,7 @@ void clustering_parameters::usage() {
     cout << "Strong scaling : -s   [default=false]							" << endl;
     cout << "VF             : -v   [default=false]							" << endl;
     cout << "Output         : -o   [default=false]							" << endl;
+    cout << "Intrinsic      : -i   [default=false]							" << endl;
     cout << "Coloring       : -c   [default=0]  (0) None (1) d1-coloring (2) balanced coloring " <<endl;
     cout << "                                   (3) incomplete coloring -- need to set n (#colors)" << endl;
     cout << "BasicOpt       : -b   [default=0]  (0) basic (1) replaceMap    " << endl;
@@ -79,7 +81,7 @@ void clustering_parameters::usage() {
 }//end of usage()
 
 bool clustering_parameters::parse(int argc, char *argv[]) {
-    static const char *opt_string = "c:n:p:b:y:svof:t:d:m:r";
+    static const char *opt_string = "c:n:p:b:y:svof:t:d:m:r:i";
     int opt = getopt(argc, argv, opt_string);
     while (opt != -1) {
         switch (opt) {
@@ -99,6 +101,7 @@ bool clustering_parameters::parse(int argc, char *argv[]) {
             case 'v': VF = true; break;
             case 'o': output = true; break;
             case 'r': compute_metrics = true; break;
+            case 'i': intrinsic = true; break;
             case 'p': percentage = atol(optarg);
                 if((percentage <0) || ((percentage >100))) {
                     cout << "Percentage is set to default of 100 percent" << endl;

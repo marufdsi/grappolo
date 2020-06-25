@@ -386,15 +386,15 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     assert(cid != 0);
     f_weight* Counter;
     posix_memalign((void **) &Counter, alignment, ((NV + 2*NE) * sizeof(f_weight)));
-    assert(weights != 0);
+    assert(Counter != 0);
     //double* Counter             = (double *)     malloc ((NV + 2*NE) * sizeof(double));     assert(Counter != 0);
 
     //Initialize each vertex to its own cluster
     //initCommAssOpt(pastCommAss, currCommAss, NV, clusterLocalMapX, vtxPtr, vtxInd, cInfo, constantForSecondTerm, vDegree);
 
     //Initialize each vertex to its own cluster
-    initCommAss_SFP(pastCommAss, currCommAss, NV);
-//    initCommAssOptVec_SFP(pastCommAss, currCommAss, NV, clusterLocalMap, vtxPtr, vtxInd, cInfo, constantForSecondTerm, vDegree);
+//    initCommAss_SFP(pastCommAss, currCommAss, NV);
+    initCommAssOptVec_SFP(pastCommAss, currCommAss, NV, clusterLocalMap, vtxPtr, vtxInd, cInfo, constantForSecondTerm, vDegree);
 
     time2 = omp_get_wtime();
     printf("Time to initialize: %3.3lf\n", time2-time1);

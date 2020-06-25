@@ -184,8 +184,10 @@ int main(int argc, char** argv) {
             runMultiPhaseColoring(G, C_orig, opts.coloring, opts.numColors, replaceMap, opts.minGraphSize, opts.threshold, opts.C_thresh, nT, threadsOpt);
         }else if(opts.syncType != 0){
             runMultiPhaseSyncType(G, C_orig, opts.syncType, opts.minGraphSize, opts.threshold, opts.C_thresh, nT,threadsOpt);
-        }else{
+        }else if (opts.intrinsic){
             runMultiPhaseBasic_sfp(G, C_orig, opts.basicOpt, opts.minGraphSize, opts.threshold, opts.C_thresh, nT,threadsOpt, inFile);
+        }else{
+            runMultiPhaseBasic(G, C_orig, opts.basicOpt, opts.minGraphSize, opts.threshold, opts.C_thresh, nT,threadsOpt, inFile);
         }
     }
     

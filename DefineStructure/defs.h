@@ -125,6 +125,7 @@ struct clustering_parameters
     f_weight threshold; //Value of threshold
     int percentage;
     bool compute_metrics;
+    bool intrinsic;
 
     clustering_parameters();
     void usage();

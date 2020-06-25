@@ -70,6 +70,10 @@ void initCommAssOpt_SFP(long* pastCommAss, long* currCommAss, long NV,
 		    mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
 		    Comm* cInfo, double constant, double* vDegree );
 
+void initCommAssOptVec_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV,
+                           comm_type* cid, f_weight* Counter, comm_type* vtxPtr, comm_type* head, comm_type* tail,
+                           f_weight* weights, comm_type* size, f_weight* degree, f_weight constant, f_weight* vDegree );
+
 double buildLocalMapCounter(long adj1, long adj2, map<long, long> &clusterLocalMap, 
 						  vector<double> &Counter, edge* vtxInd, long* currCommAss, long me);
 /// Single floating point version
