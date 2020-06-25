@@ -65,9 +65,9 @@ void initCommAss(long* pastCommAss, long* currCommAss, long NV);
 void initCommAss_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV);
 
 /// Single floating point version
-void initCommAssOpt(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV,
-		    mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
-		    Comm* cInfo, f_weight constant, double* vDegree );
+void initCommAssOpt(long* pastCommAss, long* currCommAss, long NV,
+		    mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
+		    Comm* cInfo, double constant, double* vDegree );
 
 void initCommAssOpt_SFP(long* pastCommAss, long* currCommAss, long NV,
 		    mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
