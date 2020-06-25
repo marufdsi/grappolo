@@ -288,7 +288,8 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
                                f_weight thresh, double *totTime, int *numItr, bool *change) {
 
     cout<< "Vectorized version called" <<endl;
-    size_t alignment = sysconf(_SC_PAGESIZE);
+//    size_t alignment = sysconf(_SC_PAGESIZE);
+    size_t alignment = 512;
 #ifdef PRINT_DETAILED_STATS_
     printf("Within parallelLouvianMethod()\n");
 #endif
@@ -573,6 +574,11 @@ reduction(+:e_xx) reduction(+:a2_x)
     free(currCommAss);
     free(targetCommAss);
     free(vDegree);
+    free(head);
+    free(tail);
+    free(weights);
+    free(cid);
+    free(Counter);
     free(cInfo_size);
     free(cInfo_degree);
     free(cUpdate_size);
