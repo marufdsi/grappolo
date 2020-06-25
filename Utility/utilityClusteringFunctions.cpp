@@ -90,6 +90,30 @@ void updateAxForOpt_SFP(Comm* cInfo, comm_type* currCommAss, f_weight* vDegree, 
    }
   }
 }
+
+void updateAxForOptVec_SFP(comm_type* size, f_weight* degree, comm_type* currCommAss, f_weight* vDegree, comm_type NV)
+{
+  //printf("NUMBER OF VERTICES: %d\n", NV);
+  #pragma omp parallel for
+  for(comm_type i = 0; i < NV; i++)
+  {
+    if(currCommAss[i] != i){
+/*    __sync_fetch_and_sub(&(cInfo[i].degree),vDegree[i]);
+      __sync_fetch_and_sub(&(cInfo[i].size),1);
+      __sync_fetch_and_add(&(cInfo[currCommAss[i]].degree),vDegree[i]);
+      __sync_fetch_and_add(&(cInfo[currCommAss[i]].size),1);
+*/
+      #pragma omp atomic update
+      degree[i] -= vDegree[i];
+      #pragma omp atomic update
+      size[i] -= 1;
+      #pragma omp atomic update
+      degree[currCommAss[i]] += vDegree[i];
+      #pragma omp atomic update
+      size[currCommAss[i]] += 1;
+   }
+  }
+}
 void sumVertexDegree(edge* vtxInd, long* vtxPtr, double* vDegree, long NV, Comm* cInfo) {
 #pragma omp parallel for
   for (long i=0; i<NV; i++) {
@@ -305,8 +329,8 @@ void initCommAssOptVec_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_
     //Step-1: Build local map counter (without a map):
       comm_type numUniqueClusters = 0;
       f_weight selfLoop = 0;
-    clusterLocalMap[sPosition].cid     = v; //Add itself
-    clusterLocalMap[sPosition].Counter = 0; //Initialize the count
+    cid[sPosition]     = v; //Add itself
+    Counter[sPosition] = 0; //Initialize the count
     numUniqueClusters++;
     //Parse through the neighbors
     for(comm_type j=adj1; j<adj2; j++) {
@@ -317,8 +341,8 @@ void initCommAssOptVec_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_
       }
       //Assume each neighbor is assigned to a separate cluster
       //Assume no duplicates (only way to improve performance at this step)
-      clusterLocalMap[sPosition + numUniqueClusters].cid     = vtxInd[j].tail; //Add the cluster id (initialized to itself)
-      clusterLocalMap[sPosition + numUniqueClusters].Counter = vtxInd[j].weight; //Initialize the count
+      cid[sPosition + numUniqueClusters] = vtxInd[j].tail; //Add the cluster id (initialized to itself)
+      Counter[sPosition + numUniqueClusters] = vtxInd[j].weight; //Initialize the count
       numUniqueClusters++;
     }//End of for(j)
 
@@ -326,30 +350,30 @@ void initCommAssOptVec_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_
       comm_type maxIndex = v;	//Assign the initial value as the current community
       f_weight curGain = 0;
       f_weight maxGain = 0;
-      f_weight eix = clusterLocalMap[sPosition].Counter - selfLoop; //NOT SURE ABOUT THIS.
-      f_weight ax  = cInfo[v].degree - vDegree[v];
+      f_weight eix = Counter[sPosition] - selfLoop; //NOT SURE ABOUT THIS.
+      f_weight ax  = degree[v] - vDegree[v];
       f_weight eiy = 0;
       f_weight ay  = 0;
     for(comm_type k=0; k<numUniqueClusters; k++) {
-      if(v != clusterLocalMap[sPosition + k].cid) {
-        ay = cInfo[clusterLocalMap[sPosition + k].cid].degree; // degree of cluster y
-        eiy = clusterLocalMap[sPosition + k].Counter; 	//Total edges incident on cluster y
+      if(v != cid[sPosition + k]) {
+        ay = degree[cid[sPosition + k]]; // degree of cluster y
+        eiy = Counter[sPosition + k]; 	//Total edges incident on cluster y
         curGain = 2*(eiy - eix) - 2*vDegree[v]*(ay - ax)*constant;
 
-        if( (curGain > maxGain) || ((curGain==maxGain) && (curGain != 0) && (clusterLocalMap[sPosition + k].cid < maxIndex)) ) {
+        if( (curGain > maxGain) || ((curGain==maxGain) && (curGain != 0) && (cid[sPosition + k] < maxIndex)) ) {
           maxGain  = curGain;
-          maxIndex = clusterLocalMap[sPosition + k].cid;
+          maxIndex = cid[sPosition + k];
         }
       }
     }//End of for()
 
-    if(cInfo[maxIndex].size == 1 && cInfo[v].size == 1 && maxIndex > v) { //Swap protection
+    if(size[maxIndex] == 1 && size[v] == 1 && maxIndex > v) { //Swap protection
       maxIndex = v;
     }
     currCommAss[v] = maxIndex; //Assign the new community
   }
 
-    updateAxForOpt_SFP(cInfo,currCommAss,vDegree,NV);
+    updateAxForOptVec_SFP(size, degree, currCommAss, vDegree, NV);
 }//End of initCommAssOpt()
 
 
