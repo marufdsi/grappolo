@@ -40,6 +40,7 @@
 // ************************************************************************
 
 #include "utilityClusteringFunctions.h"
+#include "../DefineStructure/defs.h"
 
 using namespace std;
 
@@ -649,6 +650,40 @@ comm_type maxNoMap_SFP(comm_type v, mapElement* clusterLocalMap, comm_type* vtxP
     }//End of for()
 
     if(cInfo[maxIndex].size == 1 && cInfo[sc].size ==1 && maxIndex > sc) { //Swap protection
+        maxIndex = sc;
+    }
+
+    return maxIndex;
+}//End maxNoMap()
+
+comm_type maxNoMapVec_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, f_weight selfLoop,
+        comm_type * cInfo_size, f_weight* cInfo_degree, f_weight degree, comm_type sc, f_weight constant,
+        comm_type numUniqueClusters ) {
+
+    comm_type maxIndex = sc;	//Assign the initial value as the current community
+    f_weight curGain = 0;
+    f_weight maxGain = 0;
+    comm_type sPosition = vtxPtr[v]+v; //Starting position of local map for v
+    f_weight eix = Counter[sPosition] - selfLoop;
+    f_weight ax  = cInfo_degree[sc] - degree;
+    f_weight eiy = 0;
+    f_weight ay  = 0;
+
+    for(comm_type k=0; k<numUniqueClusters; k++) {
+        if(sc != cid[sPosition + k]) {
+            ay = cInfo_degree[cid[sPosition + k]]; // degree of cluster y
+            eiy = Counter[sPosition + k]; 	//Total edges incident on cluster y
+            curGain = 2*(eiy - eix) - 2*degree*(ay - ax)*constant;
+
+            if( (curGain > maxGain) ||
+               ((curGain==maxGain) && (curGain != 0) && (cid[sPosition + k] < maxIndex)) ) {
+                maxGain  = curGain;
+                maxIndex = cid[sPosition + k];
+            }
+        }
+    }//End of for()
+
+    if(cInfo_size[maxIndex] == 1 && cInfo_size[sc] ==1 && maxIndex > sc) { //Swap protection
         maxIndex = sc;
     }
 

@@ -102,6 +102,10 @@ long maxNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, double selfLoop
 /// Single floating point version
 comm_type maxNoMap_SFP(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, f_weight selfLoop, Comm* cInfo,
         f_weight degree, comm_type sc, f_weight constant, comm_type numUniqueClusters );
+/// Single floating point vectorized version
+comm_type maxNoMapVec_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, f_weight selfLoop,
+                          comm_type * cInfo_size, f_weight* cInfo_degree, f_weight degree, comm_type sc, f_weight constant,
+                          comm_type numUniqueClusters );
 
 void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, long N2);
 

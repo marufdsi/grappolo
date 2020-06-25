@@ -330,9 +330,9 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     posix_memalign((void **) &vDegree, alignment, NV * sizeof(f_weight));
     assert(vDegree != 0);
     //Community info. (ai and size)
-    Comm *cInfo; // = (Comm *) malloc (NV * sizeof(Comm));
+    /*Comm *cInfo; // = (Comm *) malloc (NV * sizeof(Comm));
     posix_memalign((void **) &cInfo, alignment, NV * sizeof(Comm));
-    assert(cInfo != 0);
+    assert(cInfo != 0);*/
     /// replace cInfo by the following cInfo_size and cInfo_degree
     comm_type* cInfo_size;
     posix_memalign((void **) &cInfo_size, alignment, NV * sizeof(comm_type));
@@ -342,9 +342,9 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     assert(cInfo_degree != 0);
 
     //use for updating Community
-    Comm *cUpdate; // = (Comm*)malloc(NV*sizeof(Comm));
+    /*Comm *cUpdate; // = (Comm*)malloc(NV*sizeof(Comm));
     posix_memalign((void **) &cUpdate, alignment, NV * sizeof(Comm));
-    assert(cUpdate != 0);
+    assert(cUpdate != 0);*/
     /// replace cUpdate by the following cUpdate_size and cUpdate_degree
     comm_type* cUpdate_size;
     posix_memalign((void **) &cUpdate_size, alignment, NV * sizeof(comm_type));
@@ -393,10 +393,10 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     }
 
     //Vectors used in place of maps: Total size = |V|+2*|E| -- The |V| part takes care of self loop
-    mapElement* clusterLocalMap; // = (mapElement *) malloc ((NV + 2*NE) * sizeof(mapElement));
+    /*mapElement* clusterLocalMap; // = (mapElement *) malloc ((NV + 2*NE) * sizeof(mapElement));
     posix_memalign((void **) &clusterLocalMap, alignment, ((NV + 2*NE) * sizeof(mapElement)));
-    assert(clusterLocalMap != 0);
-
+    assert(clusterLocalMap != 0);*/
+    /// Replace clusterLocalMap by the following cid and Counter
     comm_type* cid;
     posix_memalign((void **) &cid, alignment, ((NV + 2*NE) * sizeof(comm_type)));
     assert(cid != 0);
@@ -433,8 +433,8 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
 #pragma omp parallel for
         for (long i=0; i<NV; i++) {
             clusterWeightInternal[i] = 0;
-            cUpdate[i].degree =0;
-            cUpdate[i].size =0;
+            cUpdate_degree[i] =0;
+            cUpdate_size[i] =0;
         }
 
         bool moved = false;
@@ -453,20 +453,20 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
 //                clusterLocalMap[currCommAss[i]] = 0;
 //                Counter.push_back(0); //Initialize the counter to ZERO (no edges incident yet)
                 long sPosition = vtxPtr[i]+i; //Starting position of local map for i
-                clusterLocalMap[sPosition].Counter = 0;          //Initialize the counter to ZERO (no edges incident yet)
-                clusterLocalMap[sPosition].cid = currCommAss[i]; //Initialize with current community
+                Counter[sPosition] = 0;          //Initialize the counter to ZERO (no edges incident yet)
+                cid[sPosition] = currCommAss[i]; //Initialize with current community
                 numUniqueClusters++; //Added the first entry
 
                 //Find unique cluster ids and #of edges incident (eicj) to them
 //                selfLoop = buildLocalMapCounter_sfp(adj1, adj2, clusterLocalMap, Counter, vtxInd, currCommAss, i);
-                selfLoop = buildLocalMapCounterNoMap_SFP(i, clusterLocalMap, vtxPtr, vtxInd, currCommAss, numUniqueClusters);
+                selfLoop = buildLocalMapCounterVec_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
                 // Update delta Q calculation
 //                clusterWeightInternal[i] += Counter[0]; //(e_ix)
-                clusterWeightInternal[i] += clusterLocalMap[sPosition].Counter; //(e_ix)
+                clusterWeightInternal[i] += Counter[sPosition]; //(e_ix)
                 //Calculate the max
 //                targetCommAss[i] = max_sfp(clusterLocalMap, Counter, selfLoop, cInfo, vDegree[i], currCommAss[i], constantForSecondTerm);
-                targetCommAss[i] = maxNoMap_SFP(i, clusterLocalMap, vtxPtr, selfLoop, cInfo, vDegree[i], currCommAss[i],
-                                            constantForSecondTerm, numUniqueClusters);
+                targetCommAss[i] = maxNoMapVec_SFP(i, cid, Counter, vtxPtr, selfLoop, cInfo_size, cInfo_degree, vDegree[i],
+                        currCommAss[i], constantForSecondTerm, numUniqueClusters);
                 //assert((targetCommAss[i] >= 0)&&(targetCommAss[i] < NV));
             } else {
                 targetCommAss[i] = -1;
@@ -476,13 +476,13 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
             if(targetCommAss[i] != currCommAss[i]  && targetCommAss[i] != -1) {
                 moved = true;
 #pragma omp atomic update
-                cUpdate[targetCommAss[i]].degree += vDegree[i];
+                cUpdate_degree[targetCommAss[i]] += vDegree[i];
 #pragma omp atomic update
-                cUpdate[targetCommAss[i]].size += 1;
+                cUpdate_size[targetCommAss[i]] += 1;
 #pragma omp atomic update
-                cUpdate[currCommAss[i]].degree -= vDegree[i];
+                cUpdate_degree[currCommAss[i]] -= vDegree[i];
 #pragma omp atomic update
-                cUpdate[currCommAss[i]].size -=1;
+                cUpdate_size[currCommAss[i]] -=1;
                 /*
                  __sync_fetch_and_add(&cUpdate[targetCommAss[i]].size, 1);
                  __sync_fetch_and_sub(&cUpdate[currCommAss[i]].degree, vDegree[i]);
@@ -499,7 +499,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
 reduction(+:e_xx) reduction(+:a2_x)
         for (long i=0; i<NV; i++) {
             e_xx += clusterWeightInternal[i];
-            a2_x += (cInfo[i].degree)*(cInfo[i].degree);
+            a2_x += (cInfo_degree[i])*(cInfo_degree[i]);
         }
         time4 = omp_get_wtime();
 
@@ -527,8 +527,8 @@ reduction(+:e_xx) reduction(+:a2_x)
             prevMod = Lower;
 #pragma omp parallel for
         for (long i=0; i<NV; i++) {
-            cInfo[i].size += cUpdate[i].size;
-            cInfo[i].degree += cUpdate[i].degree;
+            cInfo_size[i] += cUpdate_size[i];
+            cInfo_degree[i] += cUpdate_degree[i];
         }
 
         //Do pointer swaps to reuse memory:
@@ -565,8 +565,10 @@ reduction(+:e_xx) reduction(+:a2_x)
     free(currCommAss);
     free(targetCommAss);
     free(vDegree);
-    free(cInfo);
-    free(cUpdate);
+    free(cInfo_size);
+    free(cInfo_degree);
+    free(cUpdate_size);
+    free(cUpdate_degree);
     free(clusterWeightInternal);
 
     return prevMod;
