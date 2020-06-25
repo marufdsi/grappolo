@@ -315,7 +315,7 @@ void initCommAssOpt_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_typ
 //WARNING: Will ignore duplicate edge entries (multi-graph)
 void initCommAssOptVec_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV,
                            comm_type* cid, f_weight* Counter, comm_type* vtxPtr, comm_type* head, comm_type* tail,
-                           f_weight* weights, comm_type* size, f_weight degree, f_weight constant, f_weight* vDegree ) {
+                           f_weight* weights, comm_type* size, f_weight* degree, f_weight constant, f_weight* vDegree ) {
 
 #pragma omp parallel for
   for (comm_type v=0; v<NV; v++) {
@@ -341,8 +341,8 @@ void initCommAssOptVec_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_
       }
       //Assume each neighbor is assigned to a separate cluster
       //Assume no duplicates (only way to improve performance at this step)
-      cid[sPosition + numUniqueClusters] = vtxInd[j].tail; //Add the cluster id (initialized to itself)
-      Counter[sPosition + numUniqueClusters] = vtxInd[j].weight; //Initialize the count
+      cid[sPosition + numUniqueClusters] = tail[j]; //Add the cluster id (initialized to itself)
+      Counter[sPosition + numUniqueClusters] = weights[j]; //Initialize the count
       numUniqueClusters++;
     }//End of for(j)
 
