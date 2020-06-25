@@ -395,7 +395,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     //Initialize each vertex to its own cluster
 //    initCommAss_SFP(pastCommAss, currCommAss, NV);
     initCommAssOptVec_SFP(pastCommAss, currCommAss, NV, clusterLocalMap, vtxPtr, vtxInd, cInfo, constantForSecondTerm, vDegree);
-`
+
     time2 = omp_get_wtime();
     printf("Time to initialize: %3.3lf\n", time2-time1);
 
@@ -472,8 +472,6 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
                  __sync_fetch_and_sub(&cUpdate[currCommAss[i]].degree, vDegree[i]);
                  __sync_fetch_and_sub(&cUpdate[currCommAss[i]].size, 1);*/
             }//End of If()
-            clusterLocalMap.clear();
-            Counter.clear();
         }//End of for(i)
         time2 = omp_get_wtime();
 
