@@ -475,8 +475,9 @@ double buildLocalMapCounterNoMap(long v, mapElement* clusterLocalMap, long* vtxP
 }//End of buildLocalMapCounter()
 
 //Build the local-map data structure using vectors
-f_weight buildLocalMapCounterNoMap_SFP(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
-                                     comm_type* currCommAss, comm_type &numUniqueClusters) {
+f_weight buildLocalMapCounterNoMap_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, comm_type* head,
+                                       comm_type* tail, f_weight* weights, comm_type* currCommAss,
+                                       comm_type &numUniqueClusters) {
     comm_type adj1  = vtxPtr[v];
     comm_type adj2  = vtxPtr[v+1];
     comm_type sPosition = vtxPtr[v]+v; //Starting position of local map for v
@@ -484,20 +485,20 @@ f_weight buildLocalMapCounterNoMap_SFP(comm_type v, mapElement* clusterLocalMap,
     comm_type storedAlready = 0;
     f_weight selfLoop = 0;
     for(comm_type j=adj1; j<adj2; j++) {
-        if(vtxInd[j].tail == v) {	// SelfLoop need to be recorded
-            selfLoop += vtxInd[j].weight;
+        if(tail[j] == v) {	// SelfLoop need to be recorded
+            selfLoop += weights[j];
         }
         bool storedAlready = false; //Initialize to zero
         for(comm_type k=0; k<numUniqueClusters; k++) { //Check if it already exists
-            if(currCommAss[vtxInd[j].tail] ==  clusterLocalMap[sPosition+k].cid) {
+            if(currCommAss[tail[j]] ==  cid[sPosition+k]) {
                 storedAlready = true;
-                clusterLocalMap[sPosition + k].Counter += vtxInd[j].weight; //Increment the counter with weight
+                Counter[sPosition + k] += weights[j]; //Increment the counter with weight
                 break;
             }
         }
         if( storedAlready == false ) {	//Does not exist, add to the map
-            clusterLocalMap[sPosition + numUniqueClusters].cid     = currCommAss[vtxInd[j].tail];
-            clusterLocalMap[sPosition + numUniqueClusters].Counter = vtxInd[j].weight; //Initialize the count
+            cid[sPosition + numUniqueClusters]     = currCommAss[tail[j]];
+            Counter[sPosition + numUniqueClusters] = weights[j]; //Initialize the count
             numUniqueClusters++;
         }
     }//End of for(j)
@@ -640,33 +641,34 @@ long maxNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, double selfLoop
     return maxIndex;
 }//End maxNoMap()
 
-comm_type maxNoMap_SFP(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, f_weight selfLoop, Comm* cInfo,
-        f_weight degree, comm_type sc, f_weight constant, comm_type numUniqueClusters ) {
+comm_type maxNoMap_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, f_weight selfLoop,
+                       comm_type * cInfo_size, f_weight* cInfo_degree, f_weight degree, comm_type sc, f_weight constant,
+                       comm_type numUniqueClusters ) {
 
     comm_type maxIndex = sc;	//Assign the initial value as the current community
     f_weight curGain = 0;
     f_weight maxGain = 0;
     comm_type sPosition = vtxPtr[v]+v; //Starting position of local map for v
-    f_weight eix = clusterLocalMap[sPosition].Counter - selfLoop;
-    f_weight ax  = cInfo[sc].degree - degree;
+    f_weight eix = Counter[sPosition] - selfLoop;
+    f_weight ax  = cInfo_degree[sc] - degree;
     f_weight eiy = 0;
     f_weight ay  = 0;
 
     for(comm_type k=0; k<numUniqueClusters; k++) {
-        if(sc != clusterLocalMap[sPosition + k].cid) {
-            ay = cInfo[clusterLocalMap[sPosition + k].cid].degree; // degree of cluster y
-            eiy = clusterLocalMap[sPosition + k].Counter; 	//Total edges incident on cluster y
+        if(sc != cid[sPosition + k]) {
+            ay = cInfo_degree[cid[sPosition + k]]; // degree of cluster y
+            eiy = Counter[sPosition + k]; 	//Total edges incident on cluster y
             curGain = 2*(eiy - eix) - 2*degree*(ay - ax)*constant;
 
             if( (curGain > maxGain) ||
-               ((curGain==maxGain) && (curGain != 0) && (clusterLocalMap[sPosition + k].cid < maxIndex)) ) {
+                ((curGain==maxGain) && (curGain != 0) && (cid[sPosition + k] < maxIndex)) ) {
                 maxGain  = curGain;
-                maxIndex = clusterLocalMap[sPosition + k].cid;
+                maxIndex = cid[sPosition + k];
             }
         }
     }//End of for()
 
-    if(cInfo[maxIndex].size == 1 && cInfo[sc].size ==1 && maxIndex > sc) { //Swap protection
+    if(cInfo_size[maxIndex] == 1 && cInfo_size[sc] ==1 && maxIndex > sc) { //Swap protection
         maxIndex = sc;
     }
 

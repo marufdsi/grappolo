@@ -48,7 +48,9 @@ using namespace std;
 f_weight parallelLouvianMethod_SFP(graph *G, long *C, int nThreads, f_weight Lower,
                                f_weight thresh, double *totTime, int *numItr, bool *change) {
 
-    size_t alignment = sysconf(_SC_PAGESIZE);
+    cout << "modified parallel version called" << endl;
+    //    size_t alignment = sysconf(_SC_PAGESIZE);
+    size_t alignment = 512;
 #ifdef PRINT_DETAILED_STATS_
     printf("Within parallelLouvianMethod()\n");
 #endif
@@ -64,17 +66,26 @@ f_weight parallelLouvianMethod_SFP(graph *G, long *C, int nThreads, f_weight Low
 #ifdef PRINT_DETAILED_STATS_
     printf("Actual number of threads: %d (requested: %d)\n", nT, nThreads);
 #endif
-    
-    
+
+
     double time1, time2, time3, time4; //For timing purposes
     double total = 0, totItr = 0;
-    
+
     long    NV        = G->numVertices;
     long    NS        = G->sVertices;
     long    NE        = G->numEdges;
     long    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
-    
+
+    comm_type nnz = 0;
+    for (long i=0; i<NV; i++) {
+        long adj1 = vtxPtr[i];        //Begin
+        long adj2 = vtxPtr[i + 1];    //End
+        for (long j = adj1; j < adj2; j++) {
+            nnz++;
+        }
+    }
+    cout << "NNZ: " << nnz << " NE: " << NE << " twice NE: " << (2*NE) << endl;
     /* Variables for computing modularity */
     long totalEdgeWeightTwice;
     f_weight constantForSecondTerm;
@@ -83,32 +94,48 @@ f_weight parallelLouvianMethod_SFP(graph *G, long *C, int nThreads, f_weight Low
     //double thresMod = 0.000001;
     f_weight thresMod = thresh; //Input parameter
     int numItrs = 0;
-    
+
     /********************** Initialization **************************/
     time1 = omp_get_wtime();
     //Store the degree of all vertices
-    f_weight * vDegree; //= (f_weight *) malloc (NV * sizeof(f_weight));
+    f_weight * vDegree; // = (f_weight *) malloc (NV * sizeof(f_weight));
     posix_memalign((void **) &vDegree, alignment, NV * sizeof(f_weight));
     assert(vDegree != 0);
+
     //Community info. (ai and size)
-    Comm *cInfo; // = (Comm *) malloc (NV * sizeof(Comm));
+    /*Comm *cInfo; // = (Comm *) malloc (NV * sizeof(Comm));
     posix_memalign((void **) &cInfo, alignment, NV * sizeof(Comm));
-    assert(cInfo != 0);
+    assert(cInfo != 0);*/
+    /// replace cInfo by the following cInfo_size and cInfo_degree
+    comm_type* cInfo_size;
+    posix_memalign((void **) &cInfo_size, alignment, NV * sizeof(comm_type));
+    assert(cInfo_size != 0);
+    f_weight* cInfo_degree;
+    posix_memalign((void **) &cInfo_degree, alignment, NV * sizeof(f_weight));
+    assert(cInfo_degree != 0);
+
     //use for updating Community
-    Comm *cUpdate; // = (Comm*)malloc(NV*sizeof(Comm));
+    /*Comm *cUpdate; // = (Comm*)malloc(NV*sizeof(Comm));
     posix_memalign((void **) &cUpdate, alignment, NV * sizeof(Comm));
-    assert(cUpdate != 0);
+    assert(cUpdate != 0);*/
+    /// replace cUpdate by the following cUpdate_size and cUpdate_degree
+    comm_type* cUpdate_size;
+    posix_memalign((void **) &cUpdate_size, alignment, NV * sizeof(comm_type));
+    assert(cUpdate_size != 0);
+    f_weight* cUpdate_degree;
+    posix_memalign((void **) &cUpdate_degree, alignment, NV * sizeof(f_weight));
+    assert(cUpdate_degree != 0);
+
     //use for Modularity calculation (eii)
     f_weight* clusterWeightInternal; // = (f_weight*) malloc (NV*sizeof(f_weight));
     posix_memalign((void **) &clusterWeightInternal, alignment, NV * sizeof(f_weight));
     assert(clusterWeightInternal != 0);
-    
-    sumVertexDegree_sfp(vtxInd, vtxPtr, vDegree, NV , cInfo);	// Sum up the vertex degree
-    
+
+    sumVertexDegreeVec_sfp(vtxInd, vtxPtr, vDegree, NV , cInfo_size, cInfo_degree);	// Sum up the vertex degree
+
     /*** Compute the total edge weight (2m) and 1/2m ***/
     constantForSecondTerm = calConstantForSecondTerm_sfp(vDegree, NV); // 1 over sum of the degree
-    
-    //cout<<"CHECK THIS:              "<<constantForSecondTerm<<endl;
+
     //Community assignments:
     //Store previous iteration's community assignment
     comm_type* pastCommAss; // = (long *) malloc (NV * sizeof(long));
@@ -122,20 +149,44 @@ f_weight parallelLouvianMethod_SFP(graph *G, long *C, int nThreads, f_weight Low
     comm_type* targetCommAss; // = (long *) malloc (NV * sizeof(long));
     posix_memalign((void **) &targetCommAss, alignment, NV * sizeof(comm_type));
     assert(targetCommAss != 0);
-    
+
+    comm_type* head;
+    posix_memalign((void **) &head, alignment, (nnz * sizeof(comm_type)));
+    assert(head != 0);
+    comm_type* tail;
+    posix_memalign((void **) &tail, alignment, (nnz * sizeof(comm_type)));
+    assert(tail != 0);
+    f_weight* weights;
+    posix_memalign((void **) &weights, alignment, (nnz * sizeof(f_weight)));
+    assert(weights != 0);
+    for (int i = 0; i < nnz; ++i) {
+        head[i] = vtxInd[i].head;
+        tail[i] = vtxInd[i].tail;
+        weights[i] = vtxInd[i].weight;
+    }
+
     //Vectors used in place of maps: Total size = |V|+2*|E| -- The |V| part takes care of self loop
-    //  mapElement* clusterLocalMapX = (mapElement *) malloc ((NV + 2*NE) * sizeof(mapElement)); assert(clusterLocalMapX != 0);
+    /*mapElement* clusterLocalMap; // = (mapElement *) malloc ((NV + 2*NE) * sizeof(mapElement));
+    posix_memalign((void **) &clusterLocalMap, alignment, ((NV + 2*NE) * sizeof(mapElement)));
+    assert(clusterLocalMap != 0);*/
+    /// Replace clusterLocalMap by the following cid and Counter
+    comm_type* cid;
+    posix_memalign((void **) &cid, alignment, ((NV + 2*NE) * sizeof(comm_type)));
+    assert(cid != 0);
+    f_weight* Counter;
+    posix_memalign((void **) &Counter, alignment, ((NV + 2*NE) * sizeof(f_weight)));
+    assert(Counter != 0);
     //double* Counter             = (double *)     malloc ((NV + 2*NE) * sizeof(double));     assert(Counter != 0);
-    
+
     //Initialize each vertex to its own cluster
     //initCommAssOpt(pastCommAss, currCommAss, NV, clusterLocalMapX, vtxPtr, vtxInd, cInfo, constantForSecondTerm, vDegree);
-    
+
     //Initialize each vertex to its own cluster
-    initCommAss(pastCommAss, currCommAss, NV);
-    
+//    initCommAss_SFP(pastCommAss, currCommAss, NV);
+    initCommAssOptVec_SFP(pastCommAss, currCommAss, NV, cid, Counter, vtxPtr, head, tail, weights, cInfo_size, cInfo_degree, constantForSecondTerm, vDegree);
     time2 = omp_get_wtime();
     printf("Time to initialize: %3.3lf\n", time2-time1);
-    
+
 #ifdef PRINT_DETAILED_STATS_
     printf("========================================================================================================\n");
     printf("Itr      E_xx            A_x2           Curr-Mod         Time-1(s)       Time-2(s)        T/Itr(s)\n");
@@ -154,8 +205,8 @@ f_weight parallelLouvianMethod_SFP(graph *G, long *C, int nThreads, f_weight Low
 #pragma omp parallel for
         for (long i=0; i<NV; i++) {
             clusterWeightInternal[i] = 0;
-            cUpdate[i].degree =0;
-            cUpdate[i].size =0;
+            cUpdate_degree[i] =0;
+            cUpdate_size[i] =0;
         }
 
         bool moved = false;
@@ -165,57 +216,65 @@ f_weight parallelLouvianMethod_SFP(graph *G, long *C, int nThreads, f_weight Low
             long adj2 = vtxPtr[i+1];
             f_weight selfLoop = 0;
             //Build a datastructure to hold the cluster structure of its neighbors
-            map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
-            map<long, long>::iterator storedAlready;
-            vector<f_weight> Counter; //Number of edges in each unique cluster
+//            map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
+//            map<long, long>::iterator storedAlready;
+//            vector<f_weight> Counter; //Number of edges in each unique cluster
+            long numUniqueClusters = 0;
             //Add v's current cluster:
             if(adj1 != adj2){
-                clusterLocalMap[currCommAss[i]] = 0;
-                Counter.push_back(0); //Initialize the counter to ZERO (no edges incident yet)
+//                clusterLocalMap[currCommAss[i]] = 0;
+//                Counter.push_back(0); //Initialize the counter to ZERO (no edges incident yet)
+                long sPosition = vtxPtr[i]+i; //Starting position of local map for i
+                Counter[sPosition] = 0;          //Initialize the counter to ZERO (no edges incident yet)
+                cid[sPosition] = currCommAss[i]; //Initialize with current community
+                numUniqueClusters++; //Added the first entry
+
                 //Find unique cluster ids and #of edges incident (eicj) to them
-                selfLoop = buildLocalMapCounter_sfp(adj1, adj2, clusterLocalMap, Counter, vtxInd, currCommAss, i);
+//                selfLoop = buildLocalMapCounter_sfp(adj1, adj2, clusterLocalMap, Counter, vtxInd, currCommAss, i);
+                selfLoop = buildLocalMapCounterNoMap_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
                 // Update delta Q calculation
-                clusterWeightInternal[i] += Counter[0]; //(e_ix)
+//                clusterWeightInternal[i] += Counter[0]; //(e_ix)
+                clusterWeightInternal[i] += Counter[sPosition]; //(e_ix)
                 //Calculate the max
-                targetCommAss[i] = max_sfp(clusterLocalMap, Counter, selfLoop, cInfo, vDegree[i], currCommAss[i], constantForSecondTerm);
+//                targetCommAss[i] = max_sfp(clusterLocalMap, Counter, selfLoop, cInfo, vDegree[i], currCommAss[i], constantForSecondTerm);
+                targetCommAss[i] = maxNoMap_SFP(i, cid, Counter, vtxPtr, selfLoop, cInfo_size, cInfo_degree, vDegree[i],
+                                                   currCommAss[i], constantForSecondTerm, numUniqueClusters);
                 //assert((targetCommAss[i] >= 0)&&(targetCommAss[i] < NV));
             } else {
                 targetCommAss[i] = -1;
             }
-            
+
             //Update
             if(targetCommAss[i] != currCommAss[i]  && targetCommAss[i] != -1) {
                 moved = true;
 #pragma omp atomic update
-                cUpdate[targetCommAss[i]].degree += vDegree[i];
+                cUpdate_degree[targetCommAss[i]] += vDegree[i];
 #pragma omp atomic update
-                cUpdate[targetCommAss[i]].size += 1;
+                cUpdate_size[targetCommAss[i]] += 1;
 #pragma omp atomic update
-                cUpdate[currCommAss[i]].degree -= vDegree[i];
+                cUpdate_degree[currCommAss[i]] -= vDegree[i];
 #pragma omp atomic update
-                cUpdate[currCommAss[i]].size -=1;
+                cUpdate_size[currCommAss[i]] -=1;
                 /*
                  __sync_fetch_and_add(&cUpdate[targetCommAss[i]].size, 1);
                  __sync_fetch_and_sub(&cUpdate[currCommAss[i]].degree, vDegree[i]);
                  __sync_fetch_and_sub(&cUpdate[currCommAss[i]].size, 1);*/
             }//End of If()
-            clusterLocalMap.clear();
-            Counter.clear();
         }//End of for(i)
         time2 = omp_get_wtime();
-        
+
         time3 = omp_get_wtime();
         f_weight e_xx = 0;
         f_weight a2_x = 0;
-        
+
 #pragma omp parallel for \
 reduction(+:e_xx) reduction(+:a2_x)
         for (long i=0; i<NV; i++) {
             e_xx += clusterWeightInternal[i];
-            a2_x += (cInfo[i].degree)*(cInfo[i].degree);
+            a2_x += (cInfo_degree[i])*(cInfo_degree[i]);
         }
         time4 = omp_get_wtime();
-        
+
         currMod = (e_xx*(f_weight)constantForSecondTerm) - (a2_x*(f_weight)constantForSecondTerm*(f_weight)constantForSecondTerm);
         totItr = (time2-time1) + (time4-time3);
         total += totItr;
@@ -233,28 +292,28 @@ reduction(+:e_xx) reduction(+:a2_x)
         if(!moved || numItrs >= 25/*(currMod - prevMod) < thresMod*/) {
             break;
         }
-        
+
         //Else update information for the next iteration
         prevMod = currMod;
         if(prevMod < Lower)
             prevMod = Lower;
 #pragma omp parallel for
         for (long i=0; i<NV; i++) {
-            cInfo[i].size += cUpdate[i].size;
-            cInfo[i].degree += cUpdate[i].degree;
+            cInfo_size[i] += cUpdate_size[i];
+            cInfo_degree[i] += cUpdate_degree[i];
         }
-        
+
         //Do pointer swaps to reuse memory:
         long* tmp;
         tmp = pastCommAss;
         pastCommAss = currCommAss; //Previous holds the current
         currCommAss = targetCommAss; //Current holds the chosen assignment
         targetCommAss = tmp;      //Reuse the vector
-        
+
     }//End of while(true)
     *totTime = total; //Return back the total time for clustering
     *numItr  = numItrs;
-    
+
 #ifdef PRINT_DETAILED_STATS_
     printf("========================================================================================================\n");
     printf("Total time for %d iterations is: %lf\n",numItrs, total);
@@ -262,26 +321,38 @@ reduction(+:e_xx) reduction(+:a2_x)
 #endif
 #ifdef PRINT_TERSE_STATS_
     printf("========================================================================================================\n");
-    printf("Total time for %d iterations is: %lf\n",numItrs, total);  
+    printf("Total time for %d iterations is: %lf\n",numItrs, total);
     printf("========================================================================================================\n");
 #endif
-    
+
     //Store back the community assignments in the input variable:
     //Note: No matter when the while loop exits, we are interested in the previous assignment
-#pragma omp parallel for 
+#pragma omp parallel for
     for (long i=0; i<NV; i++) {
 //        C[i] = pastCommAss[i];
         C[i] = currCommAss[i];
+    }
+
+    for (int i = 0; i < nnz; ++i) {
+        vtxInd[i].head = head[i];
+        vtxInd[i].tail = tail[i];
+        vtxInd[i].weight = weights[i];
     }
     //Cleanup
     free(pastCommAss);
     free(currCommAss);
     free(targetCommAss);
     free(vDegree);
-    free(cInfo);
-    free(cUpdate);
+    free(head);
+    free(tail);
+    free(weights);
+    free(cid);
+    free(Counter);
+    free(cInfo_size);
+    free(cInfo_degree);
+    free(cUpdate_size);
+    free(cUpdate_degree);
     free(clusterWeightInternal);
-    
     return prevMod;
 }
 f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower,

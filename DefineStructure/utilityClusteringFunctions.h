@@ -86,8 +86,9 @@ f_weight buildLocalMapCounter_sfp(comm_type adj1, comm_type adj2, map<comm_type,
 double buildLocalMapCounterNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
                                long* currCommAss, long &numUniqueClusters);
 /// Single floating point version
-f_weight buildLocalMapCounterNoMap_SFP(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
-                                     comm_type* currCommAss, comm_type &numUniqueClusters);
+f_weight buildLocalMapCounterNoMap_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, comm_type* head,
+                                       comm_type* tail, f_weight* weights, comm_type* currCommAss,
+                                       comm_type &numUniqueClusters);
 /// Single floating point version
 f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, comm_type* head,
                                      comm_type* tail, f_weight* weights, comm_type* currCommAss,
@@ -103,8 +104,9 @@ comm_type max_sfp(map<long, long> &clusterLocalMap, vector<f_weight> &Counter,
 long maxNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, double selfLoop, Comm* cInfo, double degree,
               long sc, double constant, long numUniqueClusters );
 /// Single floating point version
-comm_type maxNoMap_SFP(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, f_weight selfLoop, Comm* cInfo,
-        f_weight degree, comm_type sc, f_weight constant, comm_type numUniqueClusters );
+comm_type maxNoMap_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, f_weight selfLoop,
+                       comm_type * cInfo_size, f_weight* cInfo_degree, f_weight degree, comm_type sc, f_weight constant,
+                       comm_type numUniqueClusters );
 /// Single floating point vectorized version
 comm_type maxNoMapVec_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, f_weight selfLoop,
                           comm_type * cInfo_size, f_weight* cInfo_degree, f_weight degree, comm_type sc, f_weight constant,
