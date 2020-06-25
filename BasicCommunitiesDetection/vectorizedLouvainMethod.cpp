@@ -333,14 +333,14 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     //double thresMod = 0.000001;
     f_weight thresMod = thresh; //Input parameter
     int numItrs = 0;
-    cout << "NV: " << NV << " NS: " << NS << " NE: " << NE << endl;
+
     /********************** Initialization **************************/
     time1 = omp_get_wtime();
     //Store the degree of all vertices
     f_weight * vDegree; // = (f_weight *) malloc (NV * sizeof(f_weight));
     posix_memalign((void **) &vDegree, alignment, NV * sizeof(f_weight));
     assert(vDegree != 0);
-    cout << "test 1" << endl;
+
     //Community info. (ai and size)
     /*Comm *cInfo; // = (Comm *) malloc (NV * sizeof(Comm));
     posix_memalign((void **) &cInfo, alignment, NV * sizeof(Comm));
@@ -352,7 +352,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     f_weight* cInfo_degree;
     posix_memalign((void **) &cInfo_degree, alignment, NV * sizeof(f_weight));
     assert(cInfo_degree != 0);
-    cout << "test 2" << endl;
+
     //use for updating Community
     /*Comm *cUpdate; // = (Comm*)malloc(NV*sizeof(Comm));
     posix_memalign((void **) &cUpdate, alignment, NV * sizeof(Comm));
@@ -364,17 +364,17 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     f_weight* cUpdate_degree;
     posix_memalign((void **) &cUpdate_degree, alignment, NV * sizeof(f_weight));
     assert(cUpdate_degree != 0);
-    cout << "test 3" << endl;
+
     //use for Modularity calculation (eii)
     f_weight* clusterWeightInternal; // = (f_weight*) malloc (NV*sizeof(f_weight));
     posix_memalign((void **) &clusterWeightInternal, alignment, NV * sizeof(f_weight));
     assert(clusterWeightInternal != 0);
-    cout << "test 4" << endl;
+
     sumVertexDegreeVec_sfp(vtxInd, vtxPtr, vDegree, NV , cInfo_size, cInfo_degree);	// Sum up the vertex degree
 
     /*** Compute the total edge weight (2m) and 1/2m ***/
     constantForSecondTerm = calConstantForSecondTerm_sfp(vDegree, NV); // 1 over sum of the degree
-    cout << "test 5" << endl;
+
     //Community assignments:
     //Store previous iteration's community assignment
     comm_type* pastCommAss; // = (long *) malloc (NV * sizeof(long));
@@ -388,7 +388,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     comm_type* targetCommAss; // = (long *) malloc (NV * sizeof(long));
     posix_memalign((void **) &targetCommAss, alignment, NV * sizeof(comm_type));
     assert(targetCommAss != 0);
-    cout << "test 6" << endl;
+
     comm_type* head;
     posix_memalign((void **) &head, alignment, (nnz * sizeof(comm_type)));
     assert(head != 0);
@@ -403,7 +403,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
         tail[i] = vtxInd[i].tail;
         weights[i] = vtxInd[i].weight;
     }
-    cout << "test 7" << endl;
+
     //Vectors used in place of maps: Total size = |V|+2*|E| -- The |V| part takes care of self loop
     /*mapElement* clusterLocalMap; // = (mapElement *) malloc ((NV + 2*NE) * sizeof(mapElement));
     posix_memalign((void **) &clusterLocalMap, alignment, ((NV + 2*NE) * sizeof(mapElement)));
@@ -416,14 +416,13 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     posix_memalign((void **) &Counter, alignment, ((NV + 2*NE) * sizeof(f_weight)));
     assert(Counter != 0);
     //double* Counter             = (double *)     malloc ((NV + 2*NE) * sizeof(double));     assert(Counter != 0);
-    cout << "test 8" << endl;
+
     //Initialize each vertex to its own cluster
     //initCommAssOpt(pastCommAss, currCommAss, NV, clusterLocalMapX, vtxPtr, vtxInd, cInfo, constantForSecondTerm, vDegree);
 
     //Initialize each vertex to its own cluster
 //    initCommAss_SFP(pastCommAss, currCommAss, NV);
     initCommAssOptVec_SFP(pastCommAss, currCommAss, NV, cid, Counter, vtxPtr, head, tail, weights, cInfo_size, cInfo_degree, constantForSecondTerm, vDegree);
-    cout << "test 9" << endl;
     time2 = omp_get_wtime();
     printf("Time to initialize: %3.3lf\n", time2-time1);
 
