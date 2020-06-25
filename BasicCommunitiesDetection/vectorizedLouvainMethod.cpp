@@ -358,7 +358,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     posix_memalign((void **) &clusterWeightInternal, alignment, NV * sizeof(f_weight));
     assert(clusterWeightInternal != 0);
 
-    sumVertexDegree_sfp(vtxInd, vtxPtr, vDegree, NV , cInfo);	// Sum up the vertex degree
+    sumVertexDegreeVec_sfp(vtxInd, vtxPtr, vDegree, NV , cInfo_size, cInfo_degree);	// Sum up the vertex degree
 
     /*** Compute the total edge weight (2m) and 1/2m ***/
     constantForSecondTerm = calConstantForSecondTerm_sfp(vDegree, NV); // 1 over sum of the degree

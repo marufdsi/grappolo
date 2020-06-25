@@ -146,6 +146,23 @@ void sumVertexDegree_sfp(edge* vtxInd, comm_type* vtxPtr, f_weight* vDegree, com
   }
 }//End of sumVertexDegree()
 
+/// Single floating point vectorized version
+void sumVertexDegreeVec_sfp(edge* vtxInd, comm_type* vtxPtr, f_weight* vDegree, comm_type NV, comm_type* cInfo_size,
+        f_weight* cInfo_degree) {
+#pragma omp parallel for
+  for (comm_type i=0; i<NV; i++) {
+      comm_type adj1 = vtxPtr[i];	    //Begin
+      comm_type adj2 = vtxPtr[i+1];	//End
+      f_weight totalWt = 0;
+    for(comm_type j=adj1; j<adj2; j++) {
+      totalWt += vtxInd[j].weight;
+    }
+    vDegree[i] = totalWt;	//Degree of each node
+    cInfo_degree[i] = totalWt;	//Initialize the community
+    cInfo_size[i] = 1;
+  }
+}//End of sumVertexDegree()
+
 double calConstantForSecondTerm(double* vDegree, long NV) {
   double totalEdgeWeightTwice = 0;
   #pragma omp parallel for reduction(+:totalEdgeWeightTwice)

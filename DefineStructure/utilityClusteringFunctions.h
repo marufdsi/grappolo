@@ -51,6 +51,9 @@ void sumVertexDegree(edge* vtxInd, long* vtxPtr, double* vDegree, long NV, Comm*
 /// Single floating point version
 void sumVertexDegree_sfp(edge* vtxInd, long* vtxPtr, f_weight* vDegree, long NV, Comm* cInfo);
 
+/// Single floating point vectorized version
+void sumVertexDegreeVec_sfp(edge* vtxInd, comm_type* vtxPtr, f_weight* vDegree, comm_type NV, comm_type* cInfo_size,
+                            f_weight* cInfo_degree);
 double calConstantForSecondTerm(double* vDegree, long NV);
 
 /// Single floating point version
