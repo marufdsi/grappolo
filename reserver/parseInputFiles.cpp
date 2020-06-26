@@ -1901,9 +1901,9 @@ void parse_SNAP(graph * G, char *fileName) {
     i++;
     //Read-in the next line
     getline(fin, oneLine);
-    if ((i % 999999) == 1) {
+    /*if ((i % 999999) == 1) {
       cout <<"Reading Line: "<<i<<endl;
-    }
+    }*/
   } while ( !fin.eof() );//End of while
 
   fin.close(); //Close the file

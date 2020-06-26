@@ -111,9 +111,9 @@ void parse_SNAP(graph * G, char *fileName) {
         i++;
         //Read-in the next line
         getline(fin, oneLine);
-        if ((i % 99999) == 1) {
+        /*if ((i % 99999) == 1) {
             cout <<"Reading Line: "<<i<<endl;
-        }
+        }*/
     } while ( !fin.eof() );//End of while
     
     fin.close(); //Close the file
@@ -294,9 +294,9 @@ void parse_SNAP_GroundTruthCommunities(char *fileVertexMap, char *fileGroundTrut
         Si++;
         //Read-in the next line
         getline(fin, oneLine);
-        if ((Si % 99999) == 1) {
+        /*if ((Si % 99999) == 1) {
             cout <<"Reading Line: "<<Si<<endl;
-        }
+        }*/
     } while ( !fin.eof() );//End of while
     fin.close();
     printf("Finished parsing ground truth information. |C|= %ld \n\n", Si);
