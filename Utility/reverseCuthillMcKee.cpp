@@ -52,7 +52,7 @@ void algoReverseCuthillMcKee( graph *G, long *pOrder, int nThreads )
     if(NT > 0)
         isSym = false; //A bipartite graph
     long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("Vertices:%ld  Edges:%ld\n", NV, NE);
     
@@ -281,7 +281,7 @@ void algoReverseCuthillMcKeeStrict( graph *G, long *pOrder, int nThreads )
     if(NT > 0)
         isSym = false; //A bipartite graph
     long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("Vertices:%ld  Edges:%ld\n", NV, NE);
     
