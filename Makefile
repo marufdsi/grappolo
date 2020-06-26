@@ -2,7 +2,7 @@
 CC  = icc #gcc
 CPP = icpc #g++
 CFLAGS   = -g -Ofast -fopenmp -std=c99 
-CPPFLAGS = -g -Ofast -fopenmp -std=c++11
+CPPFLAGS = -g -Ofast -fopenmp -std=c++17 -xCORE-AVX512 -O3
 #-Ofast
 
 METIS_HOME = $(HOME)/metis-5.1.0
