@@ -203,7 +203,7 @@ f_weight parallelLouvianMethod_SFP(graph *G, comm_type *C, int nThreads, f_weigh
         time1 = omp_get_wtime();
         /* Re-initialize datastructures */
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             clusterWeightInternal[i] = 0;
             cUpdate_degree[i] =0;
             cUpdate_size[i] =0;
@@ -211,20 +211,20 @@ f_weight parallelLouvianMethod_SFP(graph *G, comm_type *C, int nThreads, f_weigh
 
         bool moved = false;
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
-            long adj1 = vtxPtr[i];
-            long adj2 = vtxPtr[i+1];
+        for (comm_type i=0; i<NV; i++) {
+            comm_type adj1 = vtxPtr[i];
+            comm_type adj2 = vtxPtr[i+1];
             f_weight selfLoop = 0;
             //Build a datastructure to hold the cluster structure of its neighbors
 //            map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
 //            map<long, long>::iterator storedAlready;
 //            vector<f_weight> Counter; //Number of edges in each unique cluster
-            long numUniqueClusters = 0;
+            comm_type numUniqueClusters = 0;
             //Add v's current cluster:
             if(adj1 != adj2){
 //                clusterLocalMap[currCommAss[i]] = 0;
 //                Counter.push_back(0); //Initialize the counter to ZERO (no edges incident yet)
-                long sPosition = vtxPtr[i]+i; //Starting position of local map for i
+                comm_type sPosition = vtxPtr[i]+i; //Starting position of local map for i
                 Counter[sPosition] = 0;          //Initialize the counter to ZERO (no edges incident yet)
                 cid[sPosition] = currCommAss[i]; //Initialize with current community
                 numUniqueClusters++; //Added the first entry
