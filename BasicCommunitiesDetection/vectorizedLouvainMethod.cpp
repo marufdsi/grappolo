@@ -529,7 +529,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
 //            map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
 //            map<long, long>::iterator storedAlready;
 //            vector<f_weight> Counter; //Number of edges in each unique cluster
-            long numUniqueClusters = 0;
+            comm_type numUniqueClusters = 0;
             //Add v's current cluster:
             if(adj1 != adj2){
 //                clusterLocalMap[currCommAss[i]] = 0;
