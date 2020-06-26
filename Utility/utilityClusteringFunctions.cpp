@@ -776,20 +776,20 @@ comm_type maxNoMapVec_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_t
     for (comm_type k = 0; k < vector_op * 16; k += 16) {
         __m512i cid_vec = _mm512_loadu_si512((__m512i * ) & cid[sPosition + k]);
         __mmask16 mask = _mm512_cmpneq_epi32_mask(sc_vec, cid_vec);
-        __m512i ay_vec = _mm512_i32gather_epi32(cid_vec, &cInfo_degree[0], 4);
+        __m512 ay_vec = _mm512_i32gather_ps(cid_vec, &cInfo_degree[0], 4);
         __m512 eiy_vec = _mm512_loadu_ps((__m512 * ) & Counter[sPosition + k]);
         __m512 right_side_vec = _mm512_mul_ps(_mm512_mul_ps(_mm512_mask_sub_ps(fl_set0, mask, ay_vec, ax_vec), degree_vec), constant_vec);
         __m512 left_side_vec = _mm512_mask_sub_ps(fl_set0, mask, eiy_vec, eix_vec);
         __m512 curGain_vec = _mm512_mask_mul_ps(fl_set0, mask, const_2_vec, _mm512_sub_ps(left_side_vec, right_side_vec));
         curMaxGain = _mm512_mask_reduce_max_ps(mask, curGain_vec);
         if (curMaxGain > maxGain){
-            __m512i trackMax_vec = _mm512_set1_epi32(curMaxGain);
-            __mmask16 gain_mask = _mm512_mask_cmpeq_epi32_mask(mask, trackMax_vec, curGain_vec);
+            __m512 trackMax_vec = _mm512_set1_ps(curMaxGain);
+            __mmask16 gain_mask = _mm512_mask_cmpeq_ps_mask(mask, trackMax_vec, curGain_vec);
             maxGain = curMaxGain;
             maxIndex = _mm512_mask_reduce_min_epi32(gain_mask, cid_vec);
         } else if(curMaxGain == maxGain && curMaxGain != 0){
-            __m512i trackMax_vec = _mm512_set1_epi32(curMaxGain);
-            __mmask16 gain_mask = _mm512_mask_cmpeq_epi32_mask(mask, trackMax_vec, curGain_vec);
+            __m512 trackMax_vec = _mm512_set1_ps(curMaxGain);
+            __mmask16 gain_mask = _mm512_mask_cmpeq_ps_mask(mask, trackMax_vec, curGain_vec);
             comm_type curMinIndex = _mm512_mask_reduce_min_epi32(gain_mask, cid_vec);
             if(curMinIndex < maxIndex){
                 maxGain = curMaxGain;
