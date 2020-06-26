@@ -46,7 +46,7 @@ using namespace std;
 long vertexFollowing(graph *G, long *C)
 {
 	long    NV        = G->numVertices;
-	long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
 	edge    *vtxInd   = G->edgeList;
 	long numNode = 0;
 	double time1 = omp_get_wtime();
@@ -104,7 +104,7 @@ double buildNewGraphVF(graph *Gin, graph *Gout, long *C, long numUniqueClusters)
   //Pointers into the input graph structure:
   long    NV_in        = Gin->numVertices;
   long    NE_in        = Gin->numEdges;
-  long    *vtxPtrIn    = Gin->edgeListPtrs;
+    comm_type    *vtxPtrIn    = Gin->edgeListPtrs;
   edge    *vtxIndIn    = Gin->edgeList;
   
   time1 = omp_get_wtime();
@@ -112,7 +112,7 @@ double buildNewGraphVF(graph *Gin, graph *Gout, long *C, long numUniqueClusters)
   long NV_out = numUniqueClusters;
   long NE_self = 0; //Not all vertices get self-loops
   long NE_out = 0;  //Cross edges
-  long *vtxPtrOut = (long *) malloc ((NV_out+1)*sizeof(long));
+    comm_type *vtxPtrOut = (comm_type *) malloc ((NV_out+1)*sizeof(comm_type));
   assert(vtxPtrOut != 0);
   vtxPtrOut[0] = 0; //First location is always a zero
   /* Step 1 : Regroup the node into cluster node */
