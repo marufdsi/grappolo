@@ -62,6 +62,7 @@ double calConstantForSecondTerm(double* vDegree, long NV);
 f_weight calConstantForSecondTerm_sfp(f_weight* vDegree, long NV);
 
 void initCommAss(long* pastCommAss, long* currCommAss, long NV);
+
 void initCommAss(int* pastCommAss, int* currCommAss, int NV);
 
 /// Single floating point version
@@ -70,6 +71,11 @@ void initCommAss_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_type N
 /// Single floating point version
 void initCommAssOpt(long* pastCommAss, long* currCommAss, long NV,
 		    mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
+		    Comm* cInfo, double constant, double* vDegree );
+
+/// Single floating point version
+void initCommAssOpt(int* pastCommAss, int* currCommAss, int NV,
+		    mapElement* clusterLocalMap, int* vtxPtr, edge* vtxInd,
 		    Comm* cInfo, double constant, double* vDegree );
 
 void initCommAssOpt_SFP(long* pastCommAss, long* currCommAss, long NV,
@@ -82,6 +88,8 @@ void initCommAssOptVec_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_
 
 double buildLocalMapCounter(long adj1, long adj2, map<long, long> &clusterLocalMap, 
 						  vector<double> &Counter, edge* vtxInd, long* currCommAss, long me);
+double buildLocalMapCounter(int adj1, int adj2, map<int, int> &clusterLocalMap,
+						  vector<double> &Counter, edge* vtxInd, int* currCommAss, int me);
 /// Single floating point version
 f_weight buildLocalMapCounter_sfp(comm_type adj1, comm_type adj2, map<comm_type, comm_type> &clusterLocalMap,
 						  vector<f_weight> &Counter, edge* vtxInd, comm_type* currCommAss, comm_type me);
