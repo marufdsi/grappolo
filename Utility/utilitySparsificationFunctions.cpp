@@ -128,9 +128,9 @@ void SortNeighborListUsingInsertionAndMergeSort(graph *G) {
     printf("Within SortNeighborListUsingInsertionAndMergeSort()\n");
     double time1=0, time2=0;
     //Get the iterators for the graph:
-    long NVer     = G->numVertices;
-    long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
-    long *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type NVer     = G->numVertices;
+    comm_type NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
+    comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd  = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     
     time1 = omp_get_wtime();
@@ -166,9 +166,9 @@ double* computeEdgeSimilarityMetrics(graph *G) {
     printf("Within computeEdgeSimilarityMetrics()\n");
     double time1=0, time2=0;
     //Get the iterators for the graph:
-    long NVer     = G->numVertices;
-    long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
-    long *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type NVer     = G->numVertices;
+    comm_type NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
+    comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd  = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     
     time1 = omp_get_wtime();
@@ -229,9 +229,9 @@ graph* buildSparifiedGraph(graph *Gin, double alpha) {
     assert (alpha <= 1.0);
     double time1=0, time2=0, totalTime=0;
     //Get the iterators for the graph:
-    long NVer     = Gin->numVertices;
-    long NEdge    = Gin->numEdges;       //Returns the correct number of edges (not twice)
-    long *verPtr  = Gin->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type NVer     = Gin->numVertices;
+    comm_type NEdge    = Gin->numEdges;       //Returns the correct number of edges (not twice)
+    comm_type *verPtr  = Gin->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd  = Gin->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     printf("N= %ld  NE=%ld\n", NVer, NEdge);
     
