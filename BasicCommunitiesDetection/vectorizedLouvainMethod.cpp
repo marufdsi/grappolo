@@ -304,7 +304,7 @@ reduction(+:e_xx) reduction(+:a2_x)
         }
 
         //Do pointer swaps to reuse memory:
-        long* tmp;
+        comm_type* tmp;
         tmp = pastCommAss;
         pastCommAss = currCommAss; //Previous holds the current
         currCommAss = targetCommAss; //Current holds the chosen assignment
@@ -381,17 +381,17 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     double time1, time2, time3, time4; //For timing purposes
     double total = 0, totItr = 0;
 
-    long    NV        = G->numVertices;
-    long    NS        = G->sVertices;
-    long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    NV        = G->numVertices;
+    comm_type    NS        = G->sVertices;
+    comm_type    NE        = G->numEdges;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
 
     comm_type nnz = 0;
-    for (long i=0; i<NV; i++) {
-        long adj1 = vtxPtr[i];        //Begin
-        long adj2 = vtxPtr[i + 1];    //End
-        for (long j = adj1; j < adj2; j++) {
+    for (comm_type i=0; i<NV; i++) {
+        comm_type adj1 = vtxPtr[i];        //Begin
+        comm_type adj2 = vtxPtr[i + 1];    //End
+        for (comm_type j = adj1; j < adj2; j++) {
             nnz++;
         }
     }
@@ -513,7 +513,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
         time1 = omp_get_wtime();
         /* Re-initialize datastructures */
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             clusterWeightInternal[i] = 0;
             cUpdate_degree[i] =0;
             cUpdate_size[i] =0;
@@ -521,9 +521,9 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
 
         bool moved = false;
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
-            long adj1 = vtxPtr[i];
-            long adj2 = vtxPtr[i+1];
+        for (comm_type i=0; i<NV; i++) {
+            comm_type adj1 = vtxPtr[i];
+            comm_type adj2 = vtxPtr[i+1];
             f_weight selfLoop = 0;
             //Build a datastructure to hold the cluster structure of its neighbors
 //            map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
@@ -579,7 +579,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
 
 #pragma omp parallel for \
 reduction(+:e_xx) reduction(+:a2_x)
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             e_xx += clusterWeightInternal[i];
             a2_x += (cInfo_degree[i])*(cInfo_degree[i]);
         }
@@ -614,7 +614,7 @@ reduction(+:e_xx) reduction(+:a2_x)
         }
 
         //Do pointer swaps to reuse memory:
-        long* tmp;
+        comm_type* tmp;
         tmp = pastCommAss;
         pastCommAss = currCommAss; //Previous holds the current
         currCommAss = targetCommAss; //Current holds the chosen assignment
@@ -638,12 +638,12 @@ reduction(+:e_xx) reduction(+:a2_x)
     //Store back the community assignments in the input variable:
     //Note: No matter when the while loop exits, we are interested in the previous assignment
 #pragma omp parallel for
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
 //        C[i] = pastCommAss[i];
         C[i] = currCommAss[i];
     }
 
-    for (int i = 0; i < nnz; ++i) {
+    for (comm_type i = 0; i < nnz; ++i) {
         vtxInd[i].head = head[i];
         vtxInd[i].tail = tail[i];
         vtxInd[i].weight = weights[i];
