@@ -526,7 +526,7 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
     comm_type storedAlready = 0;
     f_weight selfLoop = 0;
     comm_type vector_op = (adj2-adj1)/16;
-//    cout << "Neighbors: " << adj2-adj1  << " numUniqueClusters: " << numUniqueClusters << endl;
+//    cout << "Neighbors: " << adj2-adj1  << " numUniqueClusters: " << (*numUniqueClusters) << endl;
     /// perform intrinsic on the neighbors that are multiple of 16
     const   __m512i check_self_loop = _mm512_set1_epi32(v);
 //    cout << "Perform vector operation" << endl;
@@ -545,7 +545,7 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
         bool storedAlready = false; //Initialize to zero
         int count_existing_cluster = 0;
         __mmask16 comm_mask = pow(2, 16) - 1;
-        for(comm_type k=0; k<numUniqueClusters; k++) { //Check if it already exists
+        for(comm_type k=0; k<(*numUniqueClusters); k++) { //Check if it already exists
             const   __m512i check_existing_cluster = _mm512_set1_epi32(cid[sPosition+k]);
             __mmask16 existing_cluster_mask = _mm512_cmpeq_epi32_mask(check_existing_cluster, currCommAss_vec);
             comm_mask = _mm512_kand(comm_mask, _mm512_knot(existing_cluster_mask));
@@ -572,9 +572,9 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
             for (int k = 0; k < _mm_popcnt_u32((unsigned) mask); ++k) {
                 const __m512i comm = _mm512_set1_epi32(remaining_comm[k]);
                 __mmask16 comm_mask = _mm512_cmpeq_epi32_mask(comm, currCommAss_vec);
-                Counter[sPosition + numUniqueClusters] += _mm512_mask_reduce_add_ps(comm_mask, w_vec);
-                cid[sPosition + numUniqueClusters] = remaining_comm[k];
-                numUniqueClusters++;
+                Counter[sPosition + (*numUniqueClusters)] += _mm512_mask_reduce_add_ps(comm_mask, w_vec);
+                cid[sPosition + (*numUniqueClusters)] = remaining_comm[k];
+                (*numUniqueClusters)++;
             }
             /*if (storedAlready == false) {    //Does not exist, add to the map
                 cid[sPosition + numUniqueClusters] = currCommAss[tail[j]];
@@ -589,7 +589,7 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
             selfLoop += weights[j];
         }
         bool storedAlready = false; //Initialize to zero
-        for(comm_type k=0; k<numUniqueClusters; k++) { //Check if it already exists
+        for(comm_type k=0; k<(*numUniqueClusters); k++) { //Check if it already exists
             if(currCommAss[tail[j]] ==  cid[sPosition+k]) {
                 storedAlready = true;
                 Counter[sPosition + k] += weights[j]; //Increment the counter with weight
@@ -597,12 +597,12 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
             }
         }
         if( storedAlready == false ) {	//Does not exist, add to the map
-            cid[sPosition + numUniqueClusters]     = currCommAss[tail[j]];
-            Counter[sPosition + numUniqueClusters] = weights[j]; //Initialize the count
-            numUniqueClusters++;
+            cid[sPosition + (*numUniqueClusters)]     = currCommAss[tail[j]];
+            Counter[sPosition + (*numUniqueClusters)] = weights[j]; //Initialize the count
+            (*numUniqueClusters)++;
         }
     }//End of for(j)
-    cout << "[" << (adj2-adj1) << "] numUniqueClusters: " << numUniqueClusters << endl;
+    cout << "[" << (adj2-adj1) << "] numUniqueClusters: " << (*numUniqueClusters) << endl;
     return selfLoop;
 }//End of buildLocalMapCounter()
                                                                                 
