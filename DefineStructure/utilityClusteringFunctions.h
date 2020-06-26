@@ -116,6 +116,8 @@ comm_type max_sfp(map<long, long> &clusterLocalMap, vector<f_weight> &Counter,
 
 long maxNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, double selfLoop, Comm* cInfo, double degree,
               long sc, double constant, long numUniqueClusters );
+long maxNoMap(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, double selfLoop, Comm* cInfo, double degree,
+              comm_type sc, double constant, comm_type numUniqueClusters );
 /// Single floating point version
 comm_type maxNoMap_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, f_weight selfLoop,
                        comm_type * cInfo_size, f_weight* cInfo_degree, f_weight degree, comm_type sc, f_weight constant,
