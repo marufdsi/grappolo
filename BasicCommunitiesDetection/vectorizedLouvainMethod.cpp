@@ -541,7 +541,7 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
 
                 //Find unique cluster ids and #of edges incident (eicj) to them
 //                selfLoop = buildLocalMapCounter_sfp(adj1, adj2, clusterLocalMap, Counter, vtxInd, currCommAss, i);
-                selfLoop = buildLocalMapCounterVec_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
+                selfLoop = buildLocalMapCounterVec_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, &numUniqueClusters);
                 // Update delta Q calculation
 //                clusterWeightInternal[i] += Counter[0]; //(e_ix)
                 clusterWeightInternal[i] += Counter[sPosition]; //(e_ix)

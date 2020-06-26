@@ -509,7 +509,7 @@ f_weight buildLocalMapCounterNoMap_SFP(comm_type v, comm_type *cid, f_weight *Co
 //Build the local-map data structure using vectors
 f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, comm_type* head,
                                      comm_type* tail, f_weight* weights, comm_type* currCommAss,
-                                     comm_type &numUniqueClusters) {
+                                     comm_type *numUniqueClusters) {
     comm_type adj1  = vtxPtr[v];
     comm_type adj2  = vtxPtr[v+1];
     comm_type sPosition = vtxPtr[v]+v; //Starting position of local map for v
