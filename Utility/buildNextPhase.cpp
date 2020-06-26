@@ -103,14 +103,14 @@ double buildNextLevelGraphOpt(graph *Gin, graph *Gout, long *C, long numUniqueCl
     //Pointers into the input graph structure:
     long    NV_in        = Gin->numVertices;
     long    NE_in        = Gin->numEdges;
-    long    *vtxPtrIn    = Gin->edgeListPtrs;
+    comm_type    *vtxPtrIn    = Gin->edgeListPtrs;
     edge    *vtxIndIn    = Gin->edgeList;
     
     time1 = omp_get_wtime();
     // Pointers into the output graph structure
     long NV_out = numUniqueClusters;
     long NE_out = 0;
-    long *vtxPtrOut = (long *) malloc ((NV_out+1)*sizeof(long)); assert(vtxPtrOut != 0);
+    comm_type *vtxPtrOut = (comm_type *) malloc ((NV_out+1)*sizeof(comm_type)); assert(vtxPtrOut != 0);
     vtxPtrOut[0] = 0; //First location is always a zero
     /* Step 1 : Regroup the node into cluster node */
     map<long,double>** cluPtrIn = (map<long,double>**) malloc (numUniqueClusters*sizeof(map<long,double>*));
@@ -278,14 +278,14 @@ double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniq
     //Pointers into the input graph structure:
     long    NV_in        = Gin->numVertices;
     long    NE_in        = Gin->numEdges;
-    long    *vtxPtrIn    = Gin->edgeListPtrs;
+    comm_type    *vtxPtrIn    = Gin->edgeListPtrs;
     edge    *vtxIndIn    = Gin->edgeList;
 
     time1 = omp_get_wtime();
     // Pointers into the output graph structure
     long NV_out = numUniqueClusters;
     long NE_out = 0;
-    long *vtxPtrOut = (long *) malloc ((NV_out+1)*sizeof(long)); assert(vtxPtrOut != 0);
+    comm_type *vtxPtrOut = (comm_type *) malloc ((NV_out+1)*sizeof(comm_type)); assert(vtxPtrOut != 0);
     vtxPtrOut[0] = 0; //First location is always a zero
     /* Step 1 : Regroup the node into cluster node */
     map<long,f_weight>** cluPtrIn = (map<long,f_weight>**) malloc (numUniqueClusters*sizeof(map<long,f_weight>*));
@@ -440,7 +440,7 @@ void buildNextLevelGraph(graph *Gin, graph *Gout, long *C, long numUniqueCluster
     //Pointers into the input graph structure:
     long    NV_in        = Gin->numVertices;
     long    NE_in        = Gin->numEdges;
-    long    *vtxPtrIn    = Gin->edgeListPtrs;
+    comm_type    *vtxPtrIn    = Gin->edgeListPtrs;
     edge    *vtxIndIn    = Gin->edgeList;
     
     long vecSize = (numUniqueClusters*(numUniqueClusters+1))/2;
@@ -478,7 +478,7 @@ void buildNextLevelGraph(graph *Gin, graph *Gout, long *C, long numUniqueCluster
     /////STEP-2: Build the graph data structure:
     long NV_out = numUniqueClusters;
     long NE_out = 0;
-    long *vtxPtrOut = (long *) malloc ((NV_out+1)*sizeof(long));
+    comm_type *vtxPtrOut = (comm_type *) malloc ((NV_out+1)*sizeof(comm_type));
     assert(vtxPtrOut != 0);
     vtxPtrOut[0] = 0; //First location is always a zero
 #pragma omp parallel for
