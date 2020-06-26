@@ -42,6 +42,7 @@
 #include "defs.h"
 #include "basic_comm.h"
 #include "basic_util.h"
+#include "../DefineStructure/defs.h"
 #include <sstream>
 #include <fstream>
 #include <sys/stat.h>
@@ -63,7 +64,7 @@ std::vector<std::string> split(std::string str, char delim) {
 //         Assume C_orig is initialized appropriately
 //WARNING: Graph G will be destroyed at the end of this routine
 void runMultiPhaseBasic(graph *G, comm_type *C_orig, int basicOpt, comm_type minGraphSize,
-                        double threshold, double C_threshold, int numThreads, int threadsOpt, char *graphName) {
+                        f_weight threshold, f_weight C_threshold, int numThreads, int threadsOpt, char *graphName) {
     double totTimeClustering = 0, totTimeBuildingPhase = 0, totTimeColoring = 0, tmpTime = 0;
     int tmpItr = 0, totItr = 0;
     comm_type NV = G->numVertices;
@@ -133,7 +134,7 @@ void runMultiPhaseBasic(graph *G, comm_type *C_orig, int basicOpt, comm_type min
         if (change /*(currMod - prevMod) > threshold*/) {
             Gnew = (graph *) malloc(sizeof(graph));
             assert(Gnew != 0);
-            tmpTime = buildNextLevelGraphOpt(G, Gnew, C, numClusters, numThreads);
+            tmpTime = buildNextLevelGraphOpt_SFP(G, Gnew, C, numClusters, numThreads);
             totTimeBuildingPhase += tmpTime;
             //Free up the previous graph
             free(G->edgeListPtrs);
@@ -175,7 +176,7 @@ void runMultiPhaseBasic(graph *G, comm_type *C_orig, int basicOpt, comm_type min
                 << std::endl;
     }
     infile.close();
-    resultCSV << split(parts[parts.size()-1], '.')[0] << "," << "Parallel" << numThreads << "," << phase << "," << totItr << "," << numClusters << "," << prevMod
+    resultCSV << split(parts[parts.size()-1], '.')[0] << "," << "Modified Parallel" << "," << numThreads << "," << phase << "," << totItr << "," << numClusters << "," << prevMod
               << "," << totTimeClustering << "," << totTimeBuildingPhase << ","
               << totTimeClustering + totTimeBuildingPhase + totTimeColoring << "," << threshold << "," << sizeof(f_weight) << std::endl;
     resultCSV.close();

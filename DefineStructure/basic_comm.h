@@ -1,9 +1,11 @@
 #ifndef __BASIC__COMM__
 #define __BASIC__COMM__
 
+#include "defs.h"
+
 // Define in louvainMultiPhaseRun.cpp
 void runMultiPhaseBasic(graph *G, comm_type *C_orig, int basicOpt, comm_type minGraphSize,
-			double threshold, double C_threshold, int numThreads, int threadsOpt, char * graphName = "");
+			f_weight threshold, f_weight C_threshold, int numThreads, int threadsOpt, char * graphName = "");
 
 /// Single floating point version
 void runMultiPhaseBasic_sfp(graph *G, comm_type *C_orig, int basicOpt, comm_type minGraphSize,
