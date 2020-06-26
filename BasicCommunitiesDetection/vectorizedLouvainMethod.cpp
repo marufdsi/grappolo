@@ -45,7 +45,7 @@
 #include "../DefineStructure/defs.h"
 #include <unistd.h>
 using namespace std;
-f_weight parallelLouvianMethod_SFP(graph *G, long *C, int nThreads, f_weight Lower,
+f_weight parallelLouvianMethod_SFP(graph *G, comm_type *C, int nThreads, f_weight Lower,
                                f_weight thresh, double *totTime, int *numItr, bool *change) {
 
     cout << "modified parallel version called" << endl;
@@ -71,10 +71,10 @@ f_weight parallelLouvianMethod_SFP(graph *G, long *C, int nThreads, f_weight Low
     double time1, time2, time3, time4; //For timing purposes
     double total = 0, totItr = 0;
 
-    long    NV        = G->numVertices;
-    long    NS        = G->sVertices;
-    long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    NV        = G->numVertices;
+    comm_type    NS        = G->sVertices;
+    comm_type    NE        = G->numEdges;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
 
     comm_type nnz = 0;
