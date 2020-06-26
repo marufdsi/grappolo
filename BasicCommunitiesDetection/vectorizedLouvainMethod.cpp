@@ -554,6 +554,7 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
                 targetCommAss[i] = -1;
             }
 
+            cout<< "Vertex " << i  << " of " << NV << " processed" << endl;
             //Update
             if(targetCommAss[i] != currCommAss[i]  && targetCommAss[i] != -1) {
                 moved = true;
