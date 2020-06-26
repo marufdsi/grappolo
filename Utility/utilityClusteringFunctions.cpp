@@ -532,14 +532,14 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
         /// Load at most 16 tail of the neighbors.
         __m512i tail_vec = _mm512_loadu_si512((__m512i *) &tail[j]);
         /// Load at most 16 neighbors edge weight.
-        __m512 w_vec = _mm512_loadu_ps((__m512 *) &weights[i]);
+        __m512 w_vec = _mm512_loadu_ps((__m512 *) &weights[j]);
         /// Mask to find u != v
         __mmask16 self_loop_mask = _mm512_cmpeq_epi32_mask(check_self_loop, tail_vec);
         selfLoop += _mm512_mask_reduce_add_ps(self_loop_mask, w_vec);
         /*if(tail[j] == v) {	// SelfLoop need to be recorded
             selfLoop += weights[j];
         }*/
-        __m512i currCommAss_vec = _mm512_mask_i32gather_epi32(tail_vec, &currCommAss[0], 4);
+        __m512i currCommAss_vec = _mm512_i32gather_epi32(tail_vec, &currCommAss[0], 4);
         bool storedAlready = false; //Initialize to zero
         int count_existing_cluster = 0;
         __mmask16 comm_mask = pow(2, 16) - 1;
