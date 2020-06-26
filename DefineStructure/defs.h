@@ -87,10 +87,10 @@ typedef struct /* the edge data structure */
 
 typedef struct /* the graph data structure */
 {
-    long numVertices;        /* Number of columns                                */
-    long sVertices;          /* Number of rows: Bipartite graph: number of S vertices; T = N - S */
-    long numEdges;           /* Each edge stored twice, but counted once        */
-    long * edgeListPtrs;     /* start vertex of edge, sorted, primary key        */
+    comm_type numVertices;        /* Number of columns                                */
+    comm_type sVertices;          /* Number of rows: Bipartite graph: number of S vertices; T = N - S */
+    comm_type numEdges;           /* Each edge stored twice, but counted once        */
+    comm_type * edgeListPtrs;     /* start vertex of edge, sorted, primary key        */
     edge * edgeList;         /* end   vertex of edge, sorted, secondary key      */
 } graph;
 
