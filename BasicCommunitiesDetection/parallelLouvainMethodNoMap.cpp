@@ -131,26 +131,26 @@ double parallelLouvianMethodNoMap(graph *G, long *C, int nThreads, double Lower,
         time1 = omp_get_wtime();
         /* Re-initialize datastructures */
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             clusterWeightInternal[i] = 0;
             cUpdate[i].degree =0;
             cUpdate[i].size =0;
         }
         
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
-            long adj1 = vtxPtr[i];
-            long adj2 = vtxPtr[i+1];
+        for (comm_type i=0; i<NV; i++) {
+            comm_type adj1 = vtxPtr[i];
+            comm_type adj2 = vtxPtr[i+1];
             double selfLoop = 0;
             //Build a datastructure to hold the cluster structure of its neighbors
             //map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
             //map<long, long>::iterator storedAlready;
             // vector<double> Counter; //Number of edges in each unique cluster
-            long numUniqueClusters = 0;
+            comm_type numUniqueClusters = 0;
             //Add v's current cluster:
             if(adj1 != adj2){
                 //Add the current cluster of i to the local map
-                long sPosition = vtxPtr[i]+i; //Starting position of local map for i
+                comm_type sPosition = vtxPtr[i]+i; //Starting position of local map for i
                 clusterLocalMap[sPosition].Counter = 0;          //Initialize the counter to ZERO (no edges incident yet)
                 clusterLocalMap[sPosition].cid = currCommAss[i]; //Initialize with current community
                 numUniqueClusters++; //Added the first entry
@@ -195,7 +195,7 @@ double parallelLouvianMethodNoMap(graph *G, long *C, int nThreads, double Lower,
         
 #pragma omp parallel for \
 reduction(+:e_xx) reduction(+:a2_x)
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             e_xx += clusterWeightInternal[i];
             a2_x += (cInfo[i].degree)*(cInfo[i].degree);
         }
@@ -221,13 +221,13 @@ reduction(+:e_xx) reduction(+:a2_x)
         if(prevMod < Lower)
         prevMod = Lower;
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             cInfo[i].size += cUpdate[i].size;
             cInfo[i].degree += cUpdate[i].degree;
         }
         
         //Do pointer swaps to reuse memory:
-        long* tmp;
+        comm_type* tmp;
         tmp = pastCommAss;
         pastCommAss = currCommAss; //Previous holds the current
         currCommAss = targetCommAss; //Current holds the chosen assignment
