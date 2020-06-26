@@ -97,13 +97,13 @@ void duplicateGivenGraph(graph *Gin, graph *Gout) {
     long    NV        = Gin->numVertices;
     long    NS        = Gin->sVertices;
     long    NE        = Gin->numEdges;
-    long    *vtxPtr   = Gin->edgeListPtrs;
+    comm_type    *vtxPtr   = Gin->edgeListPtrs;
     edge    *vtxInd   = Gin->edgeList;
 #ifdef PRINT_DETAILED_STATS_
     printf("|V|= %ld, |E|= %ld \n", NV, NE);
 #endif
     double time1 = omp_get_wtime();
-    long *edgeListPtr = (long *)  malloc((NV+1) * sizeof(long));
+    comm_type *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
     assert(edgeListPtr != NULL);
 #pragma omp parallel for
     for (long i=0; i<=NV; i++) {
@@ -321,11 +321,11 @@ graph * convertDirected2Undirected(graph *G) {
     //Get the iterators for the graph:
     long NVer     = G->numVertices;
     long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
-    long *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd  = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     printf("N= %ld  NE=%ld\n", NVer, NEdge);
-    
-    long *degrees = (long *) malloc ((NVer+1) * sizeof(long));
+
+    comm_type *degrees = (comm_type *) malloc ((NVer+1) * sizeof(comm_type));
     assert(degrees != NULL);
     
     //Count the edges from source --> sink (for sink > source)
