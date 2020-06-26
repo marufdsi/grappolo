@@ -12,6 +12,8 @@ inline void Visit(long v, long myCommunity, short *Visited, long *Volts,
 				  long* vtxPtr, edge* vtxInd, long *C);
 inline void Visit(comm_type v, comm_type myCommunity, short *Visited, comm_type *Volts,
                   comm_type* vtxPtr, edge* vtxInd, comm_type *C);
+inline void Visit(comm_type v, comm_type myCommunity, comm_type *Visited, comm_type *Volts,
+                  comm_type* vtxPtr, edge* vtxInd, comm_type *C);
 				  
 // Define in vertexFollowing.cpp
 long vertexFollowing(graph *G, long *C);
