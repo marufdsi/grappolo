@@ -603,7 +603,7 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
             (*numUniqueClusters)++;
         }
     }//End of for(j)
-    cout << "[" << (adj2-adj1) << "] numUniqueClusters: " << (*numUniqueClusters) << endl;
+//    cout << "[" << (adj2-adj1) << "] numUniqueClusters: " << (*numUniqueClusters) << endl;
     return selfLoop;
 }//End of buildLocalMapCounter()
                                                                                 
