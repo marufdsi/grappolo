@@ -47,13 +47,13 @@ using namespace std;
 // First subarray is arr[l..m]
 // Second subarray is arr[m+1..r]
 // Code from: http://www.geeksforgeeks.org/merge-sort/
-void merge(edge *arr, long l, long m, long r) {
-    long i, j, k;
-    long n1 = m - l + 1;
-    long n2 =  r - m;
+void merge(edge *arr, comm_type l, comm_type m, comm_type r) {
+    comm_type i, j, k;
+    comm_type n1 = m - l + 1;
+    comm_type n2 =  r - m;
     
     /* create temp arrays */
-    //long L[n1], R[n2];
+    //comm_type L[n1], R[n2];
     edge *L = (edge *) malloc( n1 * sizeof(edge)); assert(L != 0);
     edge *R = (edge *) malloc( n2 * sizeof(edge)); assert(R != 0);
     
@@ -111,11 +111,11 @@ void merge(edge *arr, long l, long m, long r) {
 
 /* l is for left index and r is right index of the sub-array of arr to be sorted */
 // Code from: http://www.geeksforgeeks.org/merge-sort/
-void mergeSort(edge *arr, long l, long r) {
+void mergeSort(edge *arr, comm_type l, comm_type r) {
     if (l < r) {
         // Same as (l+r)/2, but avoids overflow for
         // large l and h
-        long m = l+(r-l)/2;
+        comm_type m = l+(r-l)/2;
         
         // Sort first and second halves
         mergeSort(arr, l, m);
@@ -136,15 +136,15 @@ void SortNeighborListUsingInsertionAndMergeSort(graph *G) {
     time1 = omp_get_wtime();
     double* simWeights = (double*) malloc (2*NEdge*sizeof(double)); assert(simWeights != 0);
 #pragma omp parallel for
-    for (long v = 0; v < NVer; v++) {
-        long adj1 = verPtr[v];
-        long adj2 = verPtr[v+1];
+    for (comm_type v = 0; v < NVer; v++) {
+        comm_type adj1 = verPtr[v];
+        comm_type adj2 = verPtr[v+1];
         if((adj2 - adj1) < 1000 ) {
             //Use insertion sort: https://en.wikipedia.org/wiki/Insertion_sort
-            for (long i = adj1+1; i < adj2; i++) {
-                long x     = verInd[i].tail;
+            for (comm_type i = adj1+1; i < adj2; i++) {
+                comm_type x     = verInd[i].tail;
                 double wtX = verInd[i].weight;
-                long j = i - 1;
+                comm_type j = i - 1;
                 while ((j >= adj1) && (verInd[j].tail > x)) {
                     verInd[j+1].tail   = verInd[j].tail;
                     verInd[j+1].weight = verInd[j].weight;
@@ -174,20 +174,20 @@ double* computeEdgeSimilarityMetrics(graph *G) {
     time1 = omp_get_wtime();
     double* simWeights = (double*) malloc (2*NEdge*sizeof(double)); assert(simWeights != 0);
 #pragma omp parallel for
-    for (long v = 0; v < NVer; v++) {
-        long adjV1 = verPtr[v];
-        long adjV2 = verPtr[v+1];
+    for (comm_type v = 0; v < NVer; v++) {
+        comm_type adjV1 = verPtr[v];
+        comm_type adjV2 = verPtr[v+1];
         //Process all the neighbors of v:
-        for(long i = adjV1; i < adjV2; i++ ) {
-            long w = verInd[i].tail;
+        for(comm_type i = adjV1; i < adjV2; i++ ) {
+            comm_type w = verInd[i].tail;
             if(w < v)
                 continue; //This vertex has already been processed from the other end
-            long setIntersect = 0, setUnion = 0;
-            long adjW1 = verPtr[w];
-            long adjW2 = verPtr[w+1];
+            comm_type setIntersect = 0, setUnion = 0;
+            comm_type adjW1 = verPtr[w];
+            comm_type adjW2 = verPtr[w+1];
             //Process both the sets (v and w) in an order:
-            long c1 = adjV1;
-            long c2 = adjW1;
+            comm_type c1 = adjV1;
+            comm_type c2 = adjW1;
             while((c1<adjV2) && (c2<adjW2)) {
                 if(verInd[c1].tail == verInd[c2].tail) {
                     setIntersect++; setUnion++;
@@ -208,7 +208,7 @@ double* computeEdgeSimilarityMetrics(graph *G) {
                 similarity = setIntersect / setUnion;
             simWeights[i] = similarity;
             //Find the position for edge (w --> v)
-            for (long j=adjW1; j<adjW2; j++) {
+            for (comm_type j=adjW1; j<adjW2; j++) {
                 if (verInd[j].tail == v) {
                     simWeights[j] = similarity;
                     break;
@@ -247,21 +247,21 @@ graph* buildSparifiedGraph(graph *Gin, double alpha) {
     //Step 3: Determine top edges for each vertex:
     bool* isEdgePresent = (bool*) malloc (2*NEdge*sizeof(bool)); assert(isEdgePresent != 0);
 #pragma omp parallel for
-    for (long v = 0; v < NVer; v++) {
-        long adj1 = verPtr[v];
-        long adj2 = verPtr[v+1];
+    for (comm_type v = 0; v < NVer; v++) {
+        comm_type adj1 = verPtr[v];
+        comm_type adj2 = verPtr[v+1];
         if(adj2 == adj1)
             continue; //isolated vertex; do nothing
-        long numTopEdges = round(pow((adj2-adj1), alpha)); //Number of top edges
+        comm_type numTopEdges = round(pow((adj2-adj1), alpha)); //Number of top edges
         if(numTopEdges <1)
             numTopEdges = 1; //Add at least one edge (otherwise vertices can become isolated)
         //Add the first neighbor by default
         double minWeight     = simWeights[adj1]; //Similarity value of the first neighbor
-        long   minNeighbor   = adj1;           //Position of the first neighbor
+        comm_type   minNeighbor   = adj1;           //Position of the first neighbor
         isEdgePresent[adj1]  = true;           //Mark this edge as true
-        long edgesAddedSoFar = 1;            //Added one edge so far
+        comm_type edgesAddedSoFar = 1;            //Added one edge so far
         //Process all the neighbors of v:
-        for(long i = adj1+1; i < adj2; i++ ) {
+        for(comm_type i = adj1+1; i < adj2; i++ ) {
             //Always maintain the least weighted neighbor for each vertex;
             //... this neigbor will get bounced if there is no space
             if(edgesAddedSoFar < numTopEdges) {
@@ -282,7 +282,7 @@ graph* buildSparifiedGraph(graph *Gin, double alpha) {
                     minWeight = simWeights[i];
                     minNeighbor = i; //This is the position of the smallest edge added so far
                     //Now find the next minimum to replace:
-                    for(long k = adj1; k < i; k++ ) { //Only look within unprocessed list
+                    for(comm_type k = adj1; k < i; k++ ) { //Only look within unprocessed list
                         if((isEdgePresent[k]) && (simWeights[k] < minWeight)) {
                             minWeight = simWeights[k];
                             minNeighbor = k; //This is the position of the smallest edge added so far

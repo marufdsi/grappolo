@@ -153,14 +153,14 @@ int main(int argc, char** argv) {
     // first we read to GraphHOST if that works ok
     // then we read to GraphGPU object
     GraphHOST input_graph; // GPU code graph in Host Memory
-    input_graph.nb_nodes = (long) G->numVertices;
-    // input_graph.nb_links = (long) G->sVertices;
-    input_graph.nb_links = ((long) G->numEdges) * 2;
+    input_graph.nb_nodes = (comm_type) G->numVertices;
+    // input_graph.nb_links = (comm_type) G->sVertices;
+    input_graph.nb_links = ((comm_type) G->numEdges) * 2;
     std::cout << "Number of Vertices: " << input_graph.nb_nodes << std::endl;
     std::cout << "Number of Edges: " << input_graph.nb_links / 2 << std::endl;
     
-    long    NV        = G->numVertices;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    NV        = G->numVertices;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     
     //Allocate memory:
@@ -169,7 +169,7 @@ int main(int argc, char** argv) {
     input_graph.weights.resize(input_graph.nb_links);
     
     //The pointer vector:
-    for(long i = 0; i < input_graph.nb_nodes; i++) {
+    for(comm_type i = 0; i < input_graph.nb_nodes; i++) {
         input_graph.degrees[i] = (int)vtxPtr[i+1];
     }
     //Make sure that number of edges is accurately represented
@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
     // assert below will not hold true for all graph inputs
     // assert(input_graph.degrees[NV] == input_graph.nb_links);
     //The edge index vector
-    for(long i = 0; i < input_graph.nb_links; i++) {
+    for(comm_type i = 0; i < input_graph.nb_links; i++) {
         input_graph.links[i] = (int) vtxInd[i].tail;
         input_graph.weights[i] = (float) vtxInd[i].weight;
     }

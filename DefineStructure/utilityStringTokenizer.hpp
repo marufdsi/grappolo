@@ -62,8 +62,8 @@ class StringTokenizer
 
  public:
 
-  long CountTokens();			// ***Public Function No. 1***
-  long CountTokens(char *);		// ***Public Function No. 2***
+  comm_type CountTokens();			// ***Public Function No. 1***
+  comm_type CountTokens(char *);		// ***Public Function No. 2***
   
   string GetDelimiterString() const;	// ***Public Function No. 3***
   string GetFirstToken();		// ***Public Function No. 4***
@@ -71,13 +71,13 @@ class StringTokenizer
   string GetLastToken();		// ***Public Function No. 6***
   string GetNextToken();		// ***Public Function No. 7***
   string GetNextToken(char *);		// ***Public Function No. 8***
-  string GetToken(long);			// ***Public Function No. 9***
+  string GetToken(comm_type);			// ***Public Function No. 9***
 
-  long HasMoreTokens();			// ***Public Function No. 10***
-  long HasMoreTokens(char *);		// ***Public Function No. 11***
+  comm_type HasMoreTokens();			// ***Public Function No. 10***
+  comm_type HasMoreTokens(char *);		// ***Public Function No. 11***
   
-  long SetInputString(char *);		// ***Public Function No. 12***
-  long SetDelimiterString(char *);	// ***Public Function No. 13***
+  comm_type SetInputString(char *);		// ***Public Function No. 12***
+  comm_type SetDelimiterString(char *);	// ***Public Function No. 13***
   
   StringTokenizer();			// ***Public Function No. 14***
   StringTokenizer(char *);		// ***Public Function No. 15***
@@ -89,16 +89,16 @@ class StringTokenizer
 };
 /* ------------------------------------------------------------------------- */
 inline
-long StringTokenizer::CountTokens()
+comm_type StringTokenizer::CountTokens()
 {
-  long TokenCounter = 1;
+  comm_type TokenCounter = 1;
 
-  long DelimiterPosition;
+  comm_type DelimiterPosition;
   
-  long LastPosition;
+  comm_type LastPosition;
 
-  long TokenStringLength = TokenString.size();
-  long DelimiterStringLength = DelimiterString.size();
+  comm_type TokenStringLength = TokenString.size();
+  comm_type DelimiterStringLength = DelimiterString.size();
 
   string DelimiterSubString;
 
@@ -151,7 +151,7 @@ long StringTokenizer::CountTokens()
 
 // ***Public Function No. 2***
 inline
-long StringTokenizer::CountTokens(char * DelimiterChar)
+comm_type StringTokenizer::CountTokens(char * DelimiterChar)
 {
   SetDelimiterString(DelimiterChar);
 
@@ -171,7 +171,7 @@ string StringTokenizer::GetDelimiterString() const
 inline
 string StringTokenizer::GetFirstToken()
 {
-  long TokenCount = 0;
+  comm_type TokenCount = 0;
 
   string StringToken;
 
@@ -223,10 +223,10 @@ string StringTokenizer::GetNextToken()
 {
   string Token;
   
-  long DelimiterPosition;
+  comm_type DelimiterPosition;
   
-  long TokenStringLength = TokenString.size();
-  long DelimiterStringLength = DelimiterString.size();
+  comm_type TokenStringLength = TokenString.size();
+  comm_type DelimiterStringLength = DelimiterString.size();
 
   string DelimiterSubString;
 
@@ -303,9 +303,9 @@ string StringTokenizer::GetNextToken(char * DelimiterChar)
 
 // ***Public Function No. 9***
 inline
-string StringTokenizer::GetToken(long TokenPosition)
+string StringTokenizer::GetToken(comm_type TokenPosition)
 {
-  long TokenCount = 0;
+  comm_type TokenCount = 0;
 
   string StringToken;
 
@@ -328,14 +328,14 @@ string StringTokenizer::GetToken(long TokenPosition)
 
 // ***Public Function No. 10***
 inline
-long StringTokenizer::HasMoreTokens()
+comm_type StringTokenizer::HasMoreTokens()
 {
   return(CountTokens());
 }
 
 // ***Public Function No. 11***
 inline
-long StringTokenizer::HasMoreTokens(char * DelimiterChar)
+comm_type StringTokenizer::HasMoreTokens(char * DelimiterChar)
 {
   SetDelimiterString(DelimiterChar);
 
@@ -344,7 +344,7 @@ long StringTokenizer::HasMoreTokens(char * DelimiterChar)
 
 // ***Public Function No. 12***
 inline
-long StringTokenizer::SetDelimiterString(char * DelimiterChar)
+comm_type StringTokenizer::SetDelimiterString(char * DelimiterChar)
 {
   string TempDelimiterString(DelimiterChar);
 
@@ -355,7 +355,7 @@ long StringTokenizer::SetDelimiterString(char * DelimiterChar)
 
 // ***Public Function No. 13***
 inline
-long StringTokenizer::SetInputString(char * InputChar)
+comm_type StringTokenizer::SetInputString(char * InputChar)
 {
   string TempInputString(InputChar);
 

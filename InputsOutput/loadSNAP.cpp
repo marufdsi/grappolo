@@ -28,7 +28,7 @@ void parse_SNAP(graph * G, char *fileName) {
     }
     printf("parse_SNAP: Number of threads: %d\n ", nthreads);
     
-    long   NV=0,  NE=0;
+    comm_type   NV=0,  NE=0;
     string oneLine, myDelimiter(" "), myDelimiter2("\t"), oneWord; //Delimiter is a blank space
     char comment;
     
@@ -68,14 +68,14 @@ void parse_SNAP(graph * G, char *fileName) {
     /*---------------------------------------------------------------------*/
     edge *tmpEdgeList = (edge *) malloc( NE * sizeof(edge)); //Every edge stored ONCE
     assert( tmpEdgeList != NULL);
-    long Si, Ti;
+    comm_type Si, Ti;
     
-    map<long, long> clusterLocalMap; //Renumber vertices contiguously from zero
-    map<long, long>::iterator storedAlready;
-    long numUniqueVertices = 0;
+    map<comm_type, comm_type> clusterLocalMap; //Renumber vertices contiguously from zero
+    map<comm_type, comm_type>::iterator storedAlready;
+    comm_type numUniqueVertices = 0;
     
     //Parse the first edge already read from the file and stored in oneLine
-    long i=0;
+    comm_type i=0;
     f_weight wt = 1.0;
     do {
         StringTokenizer* ST = new StringTokenizer(oneLine, myDelimiter2);
@@ -124,24 +124,24 @@ void parse_SNAP(graph * G, char *fileName) {
     NV = numUniqueVertices;
     ///////////
     time1 = omp_get_wtime();
-    long *edgeListPtr = (long *)  malloc((NV+1) * sizeof(long));
+    comm_type *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
     assert(edgeListPtr != NULL);
     edge *edgeList = (edge *) malloc( 2*NE * sizeof(edge)); //Every edge stored twice
     assert( edgeList != NULL);
     time2 = omp_get_wtime();
     printf("Time for allocating memory for storing graph = %lf\n", time2 - time1);
 #pragma omp parallel for
-    for (long i=0; i <= NV; i++)
+    for (comm_type i=0; i <= NV; i++)
         edgeListPtr[i] = 0; //For first touch purposes
     
     //////Build the EdgeListPtr Array: Cumulative addition
     time1 = omp_get_wtime();
 #pragma omp parallel for
-    for(long i=0; i<NE; i++) {
+    for(comm_type i=0; i<NE; i++) {
         __sync_fetch_and_add(&edgeListPtr[tmpEdgeList[i].head+1], 1); //Leave 0th position intact
         __sync_fetch_and_add(&edgeListPtr[tmpEdgeList[i].tail+1], 1);
     }
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         edgeListPtr[i+1] += edgeListPtr[i]; //Prefix Sum:
     }
     //The last element of Cumulative will hold the total number of characters
@@ -153,19 +153,19 @@ void parse_SNAP(graph * G, char *fileName) {
     printf("About to build edgeList...\n");
     time1 = omp_get_wtime();
     //Keep track of how many edges have been added for a vertex:
-    long  *added  = (long *)  malloc( NV  * sizeof(long)); assert( added != NULL);
+    comm_type  *added  = (comm_type *)  malloc( NV  * sizeof(comm_type)); assert( added != NULL);
 #pragma omp parallel for
-    for (long i = 0; i < NV; i++)
+    for (comm_type i = 0; i < NV; i++)
         added[i] = 0;
     printf("...\n");
     //Build the edgeList from edgeListTmp:
 #pragma omp parallel for
-    for(long i=0; i<NE; i++) {
-        long head      = tmpEdgeList[i].head;
-        long tail      = tmpEdgeList[i].tail;
+    for(comm_type i=0; i<NE; i++) {
+        comm_type head      = tmpEdgeList[i].head;
+        comm_type tail      = tmpEdgeList[i].tail;
         f_weight weight  = tmpEdgeList[i].weight;
         
-        long Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
+        comm_type Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
         edgeList[Where].head = head;
         edgeList[Where].tail = tail;
         edgeList[Where].weight = weight;
@@ -221,7 +221,7 @@ void parse_SNAP_GroundTruthCommunities(char *fileVertexMap, char *fileGroundTrut
     }
     printf("parse_SNAP_GroundTruthCommunities: Number of threads: %d\n ", nthreads);
     
-    long   NV=0,  NC=0;
+    comm_type   NV=0,  NC=0;
     string oneLine, myDelimiter(" "), myDelimiter2("\t"), oneWord; //Delimiter is a blank space
     char comment;
     
@@ -235,9 +235,9 @@ void parse_SNAP_GroundTruthCommunities(char *fileVertexMap, char *fileGroundTrut
     }
     
     //Parse the vertex id mapping:  new-id --> old-id
-    map<long, long> clusterLocalMap; //Renumber vertices contiguously from zero
-    map<long, long>::iterator storedAlready;
-    long Si, Ti;
+    map<comm_type, comm_type> clusterLocalMap; //Renumber vertices contiguously from zero
+    map<comm_type, comm_type>::iterator storedAlready;
+    comm_type Si, Ti;
     printf("Parsing file %s (new-id  old-id)...\n ", fileVertexMap);
     do {
         StringTokenizer* ST = new StringTokenizer(oneLine, myDelimiter);
@@ -275,8 +275,8 @@ void parse_SNAP_GroundTruthCommunities(char *fileVertexMap, char *fileGroundTrut
     }
     
     //Parse the vertex id mapping:  new-id --> old-id
-    long * communityMap = (long *) malloc (NV * sizeof(long)); assert(communityMap != 0);
-    for(long i=0; i<NV; i++)
+    comm_type * communityMap = (comm_type *) malloc (NV * sizeof(comm_type)); assert(communityMap != 0);
+    for(comm_type i=0; i<NV; i++)
         communityMap[i] = -1;
     Si = 0;
     printf("Parsing file %s -- assumes that the new vertex ids are in an order\n ", fileGroundTruth);
@@ -285,7 +285,7 @@ void parse_SNAP_GroundTruthCommunities(char *fileVertexMap, char *fileGroundTrut
         while( ST->HasMoreTokens() ) {
             Ti = atol(ST->GetNextToken().c_str());
             storedAlready = clusterLocalMap.find(Ti);
-            long where = storedAlready->second;
+            comm_type where = storedAlready->second;
             printf("%ld \t\t %ld\n", Ti, where);
             assert(where < NV);
             communityMap[where] = Si;
@@ -312,7 +312,7 @@ void parse_SNAP_GroundTruthCommunities(char *fileVertexMap, char *fileGroundTrut
         exit(1);
     }
     //Write the communities for each vertex:
-    for(long i=0; i<NV; i++) {
+    for(comm_type i=0; i<NV; i++) {
         fprintf(fout, "%ld %ld\n", i+1, communityMap[i]);
     }
     fclose(fout);

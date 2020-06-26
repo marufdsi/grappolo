@@ -169,7 +169,7 @@ ColorElem initColoringLU(const Graph &g, ColorVector &colors, std::string input)
 	computeBinSizes(freq,colors,nv,ncolors);
 //outPut(colors,outb,freq,ncolors);
 
-  /*long dMax =0;
+  /*comm_type dMax =0;
   for(int ci = 0; ci <nv; ci++)
   {
     int xP;

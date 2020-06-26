@@ -49,7 +49,7 @@
 //////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 
-void generateRandomNumbers2(double* randValues, long NVer)
+void generateRandomNumbers2(double* randValues, comm_type NVer)
 {
     for(int v = 0; v<NVer; v++)
     {
@@ -80,9 +80,9 @@ int algoColoringMultiHashMaxMin(graph *G, int *vtxColor, int nThreads, double *t
     assert(nItrs > 0); assert(nHash > 0);
     double time1=0, time2=0, totalTime=0;
     //Get the iterators for the graph:
-    long NVer    = G->numVertices;
-    long NEdge   = G->numEdges;
-    long *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type NVer    = G->numVertices;
+    comm_type NEdge   = G->numEdges;
+    comm_type *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     
     int maxColor = (2 * nHash * nItrs); //Two colors for each hash per iteration; zero is a valid color
@@ -110,7 +110,7 @@ int algoColoringMultiHashMaxMin(graph *G, int *vtxColor, int nThreads, double *t
 #endif
     //Color all the vertices to a maximum number (means that the vertex did not get colored)
 #pragma omp parallel for
-    for (long v=0; v<NVer; v++) {
+    for (comm_type v=0; v<NVer; v++) {
         vtxColor[v] = maxColor; //Set the color to maximum
     }
     int iterFreq = 0;
@@ -124,17 +124,17 @@ int algoColoringMultiHashMaxMin(graph *G, int *vtxColor, int nThreads, double *t
         for (int ihash=0; ihash<nHash; ihash++) {
             int currentColor = (2*itr*nHash + 2*ihash); //Color to be used in current itr-hash combination
 #pragma omp parallel for
-            for (long v=0; v<NVer; v++) {
+            for (comm_type v=0; v<NVer; v++) {
                 //Iterate over all the vertices:
                 //Check if this vertex has already been colored
                 if(vtxColor[v] != maxColor)
                     continue; //The vertex has already been colored
                 //Vertex v has not been colored. Check to see if it is a local max or a local min
-                long adj1 = verPtr[v];
-                long adj2 = verPtr[v+1];
+                comm_type adj1 = verPtr[v];
+                comm_type adj2 = verPtr[v+1];
                 //Browse the adjacency set of vertex v
                 bool isMax = true, isMin = true;
-                for(long k = adj1; k < adj2; k++ ) {
+                for(comm_type k = adj1; k < adj2; k++ ) {
                     if ( v == verInd[k].tail ) //Self-loops
                         continue;
                     //if(vtxColor[verInd[k].tail] < maxColor)
@@ -177,18 +177,18 @@ int algoColoringMultiHashMaxMin(graph *G, int *vtxColor, int nThreads, double *t
     printf("--------------------------------------------------------------\n");
     
     //Verify Results and Cleanup
-    long myConflicts = 0;
-    long unColored = 0;
+    comm_type myConflicts = 0;
+    comm_type unColored = 0;
 #pragma omp parallel for
-    for (long v=0; v < NVer; v++ ) {
-        long adj1 = verPtr[v];
-        long adj2 = verPtr[v+1];
+    for (comm_type v=0; v < NVer; v++ ) {
+        comm_type adj1 = verPtr[v];
+        comm_type adj2 = verPtr[v+1];
         if ( vtxColor[v] == maxColor ) {//Ignore uncolored vertices
             __sync_fetch_and_add(&unColored, 1);
             continue;
         }
         //Browse the adjacency set of vertex v
-        for(long k = adj1; k < adj2; k++ ) {
+        for(comm_type k = adj1; k < adj2; k++ ) {
             if ( v == verInd[k].tail ) //Self-loops
                 continue;
             if ( vtxColor[v] == vtxColor[verInd[k].tail] ) {

@@ -44,7 +44,7 @@
 #include "basic_comm.h"
 using namespace std;
 
-double parallelDirectedLouvianMethod(dGraph *dG, long *C, int nThreads, double Lower,
+double parallelDirectedLouvianMethod(dGraph *dG, comm_type *C, int nThreads, double Lower,
                              double thresh, double *totTime, int *numItr) {
 
 #ifdef PRINT_DETAILED_STATS_
@@ -67,15 +67,15 @@ double parallelDirectedLouvianMethod(dGraph *dG, long *C, int nThreads, double L
     double time1, time2, time3, time4; //For timing purposes
     double total = 0, totItr = 0;
     
-    long    NV           = dG->numVertices;
-    long    NE           = dG->numEdges;
-    long    *vtxPtrOut   = dG->edgeListPtrsOut;
+    comm_type    NV           = dG->numVertices;
+    comm_type    NE           = dG->numEdges;
+    comm_type    *vtxPtrOut   = dG->edgeListPtrsOut;
     edge    *vtxIndOut   = dG->edgeListOut;
-    long    *vtxPtrIn    = dG->edgeListPtrsIn;
+    comm_type    *vtxPtrIn    = dG->edgeListPtrsIn;
     edge    *vtxIndIn    = dG->edgeListIn;
     
     /* Variables for computing modularity */
-    long totalEdgeWeight;
+    comm_type totalEdgeWeight;
     double constantForSecondTerm;
     double prevMod=-1;
     double currMod=-1;
@@ -107,11 +107,11 @@ double parallelDirectedLouvianMethod(dGraph *dG, long *C, int nThreads, double L
     //cout<<"CHECK THIS:              "<<constantForSecondTerm<<endl;
     //Community assignments:
     //Store previous iteration's community assignment
-    long* pastCommAss = (long *) malloc (NV * sizeof(long)); assert(pastCommAss != 0);
+    comm_type* pastCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(pastCommAss != 0);
     //Store current community assignment
-    long* currCommAss = (long *) malloc (NV * sizeof(long)); assert(currCommAss != 0);
+    comm_type* currCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(currCommAss != 0);
     //Store the target of community assignment
-    long* targetCommAss = (long *) malloc (NV * sizeof(long)); assert(targetCommAss != 0);
+    comm_type* targetCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(targetCommAss != 0);
     
     //Vectors used in place of maps: Total size = |V|+2*|E| -- The |V| part takes care of self loop
     //  mapElement* clusterLocalMapX = (mapElement *) malloc ((NV + 2*NE) * sizeof(mapElement)); assert(clusterLocalMapX != 0);
@@ -142,20 +142,20 @@ double parallelDirectedLouvianMethod(dGraph *dG, long *C, int nThreads, double L
         time1 = omp_get_wtime();
         /* Re-initialize datastructures */
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             clusterWeightInternal[i] = 0;
             cUpdate[i].degree =0;
             cUpdate[i].size =0;
         }
         
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
-            long adj1 = vtxPtrOut[i];
-            long adj2 = vtxPtrOut[i+1];
+        for (comm_type i=0; i<NV; i++) {
+            comm_type adj1 = vtxPtrOut[i];
+            comm_type adj2 = vtxPtrOut[i+1];
             double selfLoop = 0;
             //Build a datastructure to hold the cluster structure of its neighbors
-            map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
-            map<long, long>::iterator storedAlready;
+            map<comm_type, comm_type> clusterLocalMap; //Map each neighbor's cluster to a local number
+            map<comm_type, comm_type>::iterator storedAlready;
             vector<double> Counter; //Number of edges in each unique cluster
             //Add v's current cluster:
             if(adj1 != adj2){
@@ -198,7 +198,7 @@ double parallelDirectedLouvianMethod(dGraph *dG, long *C, int nThreads, double L
         
 #pragma omp parallel for \
 reduction(+:e_xx) reduction(+:a2_x)
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             e_xx += clusterWeightInternal[i];
             a2_x += (cInfoOut[i].degree)*(cInfoOut[i].degree);
         }
@@ -224,13 +224,13 @@ reduction(+:e_xx) reduction(+:a2_x)
         if(prevMod < Lower)
             prevMod = Lower;
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             cInfoOut[i].size += cUpdate[i].size;
             cInfoOut[i].degree += cUpdate[i].degree;
         }
         
         //Do pointer swaps to reuse memory:
-        long* tmp;
+        comm_type* tmp;
         tmp = pastCommAss;
         pastCommAss = currCommAss; //Previous holds the current
         currCommAss = targetCommAss; //Current holds the chosen assignment
@@ -254,7 +254,7 @@ reduction(+:e_xx) reduction(+:a2_x)
     //Store back the community assignments in the input variable:
     //Note: No matter when the while loop exits, we are interested in the previous assignment
 #pragma omp parallel for 
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         C[i] = pastCommAss[i];
     }
     //Cleanup

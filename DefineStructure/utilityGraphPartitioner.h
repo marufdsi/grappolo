@@ -122,15 +122,15 @@ extern "C" {
 #endif
 */
 //METIS Graph Partitioner:
-void MetisGraphPartitioner( graph *G, long *VertexPartitioning, int numParts ) {
+void MetisGraphPartitioner( graph *G, comm_type *VertexPartitioning, int numParts ) {
 
   printf("Within MetisGraphPartitioner(): \n");
   printf("Number of partitions requested: %ld\n", numParts);
   
   //Get the iterators for the graph:
-  long   NV        = G->numVertices;  
-  long   NE        = G->numEdges;
-  long   *vtxPtr   = G->edgeListPtrs;
+  comm_type   NV        = G->numVertices;
+  comm_type   NE        = G->numEdges;
+  comm_type   *vtxPtr   = G->edgeListPtrs;
   edge   *vtxInd   = G->edgeList;  
   printf("|V|= %ld, |E|= %ld \n", NV, NE);
 
@@ -138,21 +138,21 @@ void MetisGraphPartitioner( graph *G, long *VertexPartitioning, int numParts ) {
   idx_t *xadj = (idx_t *) malloc ((NV+1) * sizeof(idx_t));
   assert(xadj != 0);
 #pragma omp parallel for
-  for(long i=0; i<=NV; i++) {
+  for(comm_type i=0; i<=NV; i++) {
      xadj[i] = (idx_t) vtxPtr[i]; 
   }
 
   idx_t *adjncy = (idx_t *) malloc (2*NE * sizeof(idx_t));
   assert(adjncy != 0);
 #pragma omp parallel for
-  for(long i=0; i<2*NE; i++) {
+  for(comm_type i=0; i<2*NE; i++) {
      adjncy[i] = (idx_t) vtxInd[i].tail; 
   }
 
   idx_t *adjwgt = (idx_t *) malloc (2*NE * sizeof(idx_t));
   assert(adjwgt != 0);
 #pragma omp parallel for
-  for(long i=0; i<2*NE; i++) {
+  for(comm_type i=0; i<2*NE; i++) {
      adjwgt[i] = (idx_t) vtxInd[i].weight; 
   }
  
@@ -188,8 +188,8 @@ void MetisGraphPartitioner( graph *G, long *VertexPartitioning, int numParts ) {
   }
 
 #pragma omp parallel for
-  for(long i=0; i<=NV; i++) {
-     VertexPartitioning[i] = (long) part[i]; //Do explicit typecasts
+  for(comm_type i=0; i<=NV; i++) {
+     VertexPartitioning[i] = (comm_type) part[i]; //Do explicit typecasts
   }
   
   //Cleaup:

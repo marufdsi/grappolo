@@ -47,9 +47,9 @@ ColorElem cBaseRedistribution(graph* G, int* vtxColor, int ncolors, int type)
 	printf("Color Base Redistribution")
 	
 	double time1=0, time2=0, totalTime=0;
-	long NVer    = G->numVertices;
-  long NEdge   = G->numEdges;  
-  long *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+	comm_type NVer    = G->numVertices;
+  comm_type NEdge   = G->numEdges;
+  comm_type *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
   edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
 	
 	
@@ -62,7 +62,7 @@ ColorElem cBaseRedistribution(graph* G, int* vtxColor, int ncolors, int type)
 	buildColorsIndex(vtxColor, ncolors, NVer, colorPtr, colorIndex, freq);
 	
 	BitVector overSize(ncolors,false);
-	long avg = ceil(nv/ncolors);
+	comm_type avg = ceil(nv/ncolors);
        
 	// Find the overSize bucket (can do some Optimization here)
 	#pragma omp parallel for
@@ -81,13 +81,13 @@ ColorElem cBaseRedistribution(graph* G, int* vtxColor, int ncolors, int type)
 	{
 		// Travel all colors
 		for(ColorElem CI = 0; CI<ncolors && overSize[CI] ==true ;CI++){
-			long cadj1	= colorPtr[CI];
-			long cadj2 = colorPtr[CI+1];
+			comm_type cadj1	= colorPtr[CI];
+			comm_type cadj2 = colorPtr[CI+1];
 			
 			// Move the vetex in same bin together
 			#pragma omp for schedule(guided)
-			for(long ki=cadj1; ki<cadj2; ki++){
-				long v = colorIndex[ki];
+			for(comm_type ki=cadj1; ki<cadj2; ki++){
+				comm_type v = colorIndex[ki];
 				
 				if(freq[CI] <= avg)
 					continue;

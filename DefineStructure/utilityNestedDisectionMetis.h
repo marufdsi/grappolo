@@ -93,14 +93,14 @@ using namespace std;
  #endif
  */
 //METIS Graph Partitioner:
-void MetisNDReorder( graph *G, long *old2NewMap ) {
+void MetisNDReorder( graph *G, comm_type *old2NewMap ) {
     
     printf("Within MetisNDReorder(): \n");
     
     //Get the iterators for the graph:
-    long   NV        = G->numVertices;
-    long   NE        = G->numEdges;
-    long   *vtxPtr   = G->edgeListPtrs;
+    comm_type   NV        = G->numVertices;
+    comm_type   NE        = G->numEdges;
+    comm_type   *vtxPtr   = G->edgeListPtrs;
     edge   *vtxInd   = G->edgeList;
     printf("|V|= %ld, |E|= %ld \n", NV, NE);
     int status=0;
@@ -109,21 +109,21 @@ void MetisNDReorder( graph *G, long *old2NewMap ) {
     idx_t *xadj = (idx_t *) malloc ((NV+1) * sizeof(idx_t));
     assert(xadj != 0);
 #pragma omp parallel for
-    for(long i=0; i<=NV; i++) {
+    for(comm_type i=0; i<=NV; i++) {
         xadj[i] = (idx_t) vtxPtr[i];
     }
     
     idx_t *adjncy = (idx_t *) malloc (2*NE * sizeof(idx_t));
     assert(adjncy != 0);
 #pragma omp parallel for
-    for(long i=0; i<2*NE; i++) {
+    for(comm_type i=0; i<2*NE; i++) {
         adjncy[i] = (idx_t) vtxInd[i].tail;
     }
     
     idx_t *adjwgt = (idx_t *) malloc (2*NE * sizeof(idx_t));
     assert(adjwgt != 0);
 #pragma omp parallel for
-    for(long i=0; i<2*NE; i++) {
+    for(comm_type i=0; i<2*NE; i++) {
         adjwgt[i] = (idx_t) vtxInd[i].weight;
     }
     
@@ -167,8 +167,8 @@ void MetisNDReorder( graph *G, long *old2NewMap ) {
     }
     
 #pragma omp parallel for
-    for(long i=0; i<=NV; i++) {
-        old2NewMap[i] = (long) perm[i]; //Do explicit typecasts
+    for(comm_type i=0; i<=NV; i++) {
+        old2NewMap[i] = (comm_type) perm[i]; //Do explicit typecasts
     }
     
     //Cleaup:

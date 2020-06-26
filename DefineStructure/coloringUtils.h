@@ -32,16 +32,16 @@
 };*/
 
 typedef std::vector<bool> BitVector;
-typedef std::vector<long> ColorVector;
+typedef std::vector<comm_type> ColorVector;
 typedef int ColorElem;
 #define MaxDegree 4096
 //using namespace std;
 
-int distanceOneMarkArray(BitVector &mark, graph *G, long v, int *vtxColor);
-void computeBinSizes(ColorVector &binSizes, int* colors, long nv, int numColors);
-void distanceOneConfResolution(graph* G, long v, int* vtxColor, double* randValues, long* QtmpTail, long* Qtmp, ColorVector& freq, int type);
-void distanceOneChecked(graph* G, long nv ,int* colors);
-void buildColorsIndex(int* colors, const int numColors, const long nv, ColorVector& colorPtr,  ColorVector& colorIndex, ColorVector& binSizes);
+int distanceOneMarkArray(BitVector &mark, graph *G, comm_type v, int *vtxColor);
+void computeBinSizes(ColorVector &binSizes, int* colors, comm_type nv, int numColors);
+void distanceOneConfResolution(graph* G, comm_type v, int* vtxColor, double* randValues, comm_type* QtmpTail, comm_type* Qtmp, ColorVector& freq, int type);
+void distanceOneChecked(graph* G, comm_type nv ,int* colors);
+void buildColorsIndex(int* colors, const int numColors, const comm_type nv, ColorVector& colorPtr,  ColorVector& colorIndex, ColorVector& binSizes);
 
 /******* UtiliyFunctions *****
 void computeBinSizes(ColorVector &binSizes, const ColorVector &colors, const GraphElem nv, const ColorElem numColors);

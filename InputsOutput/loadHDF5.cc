@@ -11,7 +11,7 @@ extern "C" {
 }
 
 
-typedef long int GraphElem;
+typedef comm_type int GraphElem;
 typedef std::pair<GraphElem, GraphElem> EdgePair;
 
 void parse_EdgeListCompressedHDF5(graph * G, char *fileName) {
@@ -111,25 +111,25 @@ void parse_EdgeListCompressedHDF5(graph * G, char *fileName) {
   printf("Weights are set to positive one.\n");
 
   time1 = omp_get_wtime();
-  long *edgeListPtr = (long *)  malloc((NV+1) * sizeof(long));
+  comm_type *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
   assert(edgeListPtr != NULL);
   edge *edgeList = (edge *) malloc( 2*NE * sizeof(edge)); //Every edge stored twice
   assert( edgeList != NULL);
   time2 = omp_get_wtime();
   printf("Time for allocating memory for storing graph = %lf\n", time2 - time1);
 #pragma omp parallel for
-  for (long i=0; i <= NV; i++)
+  for (comm_type i=0; i <= NV; i++)
     edgeListPtr[i] = 0; //For first touch purposes
 
   //////Build the EdgeListPtr Array: Cumulative addition
   time1 = omp_get_wtime();
 #pragma omp parallel for
-  for(long i=0; i<NE; i++) {
+  for(comm_type i=0; i<NE; i++) {
     __sync_fetch_and_add(&edgeListPtr[edgeListH5[i+1].first], 1); //Leave 0th position intact
     __sync_fetch_and_add(&edgeListPtr[edgeListH5[i+1].second], 1);
   }
   assert(edgeListPtr[0] == 0); //Make sure the vertex ids are 1-based numbers
-  for (long i=0; i<NV; i++) {
+  for (comm_type i=0; i<NV; i++) {
     edgeListPtr[i+1] += edgeListPtr[i]; //Prefix Sum:
   }
   //The last element of Cumulative will hold the total number of characters
@@ -141,20 +141,20 @@ void parse_EdgeListCompressedHDF5(graph * G, char *fileName) {
   printf("About to build edgeList...\n");
   time1 = omp_get_wtime();
   //Keep track of how many edges have been added for a vertex:
-  long  *added  = (long *)  malloc( NV  * sizeof(long)); assert( added != NULL);
+  comm_type  *added  = (comm_type *)  malloc( NV  * sizeof(comm_type)); assert( added != NULL);
 #pragma omp parallel for
-  for (long i = 0; i < NV; i++)
+  for (comm_type i = 0; i < NV; i++)
     added[i] = 0;
 
   //Build the edgeList from edgeListTmp:
 #pragma omp parallel for
-  for(long i=0; i<NE; i++) {
-    long head      = edgeListH5[i+1].first - 1;
-    long tail      = edgeListH5[i+1].second - 1;
+  for(comm_type i=0; i<NE; i++) {
+    comm_type head      = edgeListH5[i+1].first - 1;
+    comm_type tail      = edgeListH5[i+1].second - 1;
     double weight  = 1.0;
     assert((head>=0)&&(tail>=0));
 
-    long Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
+    comm_type Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
     edgeList[Where].head = head;
     edgeList[Where].tail = tail;
     edgeList[Where].weight = weight;
@@ -277,7 +277,7 @@ void parse_EdgeListCompressedHDF5NoDuplicates(graph * G, char *fileName) {
     time1 = omp_get_wtime();
     edge *tmpEdgeList = (edge *) malloc( 2*NE * sizeof(edge)); //Every edge stored twice
 #pragma omp parallel for
-    for(long i=0; i<NE; i++) {
+    for(comm_type i=0; i<NE; i++) {
         tmpEdgeList[2*i].head = edgeListH5[i+1].first; //Leave 0th position intact
         tmpEdgeList[2*i].tail = edgeListH5[i+1].second;
         tmpEdgeList[2*i].weight = 1.0; //Set weight to one
@@ -286,7 +286,7 @@ void parse_EdgeListCompressedHDF5NoDuplicates(graph * G, char *fileName) {
         tmpEdgeList[2*i+1].tail = edgeListH5[i+1].first;
         tmpEdgeList[2*i+1].weight = 1.0; //Set weight to one
     }
-    long newNE = removeEdges(NV, 2*NE, tmpEdgeList); //Each edge is stored twice
+    comm_type newNE = removeEdges(NV, 2*NE, tmpEdgeList); //Each edge is stored twice
     edgeListH5.clear();
     time2 = omp_get_wtime();
     printf("Number of duplicates removed: %d\n", (2*NE - newNE)/2);
@@ -294,25 +294,25 @@ void parse_EdgeListCompressedHDF5NoDuplicates(graph * G, char *fileName) {
     printf("Time for removing duplicates = %lf\n", time2 - time1);
     
     time1 = omp_get_wtime();
-    long *edgeListPtr = (long *)  malloc((NV+1) * sizeof(long));
+    comm_type *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
     assert(edgeListPtr != NULL);
     edge *edgeList = (edge *) malloc( newNE * sizeof(edge)); //Every edge stored twice
     assert( edgeList != NULL);
     time2 = omp_get_wtime();
     printf("Time for allocating memory for storing graph = %lf\n", time2 - time1);
 #pragma omp parallel for
-    for (long i=0; i <= NV; i++)
+    for (comm_type i=0; i <= NV; i++)
     edgeListPtr[i] = 0; //For first touch purposes
     
     //////Build the EdgeListPtr Array: Cumulative addition
     time1 = omp_get_wtime();
 #pragma omp parallel for
-    for(long i=0; i<newNE; i++) {
+    for(comm_type i=0; i<newNE; i++) {
         __sync_fetch_and_add(&edgeListPtr[tmpEdgeList[i].head], 1); //Nodes are 1-based indices
         //__sync_fetch_and_add(&edgeListPtr[tmpEdgeList[i].tail], 1); //Every edge stored twice
     }
     assert(edgeListPtr[0] == 0); //Make sure the vertex ids are 1-based numbers
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         edgeListPtr[i+1] += edgeListPtr[i]; //Prefix Sum:
     }
     //The last element of Cumulative will hold the total number of characters
@@ -324,20 +324,20 @@ void parse_EdgeListCompressedHDF5NoDuplicates(graph * G, char *fileName) {
     printf("About to build edgeList...\n");
     time1 = omp_get_wtime();
     //Keep track of how many edges have been added for a vertex:
-    long  *added  = (long *)  malloc( NV  * sizeof(long)); assert( added != NULL);
+    comm_type  *added  = (comm_type *)  malloc( NV  * sizeof(comm_type)); assert( added != NULL);
 #pragma omp parallel for
-    for (long i = 0; i < NV; i++)
+    for (comm_type i = 0; i < NV; i++)
     added[i] = 0;
     
     //Build the edgeList from edgeListTmp:
 #pragma omp parallel for
-    for(long i=0; i<newNE; i++) {
-        long head      = tmpEdgeList[i].head - 1;
-        long tail      = tmpEdgeList[i].tail - 1;
+    for(comm_type i=0; i<newNE; i++) {
+        comm_type head      = tmpEdgeList[i].head - 1;
+        comm_type tail      = tmpEdgeList[i].tail - 1;
         assert((head>=0)&&(tail>=0));
         assert((head<NV)&&(tail<NV));
         
-        long Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
+        comm_type Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
         edgeList[Where].head = head;
         edgeList[Where].tail = tail;
         edgeList[Where].weight = 1.0;

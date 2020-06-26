@@ -46,22 +46,22 @@
 
 using namespace std;
 
-void sumVertexDegree(edge* vtxInd, long* vtxPtr, double* vDegree, long NV, Comm* cInfo);
+void sumVertexDegree(edge* vtxInd, comm_type* vtxPtr, double* vDegree, comm_type NV, Comm* cInfo);
 
 void sumVertexDegree(edge* vtxInd, int* vtxPtr, double* vDegree, int NV, Comm* cInfo);
 
 /// Single floating point version
-void sumVertexDegree_sfp(edge* vtxInd, long* vtxPtr, f_weight* vDegree, long NV, Comm* cInfo);
+void sumVertexDegree_sfp(edge* vtxInd, comm_type* vtxPtr, f_weight* vDegree, comm_type NV, Comm* cInfo);
 
 /// Single floating point vectorized version
 void sumVertexDegreeVec_sfp(edge* vtxInd, comm_type* vtxPtr, f_weight* vDegree, comm_type NV, comm_type* cInfo_size,
                             f_weight* cInfo_degree);
-double calConstantForSecondTerm(double* vDegree, long NV);
+double calConstantForSecondTerm(double* vDegree, comm_type NV);
 
 /// Single floating point version
-f_weight calConstantForSecondTerm_sfp(f_weight* vDegree, long NV);
+f_weight calConstantForSecondTerm_sfp(f_weight* vDegree, comm_type NV);
 
-void initCommAss(long* pastCommAss, long* currCommAss, long NV);
+void initCommAss(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV);
 
 void initCommAss(int* pastCommAss, int* currCommAss, int NV);
 
@@ -69,8 +69,8 @@ void initCommAss(int* pastCommAss, int* currCommAss, int NV);
 void initCommAss_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV);
 
 /// Single floating point version
-void initCommAssOpt(long* pastCommAss, long* currCommAss, long NV,
-		    mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
+void initCommAssOpt(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV,
+		    mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
 		    Comm* cInfo, double constant, double* vDegree );
 
 /// Single floating point version
@@ -78,24 +78,24 @@ void initCommAssOpt(int* pastCommAss, int* currCommAss, int NV,
 		    mapElement* clusterLocalMap, int* vtxPtr, edge* vtxInd,
 		    Comm* cInfo, double constant, double* vDegree );
 
-void initCommAssOpt_SFP(long* pastCommAss, long* currCommAss, long NV,
-		    mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
+void initCommAssOpt_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV,
+		    mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
 		    Comm* cInfo, double constant, double* vDegree );
 
 void initCommAssOptVec_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV,
                            comm_type* cid, f_weight* Counter, comm_type* vtxPtr, comm_type* head, comm_type* tail,
                            f_weight* weights, comm_type* size, f_weight* degree, f_weight constant, f_weight* vDegree );
 
-double buildLocalMapCounter(long adj1, long adj2, map<long, long> &clusterLocalMap, 
-						  vector<double> &Counter, edge* vtxInd, long* currCommAss, long me);
+double buildLocalMapCounter(comm_type adj1, comm_type adj2, map<comm_type, comm_type> &clusterLocalMap,
+						  vector<double> &Counter, edge* vtxInd, comm_type* currCommAss, comm_type me);
 double buildLocalMapCounter(int adj1, int adj2, map<int, int> &clusterLocalMap,
 						  vector<double> &Counter, edge* vtxInd, int* currCommAss, int me);
 /// Single floating point version
 f_weight buildLocalMapCounter_sfp(comm_type adj1, comm_type adj2, map<comm_type, comm_type> &clusterLocalMap,
 						  vector<f_weight> &Counter, edge* vtxInd, comm_type* currCommAss, comm_type me);
 
-double buildLocalMapCounterNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
-                               long* currCommAss, long &numUniqueClusters);
+double buildLocalMapCounterNoMap(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
+                               comm_type* currCommAss, comm_type &numUniqueClusters);
 double buildLocalMapCounterNoMap(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
                                  comm_type* currCommAss, comm_type &numUniqueClusters);
 /// Single floating point version
@@ -107,16 +107,16 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
                                      comm_type* tail, f_weight* weights, comm_type* currCommAss,
                                      comm_type &numUniqueClusters);
 
-long max(map<long, long> &clusterLocalMap, vector<double> &Counter,
-		 double selfLoop, Comm* cInfo, double degree, long sc, double constant ) ;
+comm_type max(map<comm_type, comm_type> &clusterLocalMap, vector<double> &Counter,
+		 double selfLoop, Comm* cInfo, double degree, comm_type sc, double constant ) ;
 
 /// Single floating point version
-comm_type max_sfp(map<long, long> &clusterLocalMap, vector<f_weight> &Counter,
-         f_weight selfLoop, Comm* cInfo, f_weight degree, long sc, f_weight constant ) ;
+comm_type max_sfp(map<comm_type, comm_type> &clusterLocalMap, vector<f_weight> &Counter,
+         f_weight selfLoop, Comm* cInfo, f_weight degree, comm_type sc, f_weight constant ) ;
 
-long maxNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, double selfLoop, Comm* cInfo, double degree,
-              long sc, double constant, long numUniqueClusters );
-long maxNoMap(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, double selfLoop, Comm* cInfo, double degree,
+comm_type maxNoMap(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, double selfLoop, Comm* cInfo, double degree,
+              comm_type sc, double constant, comm_type numUniqueClusters );
+comm_type maxNoMap(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, double selfLoop, Comm* cInfo, double degree,
               comm_type sc, double constant, comm_type numUniqueClusters );
 /// Single floating point version
 comm_type maxNoMap_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, f_weight selfLoop,
@@ -127,23 +127,23 @@ comm_type maxNoMapVec_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_t
                           comm_type * cInfo_size, f_weight* cInfo_degree, f_weight degree, comm_type sc, f_weight constant,
                           comm_type numUniqueClusters );
 
-void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, long N2);
+void computeCommunityComparisons(vector<comm_type>& C1, comm_type N1, vector<comm_type>& C2, comm_type N2);
 
-double computeGiniCoefficient(long *colorSize, int numColors);
-double computeMerkinMetric(long* C1, long N1, long* C2, long N2);
-double computeVanDongenMetric(long* C1, long N1, long* C2, long N2);
+double computeGiniCoefficient(comm_type *colorSize, int numColors);
+double computeMerkinMetric(comm_type* C1, comm_type N1, comm_type* C2, comm_type N2);
+double computeVanDongenMetric(comm_type* C1, comm_type N1, comm_type* C2, comm_type N2);
 
 //Sorting functions:
-void merge(long* arr, long l, long m, long r);
-void mergeSort(long* arr, long l, long r);
+void merge(comm_type* arr, comm_type l, comm_type m, comm_type r);
+void mergeSort(comm_type* arr, comm_type l, comm_type r);
 void SortNeighborListUsingInsertionAndMergeSort(graph *G);
-long removeEdges(long NV, long NE, edge *edgeList);
-void SortEdgesUndirected(long NV, long NE, edge *list1, edge *list2, long *ptrs);
-void SortNodeEdgesByIndex(long NV, edge *list1, edge *list2, long *ptrs);
+comm_type removeEdges(comm_type NV, comm_type NE, edge *edgeList);
+void SortEdgesUndirected(comm_type NV, comm_type NE, edge *list1, edge *list2, comm_type *ptrs);
+void SortNodeEdgesByIndex(comm_type NV, edge *list1, edge *list2, comm_type *ptrs);
 
 double* computeEdgeSimilarityMetrics(graph *G);
 graph* buildSparifiedGraph(graph *Gin, double alpha);
 
-void buildOld2NewMap(long N, long *C, long *commIndex); //Build the reordering map
+void buildOld2NewMap(comm_type N, comm_type *C, comm_type *commIndex); //Build the reordering map
 
 #endif

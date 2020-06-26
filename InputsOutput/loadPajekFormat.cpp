@@ -19,7 +19,7 @@ void parse_PajekFormat(graph * G, char *fileName) {
   char line[1024];
   fgets(line, 1024, file);  
   char  LS1[25], LS2[25];
-  long NV = 0, NE=0;
+  comm_type NV = 0, NE=0;
   if (sscanf(line, "%s %s", LS1, LS2) != 2) {
     printf("parse_Pajek(): bad file format - 01");
     exit(1);
@@ -37,7 +37,7 @@ void parse_PajekFormat(graph * G, char *fileName) {
         sscanf(line, "%s", LS1);
     } while ( strcmp(LS1,"*Edges") != 0 );
     
-  //for (long i=0; i <= NV; i++) {
+  //for (comm_type i=0; i <= NV; i++) {
     //fgets(line, 1024, file);
   //}
   printf("Next line:  %s\n", line);
@@ -57,9 +57,9 @@ void parse_PajekFormat(graph * G, char *fileName) {
   /* (i , j, value ) 1-based index                                       */
   /*---------------------------------------------------------------------*/  
   edge *edgeListTmp; //Read the data in a temporary list
-  long Si, Ti;
+  comm_type Si, Ti;
   double weight = 1;
-  long edgeEstimate = NV * 1600; //25% density -- not valid for large graphs
+  comm_type edgeEstimate = NV * 1600; //25% density -- not valid for large graphs
   edgeListTmp = (edge *) malloc( edgeEstimate * sizeof(edge));
   assert(edgeListTmp != 0);
 
@@ -91,27 +91,27 @@ void parse_PajekFormat(graph * G, char *fileName) {
   printf("|V|= %ld, |E|= %ld \n", NV, NE);
   
   //Remove duplicate entries:
-  long NewEdges = removeEdges(NV, NE, edgeListTmp);
+  comm_type NewEdges = removeEdges(NV, NE, edgeListTmp);
   if (NewEdges < NE) {
     printf("Number of duplicate entries detected: %ld\n", NE-NewEdges);
     NE = NewEdges; //Only look at clean edges
   }
   
   //Allocate for Edge Pointer and keep track of degree for each vertex
-  long  *edgeListPtr = (long *)  malloc((NV+1) * sizeof(long));
+  comm_type  *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
 #pragma omp parallel for
-  for (long i=0; i <= NV; i++)
+  for (comm_type i=0; i <= NV; i++)
     edgeListPtr[i] = 0; //For first touch purposes
 
 #pragma omp parallel for
-  for(long i=0; i<NE; i++) {
+  for(comm_type i=0; i<NE; i++) {
     __sync_fetch_and_add(&edgeListPtr[edgeListTmp[i].head + 1], 1); //Plus one to take care of the zeroth location
     __sync_fetch_and_add(&edgeListPtr[edgeListTmp[i].tail + 1], 1);
   }
   
   //////Build the EdgeListPtr Array: Cumulative addition 
   time1 = omp_get_wtime();
-  for (long i=0; i<NV; i++) {
+  for (comm_type i=0; i<NV; i++) {
     edgeListPtr[i+1] += edgeListPtr[i]; //Prefix Sum:
   }
   //The last element of Cumulative will hold the total number of characters
@@ -127,9 +127,9 @@ void parse_PajekFormat(graph * G, char *fileName) {
   edge *edgeList = (edge *) malloc ((2*NE) * sizeof(edge)); //Every edge stored twice
   assert(edgeList != 0);
   //Keep track of how many edges have been added for a vertex:
-  long  *added = (long *)  malloc (NV * sizeof(long)); assert (added != 0);
+  comm_type  *added = (comm_type *)  malloc (NV * sizeof(comm_type)); assert (added != 0);
 #pragma omp parallel for
-  for (long i = 0; i < NV; i++) 
+  for (comm_type i = 0; i < NV; i++)
     added[i] = 0;
   time2 = omp_get_wtime();  
   printf("Time for allocating memory for edgeList = %lf\n", time2 - time1);
@@ -139,12 +139,12 @@ void parse_PajekFormat(graph * G, char *fileName) {
   printf("About to build edgeList...\n");
   //Build the edgeList from edgeListTmp:
 #pragma omp parallel for
-  for(long i=0; i<NE; i++) {
-    long head  = edgeListTmp[i].head;
-    long tail  = edgeListTmp[i].tail;
+  for(comm_type i=0; i<NE; i++) {
+    comm_type head  = edgeListTmp[i].head;
+    comm_type tail  = edgeListTmp[i].tail;
     double weight      = edgeListTmp[i].weight;
     
-    long Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);   
+    comm_type Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
     edgeList[Where].head = head; 
     edgeList[Where].tail = tail;
     edgeList[Where].weight = weight;
@@ -192,7 +192,7 @@ void parse_PajekFormatUndirected(graph * G, char *fileName) {
   char line[1024];
   fgets(line, 1024, file);  
   char  LS1[25], LS2[25];
-  long NV = 0, NE=0;
+  comm_type NV = 0, NE=0;
   if (sscanf(line, "%s %s", LS1, LS2) != 2) {
     printf("parse_Pajek(): bad file format - 01");
     exit(1);
@@ -217,9 +217,9 @@ void parse_PajekFormatUndirected(graph * G, char *fileName) {
   /*---------------------------------------------------------------------*/
   
   edge *edgeListTmp; //Read the data in a temporary list
-  long Si, Ti;
+  comm_type Si, Ti;
   double weight = 1;
-  long edgeEstimate = NV * NV / 8; //12.5% density -- not valid for dense graphs
+  comm_type edgeEstimate = NV * NV / 8; //12.5% density -- not valid for dense graphs
   edgeListTmp = (edge *) malloc( edgeEstimate * sizeof(edge));
 
   //while (fscanf(file, "%ld %ld %lf", &Si, &Ti, &weight) != EOF) {
@@ -242,7 +242,7 @@ void parse_PajekFormatUndirected(graph * G, char *fileName) {
   
   //Remove duplicate entries:
   /*
-  long NewEdges = removeEdges(NV, NE, edgeListTmp);
+  comm_type NewEdges = removeEdges(NV, NE, edgeListTmp);
   if (NewEdges < NE) {
     printf("Number of duplicate entries detected: %ld\n", NE-NewEdges);
     NE = NewEdges; //Only look at clean edges
@@ -251,22 +251,22 @@ void parse_PajekFormatUndirected(graph * G, char *fileName) {
   */
 
   //Allocate for Edge Pointer and keep track of degree for each vertex
-  long  *edgeListPtr = (long *) malloc((NV+1) * sizeof(long));
+  comm_type  *edgeListPtr = (comm_type *) malloc((NV+1) * sizeof(comm_type));
   assert(edgeListPtr != 0);
 
 #pragma omp parallel for
-  for (long i=0; i <= NV; i++) {
+  for (comm_type i=0; i <= NV; i++) {
     edgeListPtr[i] = 0; //For first touch purposes
   }
 #pragma omp parallel for
-  for(long i=0; i<NE; i++) {
+  for(comm_type i=0; i<NE; i++) {
     __sync_fetch_and_add(&edgeListPtr[edgeListTmp[i].head + 1], 1); //Plus one to take care of the zeroth location
     //__sync_fetch_and_add(&edgeListPtr[edgeListTmp[i].tail + 1], 1); //No need
   }
   
   //////Build the EdgeListPtr Array: Cumulative addition 
   time1 = omp_get_wtime();
-  for (long i=0; i<NV; i++) {
+  for (comm_type i=0; i<NV; i++) {
     edgeListPtr[i+1] += edgeListPtr[i]; //Prefix Sum:
   }
   //The last element of Cumulative will hold the total number of characters
@@ -281,9 +281,9 @@ void parse_PajekFormatUndirected(graph * G, char *fileName) {
   edge *edgeList = (edge *) malloc( NE * sizeof(edge)); //Every edge stored twice
   assert(edgeList != 0);
   //Keep track of how many edges have been added for a vertex:
-  long  *added    = (long *)  malloc( NV  * sizeof(long)); assert (added != 0);
+  comm_type  *added    = (comm_type *)  malloc( NV  * sizeof(comm_type)); assert (added != 0);
  #pragma omp parallel for
-  for (long i = 0; i < NV; i++) 
+  for (comm_type i = 0; i < NV; i++)
     added[i] = 0;
   
   time2 = omp_get_wtime();
@@ -294,12 +294,12 @@ void parse_PajekFormatUndirected(graph * G, char *fileName) {
   printf("About to build edgeList...\n");
   //Build the edgeList from edgeListTmp:
 #pragma omp parallel for
-  for(long i=0; i<NE; i++) {
-    long head  = edgeListTmp[i].head;
-    long tail  = edgeListTmp[i].tail;
+  for(comm_type i=0; i<NE; i++) {
+    comm_type head  = edgeListTmp[i].head;
+    comm_type tail  = edgeListTmp[i].tail;
     double weight      = edgeListTmp[i].weight;
     
-    long Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);   
+    comm_type Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
     edgeList[Where].head = head; 
     edgeList[Where].tail = tail;
     edgeList[Where].weight = weight;

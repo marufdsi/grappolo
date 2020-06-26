@@ -45,19 +45,19 @@ using namespace std;
 
 //WARNING: Will overwrite the old cluster vector
 //Returns the number of unique clusters
-long renumberClustersContiguously(long *C, long size) {
+comm_type renumberClustersContiguously(comm_type *C, comm_type size) {
 #ifdef PRINT_DETAILED_STATS_
     printf("Within renumberClustersContiguously()\n");
 #endif
     double time1 = omp_get_wtime();
     //Count the number of unique communities and internal edges
-    map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
-    map<long, long>::iterator storedAlready;
-    long numUniqueClusters = 0;
+    map<comm_type, comm_type> clusterLocalMap; //Map each neighbor's cluster to a local number
+    map<comm_type, comm_type>::iterator storedAlready;
+    comm_type numUniqueClusters = 0;
     
     //Do this loop in serial
     //Will overwrite the old cluster id with the new cluster id
-    for(long i=0; i<size; i++) {
+    for(comm_type i=0; i<size; i++) {
         assert(C[i]<size);
         if (C[i] >= 0) { //Only if it is a valid number
             storedAlready = clusterLocalMap.find(C[i]); //Check if it already exists
@@ -80,7 +80,7 @@ long renumberClustersContiguously(long *C, long size) {
 
 //WARNING: Will assume that the cluster id have been renumbered contiguously
 //Return the total time for building the next level of graph
-double buildNextLevelGraphOpt(graph *Gin, graph *Gout, long *C, long numUniqueClusters, int nThreads) {
+double buildNextLevelGraphOpt(graph *Gin, graph *Gout, comm_type *C, comm_type numUniqueClusters, int nThreads) {
     
 #ifdef PRINT_DETAILED_STATS_
     printf("Within buildNextLevelGraphOpt(): # of unique clusters= %ld\n",numUniqueClusters);
@@ -97,33 +97,33 @@ double buildNextLevelGraphOpt(graph *Gin, graph *Gout, long *C, long numUniqueCl
 #ifdef PRINT_DETAILED_STATS_
     printf("Actual number of threads: %d (requested: %d)\n", nT, nThreads);
 #endif
-    long percentange = 80;
+    comm_type percentange = 80;
     double time1, time2, TotTime=0; //For timing purposes
     double total = 0, totItr = 0;
     //Pointers into the input graph structure:
-    long    NV_in        = Gin->numVertices;
-    long    NE_in        = Gin->numEdges;
+    comm_type    NV_in        = Gin->numVertices;
+    comm_type    NE_in        = Gin->numEdges;
     comm_type    *vtxPtrIn    = Gin->edgeListPtrs;
     edge    *vtxIndIn    = Gin->edgeList;
     
     time1 = omp_get_wtime();
     // Pointers into the output graph structure
-    long NV_out = numUniqueClusters;
-    long NE_out = 0;
+    comm_type NV_out = numUniqueClusters;
+    comm_type NE_out = 0;
     comm_type *vtxPtrOut = (comm_type *) malloc ((NV_out+1)*sizeof(comm_type)); assert(vtxPtrOut != 0);
     vtxPtrOut[0] = 0; //First location is always a zero
     /* Step 1 : Regroup the node into cluster node */
-    map<long,double>** cluPtrIn = (map<long,double>**) malloc (numUniqueClusters*sizeof(map<long,double>*));
+    map<comm_type,double>** cluPtrIn = (map<comm_type,double>**) malloc (numUniqueClusters*sizeof(map<comm_type,double>*));
     assert(cluPtrIn != 0);
     
 #pragma omp parallel for
-    for (long i=0; i<numUniqueClusters; i++) {
-        cluPtrIn[i] = new map<long,double>();
+    for (comm_type i=0; i<numUniqueClusters; i++) {
+        cluPtrIn[i] = new map<comm_type,double>();
         (*(cluPtrIn[i]))[i] = 0; //Add for a self loop with zero weight
     }
     
 #pragma omp parallel for
-    for (long i=1; i<=NV_out; i++)
+    for (comm_type i=1; i<=NV_out; i++)
         vtxPtrOut[i] = 1; //Count self-loops for every vertex
     
     //Create an array of locks for each cluster
@@ -131,7 +131,7 @@ double buildNextLevelGraphOpt(graph *Gin, graph *Gout, long *C, long numUniqueCl
     assert(nlocks != 0);
     
 #pragma omp parallel for
-    for (long i=0; i<numUniqueClusters; i++) {
+    for (comm_type i=0; i<numUniqueClusters; i++) {
         omp_init_lock(&nlocks[i]); //Initialize locks
     }
     time2 = omp_get_wtime();
@@ -143,22 +143,22 @@ double buildNextLevelGraphOpt(graph *Gin, graph *Gout, long *C, long numUniqueCl
     time1 = omp_get_wtime();
     
 #pragma omp parallel for
-    for (long i=0; i<NV_in; i++) {
-        long adj1 = vtxPtrIn[i];
-        long adj2 = vtxPtrIn[i+1];
-        map<long, double>::iterator localIterator;
+    for (comm_type i=0; i<NV_in; i++) {
+        comm_type adj1 = vtxPtrIn[i];
+        comm_type adj2 = vtxPtrIn[i+1];
+        map<comm_type, double>::iterator localIterator;
         assert(C[i] < numUniqueClusters);
         //Now look for all the neighbors of this cluster
         
-        for(long j=adj1; j<adj2; j++) {
-            long tail = vtxIndIn[j].tail;
+        for(comm_type j=adj1; j<adj2; j++) {
+            comm_type tail = vtxIndIn[j].tail;
             assert(C[tail] < numUniqueClusters);
             //Add the edge from one endpoint
             if(C[i] >= C[tail]) {
                 omp_set_lock(&nlocks[C[i]]);  // Locking the cluster
                 localIterator = cluPtrIn[C[i]]->find(C[tail]); //Check if it exists
                 if( localIterator != cluPtrIn[C[i]]->end() ) {	//Already exists
-                    //				  (*(cluPtrIn[C[i]]))[C[tail]] += (long)vtxIndIn[j].weight;
+                    //				  (*(cluPtrIn[C[i]]))[C[tail]] += (comm_type)vtxIndIn[j].weight;
                     localIterator->second += vtxIndIn[j].weight;
                 } else {
                     (*(cluPtrIn[C[i]]))[C[tail]] = vtxIndIn[j].weight; //Add edge i-->j
@@ -174,7 +174,7 @@ double buildNextLevelGraphOpt(graph *Gin, graph *Gout, long *C, long numUniqueCl
     }//End of for(i)
     
     //Prefix sum:
-    for(long i=0; i<NV_out; i++) {
+    for(comm_type i=0; i<NV_out; i++) {
         vtxPtrOut[i+1] += vtxPtrOut[i];
     }
     
@@ -189,23 +189,23 @@ double buildNextLevelGraphOpt(graph *Gin, graph *Gout, long *C, long numUniqueCl
     time1 = omp_get_wtime();
     
     // Step 3 : build the edge list:
-    long numEdges   = vtxPtrOut[NV_out];
-    long realEdges  = numEdges - NE_out; //Self-loops appear once, others appear twice
+    comm_type numEdges   = vtxPtrOut[NV_out];
+    comm_type realEdges  = numEdges - NE_out; //Self-loops appear once, others appear twice
     edge *vtxIndOut = (edge *) malloc (numEdges * sizeof(edge));
     assert (vtxIndOut != 0);
-    long *Added = (long *) malloc (NV_out * sizeof(long)); //Keep track of what got added
+    comm_type *Added = (comm_type *) malloc (NV_out * sizeof(comm_type)); //Keep track of what got added
     assert (Added != 0);
     
 #pragma omp parallel for
-    for (long i=0; i<NV_out; i++) {
+    for (comm_type i=0; i<NV_out; i++) {
         Added[i] = 0;
     }
     
     //Now add the edges in no particular order
 #pragma omp parallel for
-    for (long i=0; i<NV_out; i++) {
-        long Where;
-        map<long, double>::iterator localIterator = cluPtrIn[i]->begin();
+    for (comm_type i=0; i<NV_out; i++) {
+        comm_type Where;
+        map<comm_type, double>::iterator localIterator = cluPtrIn[i]->begin();
         //Now go through the other edges:
         while ( localIterator != cluPtrIn[i]->end()) {
             Where = vtxPtrOut[i] + __sync_fetch_and_add(&Added[i], 1);
@@ -241,12 +241,12 @@ double buildNextLevelGraphOpt(graph *Gin, graph *Gout, long *C, long numUniqueCl
     //Clean up
     free(Added);
 #pragma omp parallel for
-    for (long i=0; i<numUniqueClusters; i++)
+    for (comm_type i=0; i<numUniqueClusters; i++)
         delete cluPtrIn[i];
     free(cluPtrIn);
     
 #pragma omp parallel for
-    for (long i=0; i<numUniqueClusters; i++) {
+    for (comm_type i=0; i<numUniqueClusters; i++) {
         omp_destroy_lock(&nlocks[i]);
     }
     free(nlocks);
@@ -255,7 +255,7 @@ double buildNextLevelGraphOpt(graph *Gin, graph *Gout, long *C, long numUniqueCl
 }//End of buildNextLevelGraph2()
 
 /// Single floating point version
-double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniqueClusters, int nThreads) {
+double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, comm_type *C, comm_type numUniqueClusters, int nThreads) {
 
 #ifdef PRINT_DETAILED_STATS_
     printf("Within buildNextLevelGraphOpt(): # of unique clusters= %ld\n",numUniqueClusters);
@@ -272,33 +272,33 @@ double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniq
 #ifdef PRINT_DETAILED_STATS_
     printf("Actual number of threads: %d (requested: %d)\n", nT, nThreads);
 #endif
-    long percentange = 80;
+    comm_type percentange = 80;
     double time1, time2, TotTime=0; //For timing purposes
     double total = 0, totItr = 0;
     //Pointers into the input graph structure:
-    long    NV_in        = Gin->numVertices;
-    long    NE_in        = Gin->numEdges;
+    comm_type    NV_in        = Gin->numVertices;
+    comm_type    NE_in        = Gin->numEdges;
     comm_type    *vtxPtrIn    = Gin->edgeListPtrs;
     edge    *vtxIndIn    = Gin->edgeList;
 
     time1 = omp_get_wtime();
     // Pointers into the output graph structure
-    long NV_out = numUniqueClusters;
-    long NE_out = 0;
+    comm_type NV_out = numUniqueClusters;
+    comm_type NE_out = 0;
     comm_type *vtxPtrOut = (comm_type *) malloc ((NV_out+1)*sizeof(comm_type)); assert(vtxPtrOut != 0);
     vtxPtrOut[0] = 0; //First location is always a zero
     /* Step 1 : Regroup the node into cluster node */
-    map<long,f_weight>** cluPtrIn = (map<long,f_weight>**) malloc (numUniqueClusters*sizeof(map<long,f_weight>*));
+    map<comm_type,f_weight>** cluPtrIn = (map<comm_type,f_weight>**) malloc (numUniqueClusters*sizeof(map<comm_type,f_weight>*));
     assert(cluPtrIn != 0);
 
 #pragma omp parallel for
-    for (long i=0; i<numUniqueClusters; i++) {
-        cluPtrIn[i] = new map<long,f_weight>();
+    for (comm_type i=0; i<numUniqueClusters; i++) {
+        cluPtrIn[i] = new map<comm_type,f_weight>();
         (*(cluPtrIn[i]))[i] = 0; //Add for a self loop with zero weight
     }
 
 #pragma omp parallel for
-    for (long i=1; i<=NV_out; i++)
+    for (comm_type i=1; i<=NV_out; i++)
         vtxPtrOut[i] = 1; //Count self-loops for every vertex
 
     //Create an array of locks for each cluster
@@ -306,7 +306,7 @@ double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniq
     assert(nlocks != 0);
 
 #pragma omp parallel for
-    for (long i=0; i<numUniqueClusters; i++) {
+    for (comm_type i=0; i<numUniqueClusters; i++) {
         omp_init_lock(&nlocks[i]); //Initialize locks
     }
     time2 = omp_get_wtime();
@@ -318,22 +318,22 @@ double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniq
     time1 = omp_get_wtime();
 
 #pragma omp parallel for
-    for (long i=0; i<NV_in; i++) {
-        long adj1 = vtxPtrIn[i];
-        long adj2 = vtxPtrIn[i+1];
-        map<long, f_weight>::iterator localIterator;
+    for (comm_type i=0; i<NV_in; i++) {
+        comm_type adj1 = vtxPtrIn[i];
+        comm_type adj2 = vtxPtrIn[i+1];
+        map<comm_type, f_weight>::iterator localIterator;
         assert(C[i] < numUniqueClusters);
         //Now look for all the neighbors of this cluster
 
-        for(long j=adj1; j<adj2; j++) {
-            long tail = vtxIndIn[j].tail;
+        for(comm_type j=adj1; j<adj2; j++) {
+            comm_type tail = vtxIndIn[j].tail;
             assert(C[tail] < numUniqueClusters);
             //Add the edge from one endpoint
             if(C[i] >= C[tail]) {
                 omp_set_lock(&nlocks[C[i]]);  // Locking the cluster
                 localIterator = cluPtrIn[C[i]]->find(C[tail]); //Check if it exists
                 if( localIterator != cluPtrIn[C[i]]->end() ) {	//Already exists
-                    //				  (*(cluPtrIn[C[i]]))[C[tail]] += (long)vtxIndIn[j].weight;
+                    //				  (*(cluPtrIn[C[i]]))[C[tail]] += (comm_type)vtxIndIn[j].weight;
                     localIterator->second += vtxIndIn[j].weight;
                 } else {
                     (*(cluPtrIn[C[i]]))[C[tail]] = vtxIndIn[j].weight; //Add edge i-->j
@@ -349,7 +349,7 @@ double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniq
     }//End of for(i)
 
     //Prefix sum:
-    for(long i=0; i<NV_out; i++) {
+    for(comm_type i=0; i<NV_out; i++) {
         vtxPtrOut[i+1] += vtxPtrOut[i];
     }
 
@@ -364,23 +364,23 @@ double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniq
     time1 = omp_get_wtime();
 
     // Step 3 : build the edge list:
-    long numEdges   = vtxPtrOut[NV_out];
-    long realEdges  = numEdges - NE_out; //Self-loops appear once, others appear twice
+    comm_type numEdges   = vtxPtrOut[NV_out];
+    comm_type realEdges  = numEdges - NE_out; //Self-loops appear once, others appear twice
     edge *vtxIndOut = (edge *) malloc (numEdges * sizeof(edge));
     assert (vtxIndOut != 0);
-    long *Added = (long *) malloc (NV_out * sizeof(long)); //Keep track of what got added
+    comm_type *Added = (comm_type *) malloc (NV_out * sizeof(comm_type)); //Keep track of what got added
     assert (Added != 0);
 
 #pragma omp parallel for
-    for (long i=0; i<NV_out; i++) {
+    for (comm_type i=0; i<NV_out; i++) {
         Added[i] = 0;
     }
 
     //Now add the edges in no particular order
 #pragma omp parallel for
-    for (long i=0; i<NV_out; i++) {
-        long Where;
-        map<long, f_weight>::iterator localIterator = cluPtrIn[i]->begin();
+    for (comm_type i=0; i<NV_out; i++) {
+        comm_type Where;
+        map<comm_type, f_weight>::iterator localIterator = cluPtrIn[i]->begin();
         //Now go through the other edges:
         while ( localIterator != cluPtrIn[i]->end()) {
             Where = vtxPtrOut[i] + __sync_fetch_and_add(&Added[i], 1);
@@ -416,12 +416,12 @@ double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniq
     //Clean up
     free(Added);
 #pragma omp parallel for
-    for (long i=0; i<numUniqueClusters; i++)
+    for (comm_type i=0; i<numUniqueClusters; i++)
         delete cluPtrIn[i];
     free(cluPtrIn);
 
 #pragma omp parallel for
-    for (long i=0; i<numUniqueClusters; i++) {
+    for (comm_type i=0; i<numUniqueClusters; i++) {
         omp_destroy_lock(&nlocks[i]);
     }
     free(nlocks);
@@ -430,21 +430,21 @@ double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniq
 }//End of buildNextLevelGraph2()
 
 //WARNING: Will assume that the cluster ids have been renumbered contiguously
-void buildNextLevelGraph(graph *Gin, graph *Gout, long *C, long numUniqueClusters) {
+void buildNextLevelGraph(graph *Gin, graph *Gout, comm_type *C, comm_type numUniqueClusters) {
 #ifdef PRINT_DETAILED_STATS_
     printf("Within buildNextLevelGraph() with numUC:%ld\n",numUniqueClusters);
 #endif
     double time1, time2, time3, time4; //For timing purposes
     double total = 0, totItr = 0;
-    long percentange = 80;
+    comm_type percentange = 80;
     //Pointers into the input graph structure:
-    long    NV_in        = Gin->numVertices;
-    long    NE_in        = Gin->numEdges;
+    comm_type    NV_in        = Gin->numVertices;
+    comm_type    NE_in        = Gin->numEdges;
     comm_type    *vtxPtrIn    = Gin->edgeListPtrs;
     edge    *vtxIndIn    = Gin->edgeList;
     
-    long vecSize = (numUniqueClusters*(numUniqueClusters+1))/2;
-    long *tmpCounter = (long *) malloc ( vecSize * sizeof(long));
+    comm_type vecSize = (numUniqueClusters*(numUniqueClusters+1))/2;
+    comm_type *tmpCounter = (comm_type *) malloc ( vecSize * sizeof(comm_type));
     assert(tmpCounter != 0);
     
     /////STEP-1: Count the number of internal edges and cut edges (edges between two clusters):
@@ -452,23 +452,23 @@ void buildNextLevelGraph(graph *Gin, graph *Gout, long *C, long numUniqueCluster
     ///// The diagonal entries in the matrix store the number of internal edges of a cluster
     ///// Off-diagonal entries are from i-->j iff i>j
 #pragma omp parallel for
-    for (long i=0; i<vecSize; i++)
+    for (comm_type i=0; i<vecSize; i++)
         tmpCounter[i] = 0;
     
 #pragma omp parallel for
-    for (long i=0; i<NV_in; i++) {
-        long adj1 = vtxPtrIn[i];
-        long adj2 = vtxPtrIn[i+1];
-        for(long j=adj1; j<adj2; j++) {
-            long tail = vtxIndIn[j].tail;
+    for (comm_type i=0; i<NV_in; i++) {
+        comm_type adj1 = vtxPtrIn[i];
+        comm_type adj2 = vtxPtrIn[i+1];
+        for(comm_type j=adj1; j<adj2; j++) {
+            comm_type tail = vtxIndIn[j].tail;
             assert((C[i] < numUniqueClusters)&&(C[tail] < numUniqueClusters));
             if(C[i] == C[tail]) { //Internal edge
-                long location = (C[i]*(C[i]+1))/2 + C[i]; //Diagonal element
+                comm_type location = (C[i]*(C[i]+1))/2 + C[i]; //Diagonal element
                 __sync_fetch_and_add(&tmpCounter[location], vtxIndIn[j].weight);
             } else {
                 //One store it one way: if C[i] > C[tail]
                 if(C[i] > C[tail] ) {
-                    long location = (C[i]*(C[i]+1))/2 + C[tail];
+                    comm_type location = (C[i]*(C[i]+1))/2 + C[tail];
                     __sync_fetch_and_add(&tmpCounter[location], vtxIndIn[j].weight);
                 }//End of if
             }//End of else
@@ -476,20 +476,20 @@ void buildNextLevelGraph(graph *Gin, graph *Gout, long *C, long numUniqueCluster
     }//End of for(i)
     
     /////STEP-2: Build the graph data structure:
-    long NV_out = numUniqueClusters;
-    long NE_out = 0;
+    comm_type NV_out = numUniqueClusters;
+    comm_type NE_out = 0;
     comm_type *vtxPtrOut = (comm_type *) malloc ((NV_out+1)*sizeof(comm_type));
     assert(vtxPtrOut != 0);
     vtxPtrOut[0] = 0; //First location is always a zero
 #pragma omp parallel for
-    for (long i=1; i<=NV_out; i++)
+    for (comm_type i=1; i<=NV_out; i++)
         vtxPtrOut[i] = 1; //Count self loops
     
     //Count the number of edges:
 #pragma omp parallel for
-    for (long i=0; i<NV_out; i++) {
-        long location = (i*(i+1))/2; //Starting location for i
-        for (long j=0; j<i; j++) {
+    for (comm_type i=0; i<NV_out; i++) {
+        comm_type location = (i*(i+1))/2; //Starting location for i
+        for (comm_type j=0; j<i; j++) {
             if(i == j)
                 continue; //Self-loops have already been counted
             if (tmpCounter[location+j] > 0) {
@@ -501,26 +501,26 @@ void buildNextLevelGraph(graph *Gin, graph *Gout, long *C, long numUniqueCluster
     }//End of for(i)
     
     //Prefix sum:
-    for(long i=0; i<NV_out; i++) {
+    for(comm_type i=0; i<NV_out; i++) {
         vtxPtrOut[i+1] += vtxPtrOut[i];
     }
     //printf("End Structure %ld %ld vs %ld\n",NE_out, NV_out, vtxPtrOut[NV_out]);
     assert(vtxPtrOut[NV_out] == (NE_out*2+NV_out)); //Sanity check
     
     //Now build the edge list:
-    long numEdges = NE_out*2 + NV_out; //Self-loops appear once, others appear twice
+    comm_type numEdges = NE_out*2 + NV_out; //Self-loops appear once, others appear twice
     edge *vtxIndOut = (edge *) malloc (numEdges * sizeof(edge));
-    long *Added = (long *) malloc (NV_out * sizeof(long)); //Keep track of what got added
+    comm_type *Added = (comm_type *) malloc (NV_out * sizeof(comm_type)); //Keep track of what got added
 #pragma omp parallel for
-    for (long i=0; i<NV_out; i++)
+    for (comm_type i=0; i<NV_out; i++)
         Added[i] = 0;
     
     //Now add the edges: NOT IN SORTED ORDER
 #pragma omp parallel for
-    for (long i=0; i<NV_out; i++) {
-        long location = (i*(i+1))/2; //Starting location for i
+    for (comm_type i=0; i<NV_out; i++) {
+        comm_type location = (i*(i+1))/2; //Starting location for i
         //Add the self-loop: i-i
-        long Where = vtxPtrOut[i] + __sync_fetch_and_add(&Added[i], 1);
+        comm_type Where = vtxPtrOut[i] + __sync_fetch_and_add(&Added[i], 1);
         
         vtxIndOut[Where].head = i;
         vtxIndOut[Where].tail = i;
@@ -531,7 +531,7 @@ void buildNextLevelGraph(graph *Gin, graph *Gout, long *C, long numUniqueCluster
         }
         vtxIndOut[Where].weight = tmpCounter[location+i];
         //Now go through the other edges:
-        for (long j=0; j<i; j++) {
+        for (comm_type j=0; j<i; j++) {
             if (tmpCounter[location+j] > 0) {
                 Where = vtxPtrOut[i] + __sync_fetch_and_add(&Added[i], 1);
                 vtxIndOut[Where].head = i; //Head
@@ -566,23 +566,23 @@ void buildNextLevelGraph(graph *Gin, graph *Gout, long *C, long numUniqueCluster
 
 //This code is for finding communities in power grids based on
 //voltage levels of nodes. All nodes in a connected components with 
-//the same voltage belong to a community: Complexity is O(|E|)
-long buildCommunityBasedOnVoltages(graph *G, long *Volts, long *C, long *Cvolts) {  
+//the same voltage becomm_type to a community: Complexity is O(|E|)
+comm_type buildCommunityBasedOnVoltages(graph *G, comm_type *Volts, comm_type *C, comm_type *Cvolts) {
     /* Graph data structure */
-    long    NV        = G->numVertices;
-    long    NE        = G->numEdges;
+    comm_type    NV        = G->numVertices;
+    comm_type    NE        = G->numEdges;
     comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("|V|=%ld,  |E|=%ld\n", NV, NE);
     
     short *Visited = (short *) malloc (NV * sizeof(short));
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         C[i] = -1;
         Visited[i] = 0;
     }
-    long myCommunity = 0;
+    comm_type myCommunity = 0;
     bool found = false; //Make sure that a community with no vertices does not exist
-    for (long v=0; v<NV; v++) {
+    for (comm_type v=0; v<NV; v++) {
         if (Visited[v] > 0) //Already visited
             continue;
         //Find the community of this vertex
@@ -602,17 +602,17 @@ long buildCommunityBasedOnVoltages(graph *G, long *Volts, long *C, long *Cvolts)
 }
 
 //Recursive call for finding neighbors
-inline void Visit(long v, long myCommunity, short *Visited, long *Volts, 
-                  long* vtxPtr, edge* vtxInd, long *C) {
+inline void Visit(comm_type v, comm_type myCommunity, short *Visited, comm_type *Volts,
+                  comm_type* vtxPtr, edge* vtxInd, comm_type *C) {
     printf("Visit(%ld)\n", v);
-    long adj1 = vtxPtr[v];   //Begining
-    long adj2 = vtxPtr[v+1]; //End
-    for(long i=adj1; i<adj2; i++) {
-        long w = vtxInd[i].tail;
+    comm_type adj1 = vtxPtr[v];   //Begining
+    comm_type adj2 = vtxPtr[v+1]; //End
+    for(comm_type i=adj1; i<adj2; i++) {
+        comm_type w = vtxInd[i].tail;
         if (Visited[w] != 0) { //Already visited?
             continue;
         }
-        if (Volts[v] == Volts[w]) { //belong to the same community
+        if (Volts[v] == Volts[w]) { //becomm_type to the same community
             C[w] = myCommunity; //Set the community
             Visited[w] = 1; //Mark as visited
             Visit(w, myCommunity, Visited, Volts, vtxPtr, vtxInd, C); //Find others recursively
@@ -620,25 +620,25 @@ inline void Visit(long v, long myCommunity, short *Visited, long *Volts,
     }//End of for(i)
 }//End of Visit
 
-void segregateEdgesBasedOnVoltages(graph *G, long *Volts) {	
+void segregateEdgesBasedOnVoltages(graph *G, comm_type *Volts) {
     /* Graph data structure */
-    long    NV        = G->numVertices;
-    long    NE        = G->numEdges;
+    comm_type    NV        = G->numVertices;
+    comm_type    NE        = G->numEdges;
     comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("|V|=%ld,  |E|=%ld\n", NV, NE);
     
     //Count the number of unique communities and internal edges
-    map<long, long> voltsMap; //Map each neighbor's cluster to a local number
-    map<long, long>::iterator storedAlready;
+    map<comm_type, comm_type> voltsMap; //Map each neighbor's cluster to a local number
+    map<comm_type, comm_type>::iterator storedAlready;
     
     //voltsMap[0] = 0;
-    //long numUniqueVolts = 1;
+    //comm_type numUniqueVolts = 1;
     
-    long numUniqueVolts = 0;
+    comm_type numUniqueVolts = 0;
     //Do this loop in serial
     //Will overwrite the old cluster id with the new cluster id
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         storedAlready = voltsMap.find(Volts[i]); //Check if it already exists
         if( storedAlready == voltsMap.end() ) {	//Does not exist, add to the map
             voltsMap[Volts[i]] = numUniqueVolts;
@@ -650,13 +650,13 @@ void segregateEdgesBasedOnVoltages(graph *G, long *Volts) {
     printf("Printing edges of a given voltage: \n");
     storedAlready = voltsMap.begin();
     do {
-        long myVolt = storedAlready->first;
+        comm_type myVolt = storedAlready->first;
         printf("All edges with both end-points of Volt: %ld\n", myVolt);
-        for (long v=0; v<NV; v++) {
-            long adj1 = vtxPtr[v];
-            long adj2 = vtxPtr[v+1];
-            for(long j=adj1; j<adj2; j++) {
-                long w = vtxInd[j].tail;
+        for (comm_type v=0; v<NV; v++) {
+            comm_type adj1 = vtxPtr[v];
+            comm_type adj2 = vtxPtr[v+1];
+            for(comm_type j=adj1; j<adj2; j++) {
+                comm_type w = vtxInd[j].tail;
                 if ((Volts[v]==myVolt)&&(Volts[w]==myVolt)) {
                     //printf("%ld %ld %ld %ld\n", v+1, w+1, Volts[v], Volts[w]);
                     printf("%ld %ld %ld\n", v+1, w+1, Volts[v]);

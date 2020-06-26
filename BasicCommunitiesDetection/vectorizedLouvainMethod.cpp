@@ -78,16 +78,16 @@ f_weight parallelLouvianMethod_SFP(graph *G, comm_type *C, int nThreads, f_weigh
     edge    *vtxInd   = G->edgeList;
 
     comm_type nnz = 0;
-    for (long i=0; i<NV; i++) {
-        long adj1 = vtxPtr[i];        //Begin
-        long adj2 = vtxPtr[i + 1];    //End
-        for (long j = adj1; j < adj2; j++) {
+    for (comm_type i=0; i<NV; i++) {
+        comm_type adj1 = vtxPtr[i];        //Begin
+        comm_type adj2 = vtxPtr[i + 1];    //End
+        for (comm_type j = adj1; j < adj2; j++) {
             nnz++;
         }
     }
     cout << "NNZ: " << nnz << " NE: " << NE << " twice NE: " << (2*NE) << endl;
     /* Variables for computing modularity */
-    long totalEdgeWeightTwice;
+    comm_type totalEdgeWeightTwice;
     f_weight constantForSecondTerm;
     f_weight prevMod=-1;
     f_weight currMod=-1;
@@ -138,15 +138,15 @@ f_weight parallelLouvianMethod_SFP(graph *G, comm_type *C, int nThreads, f_weigh
 
     //Community assignments:
     //Store previous iteration's community assignment
-    comm_type* pastCommAss; // = (long *) malloc (NV * sizeof(long));
+    comm_type* pastCommAss; // = (comm_type *) malloc (NV * sizeof(comm_type));
     posix_memalign((void **) &pastCommAss, alignment, NV * sizeof(comm_type));
     assert(pastCommAss != 0);
     //Store current community assignment
-    comm_type* currCommAss; // = (long *) malloc (NV * sizeof(long));
+    comm_type* currCommAss; // = (comm_type *) malloc (NV * sizeof(comm_type));
     posix_memalign((void **) &currCommAss, alignment, NV * sizeof(comm_type));
     assert(currCommAss != 0);
     //Store the target of community assignment
-    comm_type* targetCommAss; // = (long *) malloc (NV * sizeof(long));
+    comm_type* targetCommAss; // = (comm_type *) malloc (NV * sizeof(comm_type));
     posix_memalign((void **) &targetCommAss, alignment, NV * sizeof(comm_type));
     assert(targetCommAss != 0);
 
@@ -216,8 +216,8 @@ f_weight parallelLouvianMethod_SFP(graph *G, comm_type *C, int nThreads, f_weigh
             comm_type adj2 = vtxPtr[i+1];
             f_weight selfLoop = 0;
             //Build a datastructure to hold the cluster structure of its neighbors
-//            map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
-//            map<long, long>::iterator storedAlready;
+//            map<comm_type, comm_type> clusterLocalMap; //Map each neighbor's cluster to a local number
+//            map<comm_type, comm_type>::iterator storedAlready;
 //            vector<f_weight> Counter; //Number of edges in each unique cluster
             comm_type numUniqueClusters = 0;
             //Add v's current cluster:
@@ -269,7 +269,7 @@ f_weight parallelLouvianMethod_SFP(graph *G, comm_type *C, int nThreads, f_weigh
 
 #pragma omp parallel for \
 reduction(+:e_xx) reduction(+:a2_x)
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             e_xx += clusterWeightInternal[i];
             a2_x += (cInfo_degree[i])*(cInfo_degree[i]);
         }
@@ -298,7 +298,7 @@ reduction(+:e_xx) reduction(+:a2_x)
         if(prevMod < Lower)
             prevMod = Lower;
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             cInfo_size[i] += cUpdate_size[i];
             cInfo_degree[i] += cUpdate_degree[i];
         }
@@ -328,7 +328,7 @@ reduction(+:e_xx) reduction(+:a2_x)
     //Store back the community assignments in the input variable:
     //Note: No matter when the while loop exits, we are interested in the previous assignment
 #pragma omp parallel for
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
 //        C[i] = pastCommAss[i];
         C[i] = currCommAss[i];
     }
@@ -355,7 +355,7 @@ reduction(+:e_xx) reduction(+:a2_x)
     free(clusterWeightInternal);
     return prevMod;
 }
-f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower,
+f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight Lower,
                                f_weight thresh, double *totTime, int *numItr, bool *change) {
 
     cout<< "Vectorized version called" <<endl;
@@ -397,7 +397,7 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
     }
     cout << "NNZ: " << nnz << " NE: " << NE << " twice NE: " << (2*NE) << endl;
     /* Variables for computing modularity */
-    long totalEdgeWeightTwice;
+    comm_type totalEdgeWeightTwice;
     f_weight constantForSecondTerm;
     f_weight prevMod=-1;
     f_weight currMod=-1;
@@ -448,15 +448,15 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
 
     //Community assignments:
     //Store previous iteration's community assignment
-    comm_type* pastCommAss; // = (long *) malloc (NV * sizeof(long));
+    comm_type* pastCommAss; // = (comm_type *) malloc (NV * sizeof(comm_type));
     posix_memalign((void **) &pastCommAss, alignment, NV * sizeof(comm_type));
     assert(pastCommAss != 0);
     //Store current community assignment
-    comm_type* currCommAss; // = (long *) malloc (NV * sizeof(long));
+    comm_type* currCommAss; // = (comm_type *) malloc (NV * sizeof(comm_type));
     posix_memalign((void **) &currCommAss, alignment, NV * sizeof(comm_type));
     assert(currCommAss != 0);
     //Store the target of community assignment
-    comm_type* targetCommAss; // = (long *) malloc (NV * sizeof(long));
+    comm_type* targetCommAss; // = (comm_type *) malloc (NV * sizeof(comm_type));
     posix_memalign((void **) &targetCommAss, alignment, NV * sizeof(comm_type));
     assert(targetCommAss != 0);
 
@@ -526,15 +526,15 @@ f_weight vectorizedLouvianMethod(graph *G, long *C, int nThreads, f_weight Lower
             comm_type adj2 = vtxPtr[i+1];
             f_weight selfLoop = 0;
             //Build a datastructure to hold the cluster structure of its neighbors
-//            map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
-//            map<long, long>::iterator storedAlready;
+//            map<comm_type, comm_type> clusterLocalMap; //Map each neighbor's cluster to a local number
+//            map<comm_type, comm_type>::iterator storedAlready;
 //            vector<f_weight> Counter; //Number of edges in each unique cluster
             comm_type numUniqueClusters = 0;
             //Add v's current cluster:
             if(adj1 != adj2){
 //                clusterLocalMap[currCommAss[i]] = 0;
 //                Counter.push_back(0); //Initialize the counter to ZERO (no edges incident yet)
-                long sPosition = vtxPtr[i]+i; //Starting position of local map for i
+                comm_type sPosition = vtxPtr[i]+i; //Starting position of local map for i
                 Counter[sPosition] = 0;          //Initialize the counter to ZERO (no edges incident yet)
                 cid[sPosition] = currCommAss[i]; //Initialize with current community
                 numUniqueClusters++; //Added the first entry
@@ -608,7 +608,7 @@ reduction(+:e_xx) reduction(+:a2_x)
         if(prevMod < Lower)
             prevMod = Lower;
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             cInfo_size[i] += cUpdate_size[i];
             cInfo_degree[i] += cUpdate_degree[i];
         }

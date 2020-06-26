@@ -109,7 +109,7 @@ int main(int argc, char **argv)
         exit(1);
     }
     
-    //long percentange = 80;
+    //comm_type percentange = 80;
     displayGraphCharacteristics(G);
     
     int threadsOpt = 0;
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
         omp_set_num_threads(1);
         const int NUM_FILES = 10;
         std::vector<int> num_matches(G->numEdges, 0);
-        const long nv = G->numVertices;
+        const comm_type nv = G->numVertices;
         
         //std::string inputFileName = inFile;
         std::string inputFileName(inFile);
@@ -138,31 +138,31 @@ int main(int argc, char **argv)
         
         std::vector<int> vtx_to_community(nv, 0);
         
-        const long ne = G->numEdges;
-        std::vector<long> edgeCount(nv + 1L);
-        std::vector<std::pair<long, long>> edgeList(ne);
+        const comm_type ne = G->numEdges;
+        std::vector<comm_type> edgeCount(nv + 1L);
+        std::vector<std::pair<comm_type, comm_type>> edgeList(ne);
         
-        for (long int i = 0L; i < ne; i++)
+        for (comm_type int i = 0L; i < ne; i++)
         {
             edgeList[i].first = G->edgeList[i].head;
             edgeList[i].second = G->edgeList[i].tail;
             edgeCount[edgeList[i].first + 1L]++;
         }
         
-        std::vector<long> ecTmp(nv + 1L);
-        std::vector<long> edgeListIndexes(nv + 1L);
+        std::vector<comm_type> ecTmp(nv + 1L);
+        std::vector<comm_type> edgeListIndexes(nv + 1L);
         
         std::partial_sum(edgeCount.begin(), edgeCount.end(), ecTmp.begin());
         edgeCount = ecTmp;
         
         edgeListIndexes[0] = 0;
         
-        for (long i = 0L; i < nv; i++)
+        for (comm_type i = 0L; i < nv; i++)
             edgeListIndexes[i + 1L] = edgeCount[i + 1L];
         
         edgeCount.resize(0L);
         
-        auto ecmp = [](const std::pair<long, long> &e0, const std::pair<long, long> &e1)
+        auto ecmp = [](const std::pair<comm_type, comm_type> &e0, const std::pair<comm_type, comm_type> &e1)
         { return ((e0.first < e1.first) || ((e0.first == e1.first) && (e0.second < e1.second))); };
         
         if (!std::is_sorted(edgeList.begin(), edgeList.end(), ecmp))
@@ -194,19 +194,19 @@ int main(int argc, char **argv)
             // std::cerr << "The output file: "
             //           << "results/" + graphname + ".{no}color.rand.out" + std::to_string(f) << std::endl;
             
-            for (long i = 0; i < nv; i++)
+            for (comm_type i = 0; i < nv; i++)
             {
                 ifs >> vtx_to_community[i];
             }
             ifs.close();
-            long c = 0;
+            comm_type c = 0;
             //#pragma omp parallel for default(none), private(nv), shared(g, vtx_to_community), schedule(guided)
-            for (long i = 0; i < nv; i++)
+            for (comm_type i = 0; i < nv; i++)
             {
-                long e0 = edgeListIndexes[i];
-                long e1 = edgeListIndexes[i + 1];
+                comm_type e0 = edgeListIndexes[i];
+                comm_type e1 = edgeListIndexes[i + 1];
                 
-                for (long k = e0; k < e1; k++, c++)
+                for (comm_type k = e0; k < e1; k++, c++)
                 {
                     assert(i == edgeList[k].first);
                     if (vtx_to_community[i] == vtx_to_community[edgeList[k].second])
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
             }
         }
         std::vector<int> histogram(11, 0);
-        long non_zero = 0;
+        comm_type non_zero = 0;
         for (int e = 0; e < G->numEdges; e++)
         {
             //std::cout<<num_matches[e]/NUM_FILES<<std::endl;
@@ -242,15 +242,15 @@ int main(int argc, char **argv)
     {
         printf("Vertex following is enabled.\n");
         time1 = omp_get_wtime();
-        long numVtxToFix = 0; //Default zero
-        long *C = (long *)malloc(G->numVertices * sizeof(long));
+        comm_type numVtxToFix = 0; //Default zero
+        comm_type *C = (comm_type *)malloc(G->numVertices * sizeof(comm_type));
         assert(C != 0);
         numVtxToFix = vertexFollowing(G, C); //Find vertices that follow other vertices
         if (numVtxToFix > 0)
         { //Need to fix things: build a new graph
             printf("Graph will be modified -- %ld vertices need to be fixed.\n", numVtxToFix);
             graph *Gnew = (graph *)malloc(sizeof(graph));
-            long numClusters = renumberClustersContiguously(C, G->numVertices);
+            comm_type numClusters = renumberClustersContiguously(C, G->numVertices);
             buildNewGraphVF(G, Gnew, C, numClusters);
             //Get rid of the old graph and store the new graph
             free(G->edgeListPtrs);
@@ -264,8 +264,8 @@ int main(int argc, char **argv)
     } //End of if( VF == 1 )
     
     // Datastructures to store clustering information
-    long NV = G->numVertices;
-    long *C_orig = (long *)malloc(NV * sizeof(long));
+    comm_type NV = G->numVertices;
+    comm_type *C_orig = (comm_type *)malloc(NV * sizeof(comm_type));
     assert(C_orig != 0);
     
     //Call the clustering algorithm:
@@ -276,13 +276,13 @@ int main(int argc, char **argv)
     }
     
 #pragma omp parallel for
-    for (long i = 0; i < NV; i++)
+    for (comm_type i = 0; i < NV; i++)
     {
         C_orig[i] = -1;
     }
     
     //runMultiPhaseLouvainAlgorithm(G, C_orig, coloring, replaceMap, opts.minGraphSize, opts.threshold, opts.C_thresh, nT,threadsOpt);
-    // Change to each sub function that belong to the folder
+    // Change to each sub function that becomm_type to the folder
     if (opts.coloring != 0)
     {
         //runMultiPhaseColoring(G, C_orig, opts.coloring, opts.minGraphSize, opts.threshold, opts.C_thresh, nT, threadsOpt);
@@ -305,7 +305,7 @@ int main(int argc, char **argv)
         sprintf(outFile, "%s_clustInfo", opts.inFile);
         printf("Cluster information will be stored in file: %s\n", outFile);
         FILE *out = fopen(outFile, "w");
-        for (long i = 0; i < NV; i++)
+        for (comm_type i = 0; i < NV; i++)
         {
             fprintf(out, "%ld\n", C_orig[i]);
         }

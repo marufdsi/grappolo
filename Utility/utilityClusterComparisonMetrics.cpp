@@ -47,7 +47,7 @@ using namespace std;
 
 //Assume that clusters have been numbered in a contiguous manner
 //Assume that C1 is the truth data
-void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, long N2) {
+void computeCommunityComparisons(vector<comm_type>& C1, comm_type N1, vector<comm_type>& C2, comm_type N2) {
     int nT;
 #pragma omp parallel
     {
@@ -60,9 +60,9 @@ void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, lo
     assert(N1>0 && N2>0);
     //Compute number of communities in each set:
     //Assume zero is a valid community id
-    long nC1=-1;
+    comm_type nC1=-1;
     bool isZero1 = false;
-    for(long i = 0; i < N1; i++) {
+    for(comm_type i = 0; i < N1; i++) {
         //printf("%d, ",C1[i]);
         if(C1[i] == 0)
             isZero1 = true; //Check if zero is a valid community
@@ -75,7 +75,7 @@ void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, lo
     assert(nC1>0);
     //Bug fix for isolated vertices with -1 community assignments
     bool found = false;
-    for(long i = 0; i < N1; i++) {
+    for(comm_type i = 0; i < N1; i++) {
         if(C1[i] == -1) {
             C1[i] = nC1;
             found = true;
@@ -84,9 +84,9 @@ void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, lo
     if(found)
         nC1++;
     
-    long nC2=-1;
+    comm_type nC2=-1;
     bool isZero2 = false;
-    for(long i = 0; i < N2; i++) {
+    for(comm_type i = 0; i < N2; i++) {
         //printf("%d, ",C1[i]);
         if(C2[i] == -1)
             C2[i] = N2+1; //Bug fix for isolated vertices
@@ -101,7 +101,7 @@ void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, lo
     assert(nC2>0);
     //Bug fix for isolated vertices with -1 community assignments
     found = false;
-    for(long i = 0; i < N1; i++) {
+    for(comm_type i = 0; i < N1; i++) {
         if(C2[i] == -1) {
             C2[i] = nC2;
             found = true;
@@ -112,89 +112,89 @@ void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, lo
     printf("Number of unique communities in C1= %d, and C2=%d\n", nC1, nC2);
     
     //////////STEP 1: Create a CSR-like datastructure for communities in C1
-    long * commPtr1 = (long *) malloc ((nC1+1) * sizeof(long)); assert(commPtr1 != 0);
-    long * commIndex1 = (long *) malloc (N1 * sizeof(long)); assert(commIndex1 != 0);
-    long * commAdded1 = (long *) malloc (nC1 * sizeof(long)); assert(commAdded1 != 0);
-    long * clusterDist1 = (long *) malloc (nC1 * sizeof(long)); assert(clusterDist1 != 0); //For Gini coefficient
+    comm_type * commPtr1 = (comm_type *) malloc ((nC1+1) * sizeof(comm_type)); assert(commPtr1 != 0);
+    comm_type * commIndex1 = (comm_type *) malloc (N1 * sizeof(comm_type)); assert(commIndex1 != 0);
+    comm_type * commAdded1 = (comm_type *) malloc (nC1 * sizeof(comm_type)); assert(commAdded1 != 0);
+    comm_type * clusterDist1 = (comm_type *) malloc (nC1 * sizeof(comm_type)); assert(clusterDist1 != 0); //For Gini coefficient
     
     // Initialization
 #pragma omp parallel for
-    for(long i = 0; i < nC1; i++) {
+    for(comm_type i = 0; i < nC1; i++) {
         commPtr1[i] = 0;
         commAdded1[i] = 0;
     }
     commPtr1[nC1] = 0;
     // Count the size of each community
 #pragma omp parallel for
-    for(long i = 0; i < N1; i++) {
+    for(comm_type i = 0; i < N1; i++) {
         if(isZero1)
             __sync_fetch_and_add(&commPtr1[C1[i]+1],1); //Zero-based indexing
         else
             __sync_fetch_and_add(&commPtr1[C1[i]],1); //One-based indexing
     }
 #pragma omp parallel for
-    for(long i = 0; i < nC1; i++) {
+    for(comm_type i = 0; i < nC1; i++) {
         clusterDist1[i] = commPtr1[i+1]; //Zeroth position is not valid
     }
     //Prefix sum:
-    for(long i=0; i<nC1; i++) {
+    for(comm_type i=0; i<nC1; i++) {
         commPtr1[i+1] += commPtr1[i];
     }
     //Group vertices with the same community in particular order
 #pragma omp parallel for
-    for (long i=0; i<N1; i++) {
-        long tc = (long)C1[i];
+    for (comm_type i=0; i<N1; i++) {
+        comm_type tc = (comm_type)C1[i];
         if(!isZero1)
             tc--; //Convert to zero based index
-        long Where = commPtr1[tc] + __sync_fetch_and_add(&(commAdded1[tc]), 1);
+        comm_type Where = commPtr1[tc] + __sync_fetch_and_add(&(commAdded1[tc]), 1);
         commIndex1[Where] = i; //The vertex id
     }
     free(commAdded1);
     printf("Done building structure for C1...\n");
     
     //////////STEP 2: Create a CSR-like datastructure for communities in C2
-    long * commPtr2 = (long *) malloc ((nC2+1) * sizeof(long)); assert(commPtr2 != 0);
-    long * commIndex2 = (long *) malloc (N2 * sizeof(long)); assert(commIndex2 != 0);
-    long * commAdded2 = (long *) malloc (nC2 * sizeof(long)); assert(commAdded2 != 0);
-    long * clusterDist2 = (long *) malloc (nC2 * sizeof(long)); assert(clusterDist2 != 0);
+    comm_type * commPtr2 = (comm_type *) malloc ((nC2+1) * sizeof(comm_type)); assert(commPtr2 != 0);
+    comm_type * commIndex2 = (comm_type *) malloc (N2 * sizeof(comm_type)); assert(commIndex2 != 0);
+    comm_type * commAdded2 = (comm_type *) malloc (nC2 * sizeof(comm_type)); assert(commAdded2 != 0);
+    comm_type * clusterDist2 = (comm_type *) malloc (nC2 * sizeof(comm_type)); assert(clusterDist2 != 0);
     
     // Initialization
 #pragma omp parallel for
-    for(long i = 0; i < nC2; i++) {
+    for(comm_type i = 0; i < nC2; i++) {
         commPtr2[i] = 0;
         commAdded2[i] = 0;
     }
     commPtr2[nC2] = 0;
     // Count the size of each community
 #pragma omp parallel for
-    for(long i = 0; i < N2; i++) {
+    for(comm_type i = 0; i < N2; i++) {
         if(isZero2)
             __sync_fetch_and_add(&commPtr2[C2[i]+1],1); //Zero-based indexing
         else
             __sync_fetch_and_add(&commPtr2[C2[i]],1); //One-based indexing
     }
 #pragma omp parallel for
-    for(long i = 0; i < nC2; i++) {
+    for(comm_type i = 0; i < nC2; i++) {
         clusterDist2[i] = commPtr2[i+1]; //Zeroth position is not valid
     }
     //Prefix sum:
-    for(long i=0; i<nC2; i++) {
+    for(comm_type i=0; i<nC2; i++) {
         commPtr2[i+1] += commPtr2[i];
     }
     //Group vertices with the same community in particular order
 #pragma omp parallel for
-    for (long i=0; i<N2; i++) {
-        long tc = (long)C2[i];
+    for (comm_type i=0; i<N2; i++) {
+        comm_type tc = (comm_type)C2[i];
         if(!isZero2)
             tc--;
-        long Where = commPtr2[tc] + __sync_fetch_and_add(&(commAdded2[tc]), 1);
+        comm_type Where = commPtr2[tc] + __sync_fetch_and_add(&(commAdded2[tc]), 1);
         commIndex2[Where] = i; //The vertex id
     }
     free(commAdded2);
     printf("Done building structure for C2...\n");
     
     //////////STEP 3:  Compute statistics:
-    long tSameSame[nT], tSameDiff[nT], tDiffSame[nT], nAgree[nT];
+    comm_type tSameSame[nT], tSameDiff[nT], tDiffSame[nT], nAgree[nT];
 #pragma omp parallel for
     for (int i=0; i < nT; i++) {
         tSameSame[i] = 0;
@@ -208,12 +208,12 @@ void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, lo
     {
         int myRank = omp_get_thread_num();
 #pragma omp parallel for schedule(static)
-        for(long ci = 0; ci < nC1; ci++) {
-            long adj1 = commPtr1[ci];
-            long adj2 = commPtr1[ci+1];
-            for(long i=adj1; i<adj2; i++) {
-                for(long j=i+1; j<adj2; j++) {
-                    //Check if the two vertices belong to the same community in C2
+        for(comm_type ci = 0; ci < nC1; ci++) {
+            comm_type adj1 = commPtr1[ci];
+            comm_type adj2 = commPtr1[ci+1];
+            for(comm_type i=adj1; i<adj2; i++) {
+                for(comm_type j=i+1; j<adj2; j++) {
+                    //Check if the two vertices becomm_type to the same community in C2
                     //printf("(%d, %d)=", commIndex1[i]+1, commIndex1[j]+1);
                     if(C2[commIndex1[i]] == C2[commIndex1[j]]) {
                         //__sync_fetch_and_add(&SameSame,1); //Increment the counter: SameSame -- True Positive
@@ -234,13 +234,13 @@ void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, lo
         int myRank = omp_get_thread_num();
         //Compare all pairs of vertices from the perspective of C2:
 #pragma omp parallel for schedule(static)
-        for(long ci = 0; ci < nC2; ci++) {
-            long adj1 = commPtr2[ci];
-            long adj2 = commPtr2[ci+1];
-            for(long i=adj1; i<adj2; i++) {
-                for(long j=i+1; j<adj2; j++) {
+        for(comm_type ci = 0; ci < nC2; ci++) {
+            comm_type adj1 = commPtr2[ci];
+            comm_type adj2 = commPtr2[ci+1];
+            for(comm_type i=adj1; i<adj2; i++) {
+                for(comm_type j=i+1; j<adj2; j++) {
                     //printf("(%d, %d)=", commIndex2[i]+1, commIndex2[j]+1);
-                    //Check if the two vertices belong to the same community in C1
+                    //Check if the two vertices becomm_type to the same community in C1
                     if(C1[commIndex2[i]] == C1[commIndex2[j]]) {
                         //printf("SS, ");
                         //__sync_fetch_and_add(&nAgree,1); //Increment the counter: SameSame -- True Positive
@@ -256,10 +256,10 @@ void computeCommunityComparisons(vector<long>& C1, long N1, vector<long>& C2, lo
     }//End of parallel region
     printf("Done parsing C2...\n");
     
-    long SameSame = 0, SameDiff = 0, DiffSame = 0, Agree = 0;
+    comm_type SameSame = 0, SameDiff = 0, DiffSame = 0, Agree = 0;
 #pragma omp parallel for reduction(+:SameSame) reduction(+:SameDiff) \
 reduction(+:DiffSame) reduction(+:Agree)
-    for (long i=0; i<nT; i++) {
+    for (comm_type i=0; i<nT; i++) {
         SameSame += tSameSame[i];
         SameDiff += tSameDiff[i];
         DiffSame += tDiffSame[i];
@@ -306,7 +306,7 @@ reduction(+:DiffSame) reduction(+:Agree)
 
 //WARNING: Assume that colorSize is populated with the frequency for each color
 //Will sort the array within the function
-double computeGiniCoefficient(long *colorSize, int numColors) {
+double computeGiniCoefficient(comm_type *colorSize, int numColors) {
     
     //Step 1: Sort the color size vector -- use STL sort function
     double time1 = omp_get_wtime();
@@ -315,7 +315,7 @@ double computeGiniCoefficient(long *colorSize, int numColors) {
     printf("Time for sorting: %g secs\n", time2-time1);
     //Step 2: Compute Gini coefficient
     double numFunc=0.0, denFunc=0.0;
-    for (long i=0; i < numColors; i++) {
+    for (comm_type i=0; i < numColors; i++) {
         numFunc = numFunc + ((i+1)*colorSize[i]);
         denFunc = denFunc + colorSize[i];
     }
@@ -335,13 +335,13 @@ double computeGiniCoefficient(long *colorSize, int numColors) {
  Conference on Machine Learning, Bonn, Germany. 2005.
  */
 //Assume that clusters have been numbered in a contiguous manner
-double computeMerkinMetric(long* C1, long N1, long* C2, long N2) {
+double computeMerkinMetric(comm_type* C1, comm_type N1, comm_type* C2, comm_type N2) {
     assert(N1>0 && N2>0);
     assert((C1 != 0) && (C2 != 0));
     //Compute number of communities in each set:
     //Assume zero is a valid community id
-    long nC1=-1;
-    for(long i = 0; i < N1; i++) {
+    comm_type nC1=-1;
+    for(comm_type i = 0; i < N1; i++) {
         if (C1[i] > nC1) {
             nC1 = C1[i];
         }
@@ -349,43 +349,43 @@ double computeMerkinMetric(long* C1, long N1, long* C2, long N2) {
     assert(nC1>0);
     
     //STEP 1: Create a CSR-like datastructure for communities in C1
-    long * commPtr1 = (long *) malloc ((nC1+1) * sizeof(long)); assert(commPtr1 != 0);
-    long * commIndex1 = (long *) malloc (N1 * sizeof(long)); assert(commIndex1 != 0);
-    long * commAdded1 = (long *) malloc (nC1 * sizeof(long)); assert(commAdded1 != 0);
+    comm_type * commPtr1 = (comm_type *) malloc ((nC1+1) * sizeof(comm_type)); assert(commPtr1 != 0);
+    comm_type * commIndex1 = (comm_type *) malloc (N1 * sizeof(comm_type)); assert(commIndex1 != 0);
+    comm_type * commAdded1 = (comm_type *) malloc (nC1 * sizeof(comm_type)); assert(commAdded1 != 0);
     
     // Initialization
 #pragma omp parallel for
-    for(long i = 0; i < nC1; i++) {
+    for(comm_type i = 0; i < nC1; i++) {
         commPtr1[i] = 0;
         commAdded1[i] = 0;
     }
     commPtr1[nC1] = 0;
     // Count the size of each community
 #pragma omp parallel for
-    for(long i = 0; i < N1; i++) {
-        __sync_fetch_and_add(&commPtr1[(long)C1[i]+1],1);
+    for(comm_type i = 0; i < N1; i++) {
+        __sync_fetch_and_add(&commPtr1[(comm_type)C1[i]+1],1);
     }
     //Prefix sum:
-    for(long i=0; i<nC1; i++) {
+    for(comm_type i=0; i<nC1; i++) {
         commPtr1[i+1] += commPtr1[i];
     }
     //Group vertices with the same color in particular order
 #pragma omp parallel for
-    for (long i=0; i<N1; i++) {
-        long tc = (long)C1[i];
-        long Where = commPtr1[tc] + __sync_fetch_and_add(&(commAdded1[tc]), 1);
+    for (comm_type i=0; i<N1; i++) {
+        comm_type tc = (comm_type)C1[i];
+        comm_type Where = commPtr1[tc] + __sync_fetch_and_add(&(commAdded1[tc]), 1);
         commIndex1[Where] = i; //The vertex id
     }
     
     //Compare all pairs of vertices in each community from C1 to those in C2:
-    long nDisagree = 0;
+    comm_type nDisagree = 0;
 #pragma omp parallel for
-    for(long ci = 0; ci < nC1; ci++) {
-        long adj1 = commPtr1[ci];
-        long adj2 = commPtr1[ci+1];
-        for(long i=adj1; i<adj2; i++) {
-            for(long j=i+1; j<adj2; j++) {
-                //Check if the two vertices belong to the same community in C2
+    for(comm_type ci = 0; ci < nC1; ci++) {
+        comm_type adj1 = commPtr1[ci];
+        comm_type adj2 = commPtr1[ci+1];
+        for(comm_type i=adj1; i<adj2; i++) {
+            for(comm_type j=i+1; j<adj2; j++) {
+                //Check if the two vertices becomm_type to the same community in C2
                 if(C2[commIndex1[i]] != C2[commIndex1[j]])
                     __sync_fetch_and_add(&nDisagree,1); //Increment the counter
             }//End of for(j)
@@ -402,11 +402,11 @@ double computeMerkinMetric(long* C1, long N1, long* C2, long N2) {
 } //End of computeMerkinDistance()
 
 //Assume that clusters have been numbered in a contiguous manner
-double computeVanDongenMetric(long* C1, long N1, long* C2, long N2) {
+double computeVanDongenMetric(comm_type* C1, comm_type N1, comm_type* C2, comm_type N2) {
     cout << "Function computeVanDongenMetric() has not been implemented.\n";
 }
 
-double computeModularity(graph *G, long* C1) {
+double computeModularity(graph *G, comm_type* C1) {
     cout << "Function computeModularity() has not been implemented.\n";
 }
 

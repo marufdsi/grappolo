@@ -49,12 +49,12 @@
 struct GraphGPU {
     // Graph 
     unsigned int nb_nodes;
-    unsigned long nb_links;
+    unsigned comm_type nb_links;
     double total_weight;
 
     int type;
 
-    //thrust::device_vector<unsigned long> degrees;
+    //thrust::device_vector<unsigned comm_type> degrees;
 
     thrust::device_vector<int> indices;
 

@@ -12,11 +12,11 @@ bool byCommId(mapElement c1,mapElement c2){
 
 
 //Build the local-map data structure using vectors
-double buildAndLockLocalMapCounter(long v, mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
-                               long* currCommAss, long &numUniqueClusters, omp_lock_t* vlocks, omp_lock_t* clocks, int ytype, double& eix, int freedom) {
+double buildAndLockLocalMapCounter(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
+                               comm_type* currCommAss, comm_type &numUniqueClusters, omp_lock_t* vlocks, omp_lock_t* clocks, int ytype, double& eix, int freedom) {
   double selfLoop = 0;
-	long adj1  = vtxPtr[v];
-	long adj2  = vtxPtr[v+1];
+	comm_type adj1  = vtxPtr[v];
+	comm_type adj2  = vtxPtr[v+1];
 
 
 	// Has to be one over to act like array.end()
@@ -24,25 +24,25 @@ double buildAndLockLocalMapCounter(long v, mapElement* clusterLocalMap, long* vt
 
 	/*********** Calculate eii ***************/
 	// Lock all neighbors to make sure no move is performed // This Lock is to protect Data: Allow to have error
-	for(long j=adj1; j<adj2; j++){
-   // long nn = adj2-adj1;
-   // long fracFree = (nn*freedom/10);
+	for(comm_type j=adj1; j<adj2; j++){
+   // comm_type nn = adj2-adj1;
+   // comm_type fracFree = (nn*freedom/10);
    // if( rand()%nn >= fracFree)
   		omp_set_lock(&vlocks[vtxInd[j].tail]);
 	}
 	
 
 	// Aggregate the neighbors and lock their Community
-	long sPosition = vtxPtr[v]+v; //Starting position of local map for v
-	long storedAlready = 0;
+	comm_type sPosition = vtxPtr[v]+v; //Starting position of local map for v
+	comm_type storedAlready = 0;
 
-	for(long j=adj1; j<adj2; j++) {
+	for(comm_type j=adj1; j<adj2; j++) {
 		if(vtxInd[j].tail == v) {	// SelfLoop need to be recorded
 			selfLoop += vtxInd[j].weight;
 		}
 		
 		bool storedAlready = false; //Initialize to zero
-		for(long k=0; k<numUniqueClusters; k++) { //Check if it already exists
+		for(comm_type k=0; k<numUniqueClusters; k++) { //Check if it already exists
 			if(currCommAss[vtxInd[j].tail] ==  clusterLocalMap[sPosition+k].cid) {
 				storedAlready = true;
 				clusterLocalMap[sPosition + k].Counter += vtxInd[j].weight; //Increment the counter with weight
@@ -60,7 +60,7 @@ double buildAndLockLocalMapCounter(long v, mapElement* clusterLocalMap, long* vt
 	if(ytype == 1){
 		// Locking the community information for all neighbors // This lock is to protect Data: Allow to have error
 		std::sort(&clusterLocalMap[sPosition],&clusterLocalMap[sPosition+numUniqueClusters],byCommId);  
-		for(long j=sPosition; j<sPosition + numUniqueClusters; j++){
+		for(comm_type j=sPosition; j<sPosition + numUniqueClusters; j++){
 			omp_set_lock(&clocks[clusterLocalMap[j].cid]);
 		}
 	}
@@ -69,14 +69,14 @@ double buildAndLockLocalMapCounter(long v, mapElement* clusterLocalMap, long* vt
 }//End of buildLocalMapCounter()
 
 
-void maxAndFree(long v, mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd, double selfLoop, Comm* cInfo, long* CA, 
-							double constant, long numUniqueClusters, omp_lock_t* vlocks, omp_lock_t* clocks, int ytype, double eix, double* vDegree) {
+void maxAndFree(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd, double selfLoop, Comm* cInfo, comm_type* CA,
+							double constant, comm_type numUniqueClusters, omp_lock_t* vlocks, omp_lock_t* clocks, int ytype, double eix, double* vDegree) {
                                                                                 
-	long maxIndex = CA[v];	//Assign the initial value as the current community
-	long sc = CA[v];		
+	comm_type maxIndex = CA[v];	//Assign the initial value as the current community
+	comm_type sc = CA[v];
 	double curGain = 0;
 	double maxGain = 0;
-	long sPosition = vtxPtr[v]+v; //Starting position of local map for v
+	comm_type sPosition = vtxPtr[v]+v; //Starting position of local map for v
 	double degree = vDegree[v];
 	double ax  = cInfo[sc].degree - degree;
 	double eiy = 0;
@@ -84,7 +84,7 @@ void maxAndFree(long v, mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
 
 		
 	/*********** Calculate DeltaQ using aii ***************/    
-	for(long k=0; k<numUniqueClusters; k++) {
+	for(comm_type k=0; k<numUniqueClusters; k++) {
 		if(sc != clusterLocalMap[sPosition + k].cid) {
 			ay = cInfo[clusterLocalMap[sPosition + k].cid].degree; // degree of cluster y
 			eiy = clusterLocalMap[sPosition + k].Counter; 	//Total edges incident on cluster y
@@ -120,17 +120,17 @@ void maxAndFree(long v, mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
 
 	if(ytype == 1){
 		// unLock all neighbors community 	
-		for(long j=sPosition; j<sPosition + numUniqueClusters; j++){
+		for(comm_type j=sPosition; j<sPosition + numUniqueClusters; j++){
 				omp_unset_lock(&clocks[clusterLocalMap[j].cid]);
 		}
 	}
 
 	// Free Neighbor
-	long adj1  = vtxPtr[v];
-	long adj2  = vtxPtr[v+1];
+	comm_type adj1  = vtxPtr[v];
+	comm_type adj2  = vtxPtr[v+1];
 	/*********** Calculate eii ***************/
 	// unLock all neighbors vertex
-	for(long j=adj1; j<adj2; j++){
+	for(comm_type j=adj1; j<adj2; j++){
 		omp_unset_lock(&vlocks[vtxInd[j].tail]);
 	}
 

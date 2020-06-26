@@ -44,7 +44,7 @@
 #include "color_comm.h"
 using namespace std;
 
-double algoLouvainWithDistOneColoringNoMap(graph* G, long *C, int nThreads, int* color,
+double algoLouvainWithDistOneColoringNoMap(graph* G, comm_type *C, int nThreads, int* color,
 			int numColor, double Lower, double thresh, double *totTime, int *numItr) {
 #ifdef PRINT_DETAILED_STATS_  
 	printf("Within algoLouvainWithDistOneColoring()\n");
@@ -65,9 +65,9 @@ double algoLouvainWithDistOneColoringNoMap(graph* G, long *C, int nThreads, int*
 	double time1, time2, time3, time4; //For timing purposes  
 	double total = 0, totItr = 0;	
 	/* Indexs are vertex */
-	long* pastCommAss;	//Store previous iteration's community assignment
-	long* currCommAss;	//Store current community assignment
-	//long* targetCommAss;	//Store the target of community assignment
+	comm_type* pastCommAss;	//Store previous iteration's community assignment
+	comm_type* currCommAss;	//Store current community assignment
+	//comm_type* targetCommAss;	//Store the target of community assignment
   double* vDegree;	//Store each vertex's degree
 	double* clusterWeightInternal;//use for Modularity calculation (eii)
 	
@@ -76,14 +76,14 @@ double algoLouvainWithDistOneColoringNoMap(graph* G, long *C, int nThreads, int*
 	Comm* cUpdate; //use for updating Community
 	
 	/* Book keeping variables */
-	long    NV        = G->numVertices;
-	long    NS        = G->sVertices;      
-	long    NE        = G->numEdges;
-	long    *vtxPtr   = G->edgeListPtrs;
+	comm_type    NV        = G->numVertices;
+	comm_type    NS        = G->sVertices;
+	comm_type    NE        = G->numEdges;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
 	edge    *vtxInd   = G->edgeList;
 	
 	/* Modularity Needed variables */
-	long totalEdgeWeightTwice;
+	comm_type totalEdgeWeightTwice;
 	double constantForSecondTerm;
 	double prevMod=Lower;
 	double currMod=-1;
@@ -100,7 +100,7 @@ double algoLouvainWithDistOneColoringNoMap(graph* G, long *C, int nThreads, int*
 	/*** Compute the total edge weight (2m) and 1/2m ***/
 	constantForSecondTerm = calConstantForSecondTerm(vDegree, NV);	// 1 over sum of the degree
 	
-	pastCommAss = (long *) malloc (NV * sizeof(long)); assert(pastCommAss != 0);     
+	pastCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(pastCommAss != 0);
 	//Community provided as input:
 	currCommAss = C; assert(currCommAss != 0);
 
@@ -113,33 +113,33 @@ double algoLouvainWithDistOneColoringNoMap(graph* G, long *C, int nThreads, int*
 	clusterWeightInternal = (double*) malloc (NV*sizeof(double)); assert(clusterWeightInternal != 0);
 	
 	/*** Create a CSR-like datastructure for vertex-colors ***/
-	long * colorPtr = (long *) malloc ((numColor+1) * sizeof(long));
-	long * colorIndex = (long *) malloc (NV * sizeof(long));
-	long * colorAdded = (long *)malloc (numColor*sizeof(long));
+	comm_type * colorPtr = (comm_type *) malloc ((numColor+1) * sizeof(comm_type));
+	comm_type * colorIndex = (comm_type *) malloc (NV * sizeof(comm_type));
+	comm_type * colorAdded = (comm_type *)malloc (numColor*sizeof(comm_type));
 	assert(colorPtr != 0);
         assert(colorIndex != 0);
 	assert(colorAdded != 0);
 	// Initialization
 #pragma omp parallel for
-	for(long i = 0; i < numColor; i++) {	
+	for(comm_type i = 0; i < numColor; i++) {
 		colorPtr[i] = 0;
 		colorAdded[i] = 0;
 	}
 	colorPtr[numColor] = 0;
 	// Count the size of each color
 #pragma omp parallel for
-	for(long i = 0; i < NV; i++) {
-		__sync_fetch_and_add(&colorPtr[(long)color[i]+1],1);
+	for(comm_type i = 0; i < NV; i++) {
+		__sync_fetch_and_add(&colorPtr[(comm_type)color[i]+1],1);
 	}
 	//Prefix sum:
-	for(long i=0; i<numColor; i++) {
+	for(comm_type i=0; i<numColor; i++) {
 		colorPtr[i+1] += colorPtr[i];
 	}	
 	//Group vertices with the same color in particular order
 #pragma omp parallel for
-	for (long i=0; i<NV; i++) {
-		long tc = (long)color[i];
-		long Where = colorPtr[tc] + __sync_fetch_and_add(&(colorAdded[tc]), 1);
+	for (comm_type i=0; i<NV; i++) {
+		comm_type tc = (comm_type)color[i];
+		comm_type Where = colorPtr[tc] + __sync_fetch_and_add(&(colorAdded[tc]), 1);
 		colorIndex[Where] = i;
 	}
 	time2 = omp_get_wtime();
@@ -158,32 +158,32 @@ double algoLouvainWithDistOneColoringNoMap(graph* G, long *C, int nThreads, int*
 		numItrs++;
 		
 		time1 = omp_get_wtime();
-		for( long ci = 0; ci < numColor; ci++) // Begin of color loop
+		for( comm_type ci = 0; ci < numColor; ci++) // Begin of color loop
 		{
 #pragma omp parallel for
-			for (long i=0; i<NV; i++) {
+			for (comm_type i=0; i<NV; i++) {
 				clusterWeightInternal[i] = 0; //Initialize to zero
 				cUpdate[i].degree =0;
 				cUpdate[i].size =0;
 			}
-			long coloradj1 = colorPtr[ci];
-			long coloradj2 = colorPtr[ci+1];
+			comm_type coloradj1 = colorPtr[ci];
+			comm_type coloradj2 = colorPtr[ci+1];
 			
 #pragma omp parallel for  
-			for (long K = coloradj1; K<coloradj2; K++) {
-				long i = colorIndex[K];
-				long localTarget = -1;
-				long adj1 = vtxPtr[i];
-				long adj2 = vtxPtr[i+1];
+			for (comm_type K = coloradj1; K<coloradj2; K++) {
+				comm_type i = colorIndex[K];
+				comm_type localTarget = -1;
+				comm_type adj1 = vtxPtr[i];
+				comm_type adj2 = vtxPtr[i+1];
 				double selfLoop = 0;
 				//Build a datastructure to hold the cluster structure of its neighbors:      	
-				//map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
-				//map<long, long>::iterator storedAlready;
+				//map<comm_type, comm_type> clusterLocalMap; //Map each neighbor's cluster to a local number
+				//map<comm_type, comm_type>::iterator storedAlready;
 				//vector<double> Counter; //Number of edges to each unique cluster
-				long numUniqueClusters = 0;
+				comm_type numUniqueClusters = 0;
 				if(adj1 != adj2) {
 					//Add the current cluster of i to the local map
-                    long sPosition = vtxPtr[i]+i; //Starting position of local map for i
+                    comm_type sPosition = vtxPtr[i]+i; //Starting position of local map for i
                     clusterLocalMap[sPosition].Counter = 0;          //Initialize the counter to ZERO (no edges incident yet)
                     clusterLocalMap[sPosition].cid = currCommAss[i]; //Initialize with current community
                     numUniqueClusters++; //Added the first entry
@@ -217,7 +217,7 @@ double algoLouvainWithDistOneColoringNoMap(graph* G, long *C, int nThreads, int*
 			
 			// UPDATE
 #pragma omp parallel for  
-			for (long i=0; i<NV; i++) {
+			for (comm_type i=0; i<NV; i++) {
 				cInfo[i].size += cUpdate[i].size;
 				cInfo[i].degree += cUpdate[i].degree;
 			}
@@ -230,14 +230,14 @@ double algoLouvainWithDistOneColoringNoMap(graph* G, long *C, int nThreads, int*
 		
 		// CALCULATE MOD
 #pragma omp parallel for  //Parallelize on each vertex
-		for (long i =0; i<NV;i++){
+		for (comm_type i =0; i<NV;i++){
 			clusterWeightInternal[i] = 0;
 		}
 #pragma omp parallel for  //Parallelize on each vertex
-		for (long i=0; i<NV; i++) {
-			long adj1 = vtxPtr[i];
-			long adj2 = vtxPtr[i+1];
-			for(long j=adj1; j<adj2; j++) {
+		for (comm_type i=0; i<NV; i++) {
+			comm_type adj1 = vtxPtr[i];
+			comm_type adj2 = vtxPtr[i+1];
+			for(comm_type j=adj1; j<adj2; j++) {
 				if(currCommAss[vtxInd[j].tail] == currCommAss[i]){
 					clusterWeightInternal[i] += vtxInd[j].weight;
 				}
@@ -246,7 +246,7 @@ double algoLouvainWithDistOneColoringNoMap(graph* G, long *C, int nThreads, int*
 		
 #pragma omp parallel for \
 reduction(+:e_xx) reduction(+:a2_x)
-		for (long i=0; i<NV; i++) {
+		for (comm_type i=0; i<NV; i++) {
 			e_xx += clusterWeightInternal[i];
 			a2_x += (cInfo[i].degree)*(cInfo[i].degree);
 		}

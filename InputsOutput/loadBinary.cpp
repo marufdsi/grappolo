@@ -22,16 +22,16 @@ void parse_EdgeListBinaryNew(graph * G, char *fileName) {
     exit(EXIT_FAILURE);
   }
 
-  long NV, NE, weighted;
+  comm_type NV, NE, weighted;
   //Parse line-1: #Vertices #Edges
   ifs.read(reinterpret_cast<char*>(&NV), sizeof(NV));
   ifs.read(reinterpret_cast<char*>(&NE), sizeof(NE));
   ifs.read(reinterpret_cast<char*>(&weighted), sizeof(weighted));
 
-  long* verPtrRaw = (long*) malloc( (NV+1)*sizeof(long)); assert(verPtrRaw != 0);
+  comm_type* verPtrRaw = (comm_type*) malloc( (NV+1)*sizeof(comm_type)); assert(verPtrRaw != 0);
   edge* edgeListRaw = (edge*) malloc(2*NE*sizeof(edge)); assert(edgeListRaw != 0);
 
-  ifs.read(reinterpret_cast<char*>(verPtrRaw), sizeof(long) * (NV+1));
+  ifs.read(reinterpret_cast<char*>(verPtrRaw), sizeof(comm_type) * (NV+1));
   ifs.read(reinterpret_cast<char*>(edgeListRaw), sizeof(edge) * (2*NE));
  
   ifs.close(); //Close the file

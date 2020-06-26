@@ -19,7 +19,7 @@
 /* GNU General Public License for more details.                              */
 /*                                                                           */
 /* You should have received a copy of the GNU General Public License         */
-/* along with this program; if not, write to the Free Software               */
+/* acomm_type with this program; if not, write to the Free Software               */
 /* Foundation, Inc., 59 Temple Place-Suite 330,Boston,MA 02111-1307,USA.     */
 /*                                                                           */
 /*---------------------------------------------------------------------------*/
@@ -47,7 +47,7 @@ void heapInitialize(heap *myHeap) {
     myHeap->elements = data;
 }
 
-void heapInitializeToN(heap *myHeap, long n) {
+void heapInitializeToN(heap *myHeap, comm_type n) {
     myHeap->maxsize = n+1;
     myHeap->size = 0;
     term* data = (term *) malloc (n * sizeof(term));
@@ -59,7 +59,7 @@ void heapAdd(heap *myHeap, term t1) {
     if (myHeap->size < (myHeap->maxsize-1)) {
         //myHeap->size++; //Increment the size
         //Start from the last position and move up to the correct location
-        long position = myHeap->size++;
+        comm_type position = myHeap->size++;
         term *data = myHeap->elements;
         while ( (position > 0)&&(t1.weight<data[(position-1)/2].weight) ){
             data[position].id     = data[(position-1)/2].id;
@@ -85,7 +85,7 @@ void heapRemoveMin(heap *myHeap) {
     }
     //Rebuild the heap only if it is still not empty
     if ( myHeap->size > 0 ){
-        long position = 0;
+        comm_type position = 0;
         term value;
         value.id     = data[position].id;
         value.weight = data[position].weight;
@@ -93,7 +93,7 @@ void heapRemoveMin(heap *myHeap) {
         while ( position < myHeap->size ){
             //Replace position with the smaller of the two children
             //replace with the last element, otherwise
-            long childPosition = position*2 + 1;
+            comm_type childPosition = position*2 + 1;
             if ( childPosition < myHeap->size ){
                 if ( (childPosition+1 < myHeap->size) &&
                     (data[childPosition+1].weight < data[childPosition].weight) ) {

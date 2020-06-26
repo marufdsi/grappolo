@@ -44,7 +44,7 @@
 
 using namespace std;
 
-void generateRandomNumbers(double *RandVec, long size) {
+void generateRandomNumbers(double *RandVec, comm_type size) {
     int nT;
 #pragma omp parallel
     {
@@ -54,11 +54,11 @@ void generateRandomNumbers(double *RandVec, long size) {
     printf("Within generateRandomNumbers() -- Number of threads: %d\n", nT);
 #endif
     //Initialize parallel pseudo-random number generator
-    unsigned long seed[6] = {1, 2, 3, 4, 5, 6};
+    unsigned comm_type seed[6] = {1, 2, 3, 4, 5, 6};
     RngStream::SetPackageSeed(seed);
     RngStream RngArray[nT]; //array of RngStream Objects
     
-    long block = size / nT;
+    comm_type block = size / nT;
 #ifdef PRINT_DETAILED_STATS_
     cout<<"Each thread will add "<<block<<" edges\n";
 #endif
@@ -68,25 +68,25 @@ void generateRandomNumbers(double *RandVec, long size) {
     {
         int myRank = omp_get_thread_num();
 #pragma omp for schedule(static)
-        for (long i=0; i<size; i++) {
+        for (comm_type i=0; i<size; i++) {
             RandVec[i] =  RngArray[myRank].RandU01();
         }
     }//End of parallel region
 } //End of generateRandomNumbers()
 
 void displayGraph(graph *G) {
-    long    NV        = G->numVertices;
-    long    NE        = G->numEdges;
+    comm_type    NV        = G->numVertices;
+    comm_type    NE        = G->numEdges;
     comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("***********************************");
     printf("|V|= %ld, |E|= %ld \n", NV, NE);
     printf("***********************************");
-    for (long i = 0; i < NV; i++) {
-        long adj1 = vtxPtr[i];
-        long adj2 = vtxPtr[i+1];
+    for (comm_type i = 0; i < NV; i++) {
+        comm_type adj1 = vtxPtr[i];
+        comm_type adj2 = vtxPtr[i+1];
         printf("\nVtx: %ld [%ld]: ",i+1,adj2-adj1);
-        for(long j=adj1; j<adj2; j++) {
+        for(comm_type j=adj1; j<adj2; j++) {
             printf("%ld (%g), ", vtxInd[j].tail+1, vtxInd[j].weight);
         }
     }
@@ -94,9 +94,9 @@ void displayGraph(graph *G) {
 }
 
 void duplicateGivenGraph(graph *Gin, graph *Gout) {
-    long    NV        = Gin->numVertices;
-    long    NS        = Gin->sVertices;
-    long    NE        = Gin->numEdges;
+    comm_type    NV        = Gin->numVertices;
+    comm_type    NS        = Gin->sVertices;
+    comm_type    NE        = Gin->numEdges;
     comm_type    *vtxPtr   = Gin->edgeListPtrs;
     edge    *vtxInd   = Gin->edgeList;
 #ifdef PRINT_DETAILED_STATS_
@@ -106,7 +106,7 @@ void duplicateGivenGraph(graph *Gin, graph *Gout) {
     comm_type *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
     assert(edgeListPtr != NULL);
 #pragma omp parallel for
-    for (long i=0; i<=NV; i++) {
+    for (comm_type i=0; i<=NV; i++) {
         edgeListPtr[i] = vtxPtr[i]; //Prefix Sum
     }
     
@@ -114,8 +114,8 @@ void duplicateGivenGraph(graph *Gin, graph *Gout) {
     edge *edgeList = (edge *) malloc( 2*NE * sizeof(edge));
     assert( edgeList != NULL);
 #pragma omp parallel for
-    for (long i=0; i<NV; i++) {
-        for (long j=vtxPtr[i]; j<vtxPtr[i+1]; j++) {
+    for (comm_type i=0; i<NV; i++) {
+        for (comm_type j=vtxPtr[i]; j<vtxPtr[i+1]; j++) {
             edgeList[j].head = vtxInd[j].head;
             edgeList[j].tail = vtxInd[j].tail;
             edgeList[j].weight = vtxInd[j].weight;
@@ -135,16 +135,16 @@ void duplicateGivenGraph(graph *Gin, graph *Gout) {
 } //End of duplicateGivenGraph()
 
 void displayGraphEdgeList(graph *G) {
-    long    NV        = G->numVertices;
-    long    NE        = G->numEdges;
+    comm_type    NV        = G->numVertices;
+    comm_type    NE        = G->numEdges;
     comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("***********************************");
     printf("|V|= %ld, |E|= %ld \n", NV, NE);
-    for (long i = 0; i < NV; i++) {
-        long adj1 = vtxPtr[i];
-        long adj2 = vtxPtr[i+1];
-        for(long j=adj1; j<adj2; j++) {
+    for (comm_type i = 0; i < NV; i++) {
+        comm_type adj1 = vtxPtr[i];
+        comm_type adj2 = vtxPtr[i+1];
+        for(comm_type j=adj1; j<adj2; j++) {
             printf("%ld %ld %g\n", i+1, vtxInd[j].tail+1, vtxInd[j].weight);
         }
     }
@@ -152,16 +152,16 @@ void displayGraphEdgeList(graph *G) {
 }
 
 void displayGraphEdgeList(graph *G, FILE* out) {
-    long    NV        = G->numVertices;
-    long    NE        = G->numEdges;
+    comm_type    NV        = G->numVertices;
+    comm_type    NE        = G->numEdges;
     comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("********PRINT OUTPUT********************");
     fprintf(out,"p sp %ld %ld \n", NV, NE/2);
-    for (long i = 0; i < NV; i++) {
-        long adj1 = vtxPtr[i];
-        long adj2 = vtxPtr[i+1];
-        for(long j=adj1; j<adj2; j++) {
+    for (comm_type i = 0; i < NV; i++) {
+        comm_type adj1 = vtxPtr[i];
+        comm_type adj2 = vtxPtr[i+1];
+        for(comm_type j=adj1; j<adj2; j++) {
             if( i+1 < vtxInd[j].tail+1)
             {
                 fprintf(out,"a %ld %ld %g\n", i+1, vtxInd[j].tail+1, vtxInd[j].weight);
@@ -171,13 +171,13 @@ void displayGraphEdgeList(graph *G, FILE* out) {
 }
 
 void writeEdgeListToFile(graph *G, FILE* out) {
-    long    NV        = G->numVertices;
+    comm_type    NV        = G->numVertices;
     comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
-    for (long i = 0; i < NV; i++) {
-        long adj1 = vtxPtr[i];
-        long adj2 = vtxPtr[i+1];
-        for(long j=adj1; j<adj2; j++) {
+    for (comm_type i = 0; i < NV; i++) {
+        comm_type adj1 = vtxPtr[i];
+        comm_type adj2 = vtxPtr[i+1];
+        for(comm_type j=adj1; j<adj2; j++) {
             //		if( i < vtxInd[j].tail) {
             fprintf(out,"%ld %ld\n", i, vtxInd[j].tail);
             //		}
@@ -187,21 +187,21 @@ void writeEdgeListToFile(graph *G, FILE* out) {
 
 void displayGraphCharacteristics(graph *G) {
     printf("Within displayGraphCharacteristics()\n");
-    long    sum = 0, sum_sq = 0;
+    comm_type    sum = 0, sum_sq = 0;
     double  average, avg_sq, variance, std_dev;
-    long    maxDegree = 0;
-    long    isolated  = 0;
-    long    degreeOne = 0;
-    long    NS        = G->sVertices;
-    long    NV        = G->numVertices;
-    long    NT        = NV - NS;
-    long    NE        = G->numEdges;
+    comm_type    maxDegree = 0;
+    comm_type    isolated  = 0;
+    comm_type    degreeOne = 0;
+    comm_type    NS        = G->sVertices;
+    comm_type    NV        = G->numVertices;
+    comm_type    NT        = NV - NS;
+    comm_type    NE        = G->numEdges;
     comm_type    *vtxPtr   = G->edgeListPtrs;
-    long    tNV       = NV; //Number of vertices
+    comm_type    tNV       = NV; //Number of vertices
     
     if ( (NS == 0)||(NS == NV) ) {  //Nonbiparite graph
-        for (long i = 0; i < NV; i++) {
-            long degree = vtxPtr[i+1] - vtxPtr[i];
+        for (comm_type i = 0; i < NV; i++) {
+            comm_type degree = vtxPtr[i+1] - vtxPtr[i];
             sum_sq += degree*degree;
             sum    += degree;
             if (degree > maxDegree)
@@ -235,8 +235,8 @@ void displayGraphCharacteristics(graph *G) {
     else { //Bipartite graph
         
         //Compute characterisitcs from S side:
-        for (long i = 0; i < NS; i++) {
-            long degree = vtxPtr[i+1] - vtxPtr[i];
+        for (comm_type i = 0; i < NS; i++) {
+            comm_type degree = vtxPtr[i+1] - vtxPtr[i];
             sum_sq += degree*degree;
             sum    += degree;
             if (degree > maxDegree)
@@ -272,8 +272,8 @@ void displayGraphCharacteristics(graph *G) {
         maxDegree = 0;
         isolated  = 0;
         //Compute characterisitcs from T side:
-        for (long i = NS; i < NV; i++) {
-            long degree = vtxPtr[i+1] - vtxPtr[i];
+        for (comm_type i = NS; i < NV; i++) {
+            comm_type degree = vtxPtr[i+1] - vtxPtr[i];
             sum_sq += degree*degree;
             sum    += degree;
             if (degree > maxDegree)
@@ -319,8 +319,8 @@ graph * convertDirected2Undirected(graph *G) {
     
     double time1=0, time2=0, totalTime=0;
     //Get the iterators for the graph:
-    long NVer     = G->numVertices;
-    long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
+    comm_type NVer     = G->numVertices;
+    comm_type NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
     comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd  = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     printf("N= %ld  NE=%ld\n", NVer, NEdge);
@@ -330,11 +330,11 @@ graph * convertDirected2Undirected(graph *G) {
     
     //Count the edges from source --> sink (for sink > source)
 #pragma omp parallel for
-    for (long v=0; v < NVer; v++ ) {
-        long adj1 = verPtr[v];
-        long adj2 = verPtr[v+1];
-        for(long k = adj1; k < adj2; k++ ) {
-            long w = verInd[k].tail;
+    for (comm_type v=0; v < NVer; v++ ) {
+        comm_type adj1 = verPtr[v];
+        comm_type adj2 = verPtr[v+1];
+        for(comm_type k = adj1; k < adj2; k++ ) {
+            comm_type w = verInd[k].tail;
             if (w < v)
                 continue;
             __sync_fetch_and_add(&degrees[v+1], 1); //Increment by one to make space for zero
@@ -343,8 +343,8 @@ graph * convertDirected2Undirected(graph *G) {
     }//End of for(i)
     
     //Build the pointer array:
-    long m=0;
-    for (long i=1; i<=NVer; i++) {
+    comm_type m=0;
+    for (comm_type i=1; i<=NVer; i++) {
         m += degrees[i]; //Accumulate the number of edges
         degrees[i] += degrees[i-1];
     }
@@ -356,10 +356,10 @@ graph * convertDirected2Undirected(graph *G) {
     printf("Done building pointer array\n");
     
     //Build CSR for Undirected graph:
-    long* counter = (long *) malloc (NVer * sizeof(long));
+    comm_type* counter = (comm_type *) malloc (NVer * sizeof(comm_type));
     assert(counter != NULL);
 #pragma omp parallel for
-    for (long i=0; i<NVer; i++)
+    for (comm_type i=0; i<NVer; i++)
         counter[i] = 0;
     
     //Allocate memory for Edge list:
@@ -367,16 +367,16 @@ graph * convertDirected2Undirected(graph *G) {
     assert(eList != NULL);
     
 #pragma omp parallel for
-    for (long v=0; v < NVer; v++ ) {
-        long adj1 = verPtr[v];
-        long adj2 = verPtr[v+1];
-        for(long k = adj1; k < adj2; k++ ) {
-            long w = verInd[k].tail;
+    for (comm_type v=0; v < NVer; v++ ) {
+        comm_type adj1 = verPtr[v];
+        comm_type adj2 = verPtr[v+1];
+        for(comm_type k = adj1; k < adj2; k++ ) {
+            comm_type w = verInd[k].tail;
             double weight = verInd[k].weight;
             if (w < v)
                 continue;
             //Add edge v --> w
-            long location = degrees[v] + __sync_fetch_and_add(&counter[v], 1);
+            comm_type location = degrees[v] + __sync_fetch_and_add(&counter[v], 1);
             if (location >= 2*m) {
                 printf("location is out of bound: %ld \n", location);
                 exit(1);
@@ -413,27 +413,27 @@ graph * convertDirected2Undirected(graph *G) {
 }//End of convertDirected2Undirected()
 
 
-long removeEdges(long NV, long NE, edge *edgeList) {
+comm_type removeEdges(comm_type NV, comm_type NE, edge *edgeList) {
     printf("Within removeEdges()\n");
-    long NGE = 0;
-    long *head = (long *) malloc(NV * sizeof(long));     /* head of linked list points to an edge */
-    long *next = (long *) malloc(NE * sizeof(long));     /* ptr to next edge in linked list       */
+    comm_type NGE = 0;
+    comm_type *head = (comm_type *) malloc(NV * sizeof(comm_type));     /* head of linked list points to an edge */
+    comm_type *next = (comm_type *) malloc(NE * sizeof(comm_type));     /* ptr to next edge in linked list       */
     
     /* Initialize linked lists */
-    for (long i = 0; i < NV; i++) head[i] = -1;
-    for (long i = 0; i < NE; i++) next[i] = -2;
+    for (comm_type i = 0; i < NV; i++) head[i] = -1;
+    for (comm_type i = 0; i < NE; i++) next[i] = -2;
     
-    for (long i = 0; i < NE; i++) {
-        long sv  = edgeList[i].head;
-        long ev  = edgeList[i].tail;
+    for (comm_type i = 0; i < NE; i++) {
+        comm_type sv  = edgeList[i].head;
+        comm_type ev  = edgeList[i].tail;
         if (sv == ev) continue;    /* self edge */
-        long * ptr = head + sv;     /* start at head of list for this key */
+        comm_type * ptr = head + sv;     /* start at head of list for this key */
         while (1) {
-            long edgeId = *ptr;
+            comm_type edgeId = *ptr;
             if (edgeId == -1) {         /* at the end of the list */
                 edgeId = *ptr;             /* lock ptr               */
                 if (edgeId == -1) {       /* if still end of list   */
-                    long newId = NGE;
+                    comm_type newId = NGE;
                     NGE++;     /* increment number of good edges */
                     //edgeList[i].id = newId;                 /* set id of edge                 */
                     next[i] = -1;                           /* insert edge in linked list     */
@@ -448,9 +448,9 @@ long removeEdges(long NV, long NE, edge *edgeList) {
     }
     /* Move good edges to front of edgeList                    */
     /* While edge i is a bad edge, swap with last edge in list */
-    for (long i = 0; i < NGE; i++) {
+    for (comm_type i = 0; i < NGE; i++) {
         while (next[i] == -2) {
-            long k = NE - 1;
+            comm_type k = NE - 1;
             NE--;
             edgeList[i] = edgeList[k];
             next[i] = next[k];
@@ -464,31 +464,31 @@ long removeEdges(long NV, long NE, edge *edgeList) {
 }//End of removeEdges()
 
 /* Since graph is undirected, sort each edge head --> tail AND tail --> head */
-void SortEdgesUndirected(long NV, long NE, edge *list1, edge *list2, long *ptrs) {
-    for (long i = 0; i < NV + 2; i++)
+void SortEdgesUndirected(comm_type NV, comm_type NE, edge *list1, edge *list2, comm_type *ptrs) {
+    for (comm_type i = 0; i < NV + 2; i++)
         ptrs[i] = 0;
     ptrs += 2;
     
     /* Histogram key values */
-    for (long i = 0; i < NE; i++) {
+    for (comm_type i = 0; i < NE; i++) {
         ptrs[list1[i].head]++;
         ptrs[list1[i].tail]++;
     }
     /* Compute start index of each bucket */
-    for (long i = 1; i < NV; i++)
+    for (comm_type i = 1; i < NV; i++)
         ptrs[i] += ptrs[i-1];
     ptrs--;
     
     /* Move edges into its bucket's segment */
-    for (long i = 0; i < NE; i++) {
-        long head   = list1[i].head;
-        long index          = ptrs[head]++;
+    for (comm_type i = 0; i < NE; i++) {
+        comm_type head   = list1[i].head;
+        comm_type index          = ptrs[head]++;
         //list2[index].id     = list1[i].id;
         list2[index].head   = list1[i].head;
         list2[index].tail   = list1[i].tail;
         list2[index].weight = list1[i].weight;
         
-        long tail   = list1[i].tail;
+        comm_type tail   = list1[i].tail;
         index               = ptrs[tail]++;
         //list2[index].id     = list1[i].id;
         list2[index].head   = list1[i].tail;
@@ -498,22 +498,22 @@ void SortEdgesUndirected(long NV, long NE, edge *list1, edge *list2, long *ptrs)
 }//End of SortEdgesUndirected2()
 
 /* Sort each node's neighbors by tail from smallest to largest. */
-void SortNodeEdgesByIndex(long NV, edge *list1, edge *list2, long *ptrs) {
-    for (long i = 0; i < NV; i++) {
+void SortNodeEdgesByIndex(comm_type NV, edge *list1, edge *list2, comm_type *ptrs) {
+    for (comm_type i = 0; i < NV; i++) {
         edge *edges1 = list1 + ptrs[i];
         edge *edges2 = list2 + ptrs[i];
-        long size    = ptrs[i+1] - ptrs[i];
+        comm_type size    = ptrs[i+1] - ptrs[i];
         
         /* Merge Sort */
-        for (long skip = 2; skip < 2 * size; skip *= 2) {
-            for (long sect = 0; sect < size; sect += skip)  {
-                long j = sect;
-                long l = sect;
-                long half_skip = skip / 2;
-                long k = sect + half_skip;
+        for (comm_type skip = 2; skip < 2 * size; skip *= 2) {
+            for (comm_type sect = 0; sect < size; sect += skip)  {
+                comm_type j = sect;
+                comm_type l = sect;
+                comm_type half_skip = skip / 2;
+                comm_type k = sect + half_skip;
                 
-                long j_limit = (j + half_skip < size) ? j + half_skip : size;
-                long k_limit = (k + half_skip < size) ? k + half_skip : size;
+                comm_type j_limit = (j + half_skip < size) ? j + half_skip : size;
+                comm_type k_limit = (k + half_skip < size) ? k + half_skip : size;
                 
                 while ((j < j_limit) && (k < k_limit)) {
                     if   (edges1[j].tail < edges1[k].tail) {edges2[l] = edges1[j]; j++; l++;}
@@ -528,7 +528,7 @@ void SortNodeEdgesByIndex(long NV, edge *list1, edge *list2, long *ptrs) {
         }
         // result is in list2, so move to list1
         if (edges1 == list2 + ptrs[i])
-            for (long j = ptrs[i]; j < ptrs[i+1]; j++) list1[j] = list2[j];
+            for (comm_type j = ptrs[i]; j < ptrs[i+1]; j++) list1[j] = list2[j];
     }
 }//End of SortNodeEdgesByIndex2()
 
@@ -537,16 +537,16 @@ void SortNodeEdgesByIndex(long NV, edge *list1, edge *list2, long *ptrs) {
 //N = Number of vertices
 //C = Community assignments for each vertex stored in an order
 //old2NewMap = Stores the output of this routine
-void buildOld2NewMap(long N, long *C, long *commIndex) {
+void buildOld2NewMap(comm_type N, comm_type *C, comm_type *commIndex) {
     printf("Within buildOld2NewMap(%ld) function...\n", N);
     printf("WARNING: Assumes that communities are numbered contiguously\n");
     assert(N > 0);
     //Compute number of communities:
     //Assume zero is a valid community id
-    long nC=-1;
+    comm_type nC=-1;
     bool isZero = false;
     bool isNegative = false;
-    for(long i = 0; i < N; i++) {
+    for(comm_type i = 0; i < N; i++) {
         if(C[i] == 0)
             isZero = true; //Check if zero is a valid community
         if(C[i] < 0)
@@ -568,20 +568,20 @@ void buildOld2NewMap(long N, long *C, long *commIndex) {
     printf("Number of unique communities in C= %d\n", nC);
     
     //////////STEP 1: Create a CSR-like datastructure for communities in C
-    long * commPtr = (long *) malloc ((nC+1) * sizeof(long)); assert(commPtr != 0);
-    //long * commIndex = (long *) malloc (N * sizeof(long)); assert(commIndex != 0);
-    long * commAdded = (long *) malloc (nC * sizeof(long)); assert(commAdded != 0);
+    comm_type * commPtr = (comm_type *) malloc ((nC+1) * sizeof(comm_type)); assert(commPtr != 0);
+    //comm_type * commIndex = (comm_type *) malloc (N * sizeof(comm_type)); assert(commIndex != 0);
+    comm_type * commAdded = (comm_type *) malloc (nC * sizeof(comm_type)); assert(commAdded != 0);
     
     // Initialization
 #pragma omp parallel for
-    for(long i = 0; i < nC; i++) {
+    for(comm_type i = 0; i < nC; i++) {
         commPtr[i] = 0;
         commAdded[i] = 0;
     }
     commPtr[nC] = 0;
     // Count the size of each community
 #pragma omp parallel for
-    for(long i = 0; i < N; i++) {
+    for(comm_type i = 0; i < N; i++) {
         if(C[i] < 0) { //A negative value
             __sync_fetch_and_add(&commPtr[nC],1); //Unassigned vertices
         } else { //A positive value
@@ -592,22 +592,22 @@ void buildOld2NewMap(long N, long *C, long *commIndex) {
         }
     }//End of for(i)
     //Prefix sum:
-    for(long i=0; i<nC; i++) {
+    for(comm_type i=0; i<nC; i++) {
         commPtr[i+1] += commPtr[i];
     }
     //Group vertices with the same community in an order
 #pragma omp parallel for
-    for (long i=0; i<N; i++) {
-        long tc = (long)C[i];
+    for (comm_type i=0; i<N; i++) {
+        comm_type tc = (comm_type)C[i];
         if(tc < 0) { //A negative value
             tc = nC-1;
-            long Where = commPtr[tc] + __sync_fetch_and_add(&(commAdded[tc]), 1);
+            comm_type Where = commPtr[tc] + __sync_fetch_and_add(&(commAdded[tc]), 1);
             assert(Where < N);
             commIndex[Where] = i; //The vertex id
         } else {
         if(!isZero)
             tc--; //Convert to zero based index
-        long Where = commPtr[tc] + __sync_fetch_and_add(&(commAdded[tc]), 1);
+        comm_type Where = commPtr[tc] + __sync_fetch_and_add(&(commAdded[tc]), 1);
         assert(Where < N);
         commIndex[Where] = i; //The vertex id
         }
@@ -618,7 +618,7 @@ void buildOld2NewMap(long N, long *C, long *commIndex) {
     //This step will now be handled outside the routine
     /*
      #pragma omp parallel for
-     for (long i=0; i<N; i++) {
+     for (comm_type i=0; i<N; i++) {
      old2NewMap[commIndex[i]] = i;
      //printf("(%ld) --> (%ld)\n", commIndex[i]+1, i+1);
      }

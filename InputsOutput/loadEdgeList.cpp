@@ -19,8 +19,8 @@ void parse_DirectedEdgeList(dGraph * G, char *fileName) {
         printf("Cannot open the input file: %s\n",fileName);
         exit(1);
     }
-    long NV=0, NE=0;
-    long nv1, nv2;
+    comm_type NV=0, NE=0;
+    comm_type nv1, nv2;
     //Count number of vertices and edges
     while(!feof(file))
     {
@@ -44,11 +44,11 @@ void parse_DirectedEdgeList(dGraph * G, char *fileName) {
     /*---------------------------------------------------------------------*/
     edge *tmpEdgeList = (edge *) malloc( NE * sizeof(edge)); //Every edge stored ONCE
     assert( tmpEdgeList != NULL);
-    long Si, Ti;
+    comm_type Si, Ti;
     double Twt = 1.0;
     time1 = omp_get_wtime();
-    long mycount = 0;
-    for (long i = 0; i < NE; i++) {
+    comm_type mycount = 0;
+    for (comm_type i = 0; i < NE; i++) {
         fscanf(file, "%ld %ld", &Si, &Ti);
         //fscanf(file, "%ld %ld %lf", &Si, &Ti, &Twt);
 #if defined(DEL_ZERO_BASED)
@@ -70,9 +70,9 @@ void parse_DirectedEdgeList(dGraph * G, char *fileName) {
     
     ///////////
     time1 = omp_get_wtime();
-    long *edgeListPtrOut = (long *)  malloc((NV+1) * sizeof(long)); //Outgoing
+    comm_type *edgeListPtrOut = (comm_type *)  malloc((NV+1) * sizeof(comm_type)); //Outgoing
     assert(edgeListPtrOut != NULL);
-    long *edgeListPtrIn  = (long *)  malloc((NV+1) * sizeof(long)); //Incoming
+    comm_type *edgeListPtrIn  = (comm_type *)  malloc((NV+1) * sizeof(comm_type)); //Incoming
     assert(edgeListPtrIn != NULL);
     edge *edgeListOut = (edge *) malloc(NE * sizeof(edge)); //Outgoing
     assert( edgeListOut != NULL);
@@ -82,20 +82,20 @@ void parse_DirectedEdgeList(dGraph * G, char *fileName) {
     printf("Time for allocating memory for storing graph = %lf\n", time2 - time1);
     
 #pragma omp parallel for
-    for (long i=0; i <= NV; i++)
+    for (comm_type i=0; i <= NV; i++)
         edgeListPtrOut[i] = 0; //For first touch purposes
 #pragma omp parallel for
-    for (long i=0; i <= NV; i++)
+    for (comm_type i=0; i <= NV; i++)
         edgeListPtrIn[i] = 0; //For first touch purposes
     
     //////Build the EdgeListPtr Array: Cumulative addition
     time1 = omp_get_wtime();
     //#pragma omp parallel for
-    for(long i=0; i<NE; i++) {
+    for(comm_type i=0; i<NE; i++) {
         __sync_fetch_and_add(&edgeListPtrOut[tmpEdgeList[i].head+1], 1); //Leave 0th position intact
         __sync_fetch_and_add(&edgeListPtrIn[tmpEdgeList[i].tail+1], 1); //Leave 0th position intact
     }
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         edgeListPtrOut[i+1] += edgeListPtrOut[i]; //Prefix Sum
         edgeListPtrIn[i+1]  += edgeListPtrIn[i]; //Prefix Sum:
     }
@@ -108,13 +108,13 @@ void parse_DirectedEdgeList(dGraph * G, char *fileName) {
     
     //time1 = omp_get_wtime();
     //Keep track of how many edges have been added for a vertex:
-    long  *addedOut  = (long *)  malloc( NV  * sizeof(long));
+    comm_type  *addedOut  = (comm_type *)  malloc( NV  * sizeof(comm_type));
     assert( addedOut != NULL);
-    long  *addedIn  = (long *)  malloc( NV  * sizeof(long));
+    comm_type  *addedIn  = (comm_type *)  malloc( NV  * sizeof(comm_type));
     assert( addedIn != NULL);
     
 #pragma omp parallel for
-    for (long i = 0; i < NV; i++) {
+    for (comm_type i = 0; i < NV; i++) {
         addedOut[i] = 0;
         addedIn[i] = 0;
     }
@@ -122,12 +122,12 @@ void parse_DirectedEdgeList(dGraph * G, char *fileName) {
     printf("About to build edgeList...\n");
     //Build the edgeList from edgeListTmp:
 #pragma omp parallel for
-    for(long i=0; i<NE; i++) {
-        long head      = tmpEdgeList[i].head;
-        long tail      = tmpEdgeList[i].tail;
+    for(comm_type i=0; i<NE; i++) {
+        comm_type head      = tmpEdgeList[i].head;
+        comm_type tail      = tmpEdgeList[i].tail;
         double weight  = tmpEdgeList[i].weight;
         ///Add the edges: Outgoing and incoming
-        long Where = edgeListPtrOut[head] + __sync_fetch_and_add(&addedOut[head], 1);
+        comm_type Where = edgeListPtrOut[head] + __sync_fetch_and_add(&addedOut[head], 1);
         edgeListOut[Where].head = head;
         edgeListOut[Where].tail = tail;
         edgeListOut[Where].weight = weight;
@@ -170,8 +170,8 @@ void parse_UndirectedEdgeList(graph * G, char *fileName) {
         exit(1);
     }
     
-    long NV=0, NE=0;
-    long nv1, nv2;
+    comm_type NV=0, NE=0;
+    comm_type nv1, nv2;
     while(!feof(file))
     {
         fscanf(file, "%ld %ld", &nv1, &nv2);
@@ -196,10 +196,10 @@ void parse_UndirectedEdgeList(graph * G, char *fileName) {
     /*---------------------------------------------------------------------*/
     edge *tmpEdgeList = (edge *) malloc( NE * sizeof(edge)); //Every edge stored ONCE
     assert( tmpEdgeList != NULL);
-    long Si, Ti;
+    comm_type Si, Ti;
     double Twt;
     time1 = omp_get_wtime();
-    for (long i = 0; i < NE; i++) {
+    for (comm_type i = 0; i < NE; i++) {
         fscanf(file, "%ld %ld", &Si, &Ti);
 #if defined(DEL_ZERO_BASED)
 #else
@@ -223,7 +223,7 @@ void parse_UndirectedEdgeList(graph * G, char *fileName) {
     
     ///////////
     time1 = omp_get_wtime();
-    long *edgeListPtr = (long *)  malloc((NV+1) * sizeof(long));
+    comm_type *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
     assert(edgeListPtr != NULL);
     edge *edgeList = (edge *) malloc( NE * sizeof(edge)); //Every edge stored twice
     assert( edgeList != NULL);
@@ -231,16 +231,16 @@ void parse_UndirectedEdgeList(graph * G, char *fileName) {
     printf("Time for allocating memory for storing graph = %lf\n", time2 - time1);
     
 #pragma omp parallel for
-    for (long i=0; i <= NV; i++)
+    for (comm_type i=0; i <= NV; i++)
         edgeListPtr[i] = 0; //For first touch purposes
     
     //////Build the EdgeListPtr Array: Cumulative addition
     time1 = omp_get_wtime();
 #pragma omp parallel for
-    for(long i=0; i<NE; i++) {
+    for(comm_type i=0; i<NE; i++) {
         __sync_fetch_and_add(&edgeListPtr[tmpEdgeList[i].head+1], 1); //Leave 0th position intact
     }
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         edgeListPtr[i+1] += edgeListPtr[i]; //Prefix Sum:
         //printf("%d ",edgeListPtr[i]);
     }
@@ -253,22 +253,22 @@ void parse_UndirectedEdgeList(graph * G, char *fileName) {
     //time1 = omp_get_wtime();
     //Keep track of how many edges have been added for a vertex:
     printf("About to allocate for added vector: %ld\n", NV);
-    long  *added  = (long *)  malloc( NV  * sizeof(long));
+    comm_type  *added  = (comm_type *)  malloc( NV  * sizeof(comm_type));
     printf("Done allocating memory fors added vector\n");
     assert( added != NULL);
 #pragma omp parallel for
-    for (long i = 0; i < NV; i++)
+    for (comm_type i = 0; i < NV; i++)
         added[i] = 0;
     
     printf("About to build edgeList...\n");
     //Build the edgeList from edgeListTmp:
 #pragma omp parallel for
-    for(long i=0; i<NE; i++) {
-        long head      = tmpEdgeList[i].head;
-        long tail      = tmpEdgeList[i].tail;
+    for(comm_type i=0; i<NE; i++) {
+        comm_type head      = tmpEdgeList[i].head;
+        comm_type tail      = tmpEdgeList[i].tail;
         double weight  = tmpEdgeList[i].weight;
         
-        long Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
+        comm_type Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
         edgeList[Where].head = head;
         edgeList[Where].tail = tail;
         edgeList[Where].weight = weight;
@@ -317,7 +317,7 @@ void parse_UndirectedEdgeListWeighted(graph * G, char *fileName) {
     }
 
     // read number of vertices and edges
-    long NV=0, NE=0;
+    comm_type NV=0, NE=0;
     fscanf(file, "%ld %ld", &NV, &NE);
     
     printf("|V|= %ld, |E|= %ld \n", NV, NE);
@@ -327,10 +327,10 @@ void parse_UndirectedEdgeListWeighted(graph * G, char *fileName) {
     /*---------------------------------------------------------------------*/
     edge *tmpEdgeList = (edge *) malloc( NE * sizeof(edge)); //Every edge stored ONCE
     assert( tmpEdgeList != NULL);
-    long Si, Ti;
+    comm_type Si, Ti;
     double Twt = 1.0;
     time1 = omp_get_wtime();
-    for (long i = 0; i < NE; i++) {
+    for (comm_type i = 0; i < NE; i++) {
 #if defined(ALL_WEIGHTS_ONE)
         fscanf(file, "%ld %ld", &Si, &Ti);
 #else
@@ -355,7 +355,7 @@ void parse_UndirectedEdgeListWeighted(graph * G, char *fileName) {
     
     ///////////
     time1 = omp_get_wtime();
-    long *edgeListPtr = (long *)  malloc((NV+1) * sizeof(long));
+    comm_type *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
     assert(edgeListPtr != NULL);
     edge *edgeList = (edge *) malloc( NE * sizeof(edge)); //Every edge stored once
     assert( edgeList != NULL);
@@ -363,16 +363,16 @@ void parse_UndirectedEdgeListWeighted(graph * G, char *fileName) {
     printf("Time for allocating memory for storing graph = %lf\n", time2 - time1);
     
 #pragma omp parallel for
-    for (long i=0; i <= NV; i++)
+    for (comm_type i=0; i <= NV; i++)
         edgeListPtr[i] = 0; //For first touch purposes
     
     //////Build the EdgeListPtr Array: Cumulative addition
     time1 = omp_get_wtime();
 #pragma omp parallel for
-    for(long i=0; i<NE; i++) {
+    for(comm_type i=0; i<NE; i++) {
         __sync_fetch_and_add(&edgeListPtr[tmpEdgeList[i].head+1], 1); //Leave 0th position intact
     }
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         edgeListPtr[i+1] += edgeListPtr[i]; //Prefix Sum:
     }
     //The last element of Cumulative will hold the total number of characters
@@ -384,22 +384,22 @@ void parse_UndirectedEdgeListWeighted(graph * G, char *fileName) {
     time1 = omp_get_wtime();
     //Keep track of how many edges have been added for a vertex:
     printf("About to allocate for added vector: %ld\n", NV);
-    long  *added  = (long *)  malloc( NV  * sizeof(long));
+    comm_type  *added  = (comm_type *)  malloc( NV  * sizeof(comm_type));
     printf("Done allocating memory fors added vector\n");
     assert( added != NULL);
 #pragma omp parallel for
-    for (long i = 0; i < NV; i++)
+    for (comm_type i = 0; i < NV; i++)
         added[i] = 0;
     
     printf("About to build edgeList...\n");
     //Build the edgeList from edgeListTmp:
 #pragma omp parallel for
-    for(long i=0; i<NE; i++) {
-        long head      = tmpEdgeList[i].head;
-        long tail      = tmpEdgeList[i].tail;
+    for(comm_type i=0; i<NE; i++) {
+        comm_type head      = tmpEdgeList[i].head;
+        comm_type tail      = tmpEdgeList[i].tail;
         double weight  = tmpEdgeList[i].weight;
         
-        long Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
+        comm_type Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
         edgeList[Where].head = head;
         edgeList[Where].tail = tail;
         edgeList[Where].weight = weight;
@@ -437,8 +437,8 @@ void parse_UndirectedEdgeListDarpaHive(graph * G, char *fileName) {
         exit(1);
     }
     
-    long NV=-1, NE=0;
-    long nv1, nv2, wt;
+    comm_type NV=-1, NE=0;
+    comm_type nv1, nv2, wt;
     while(!feof(file))
     {
         fscanf(file, "%ld %ld %ld", &nv1, &nv2, &wt);
@@ -461,9 +461,9 @@ void parse_UndirectedEdgeListDarpaHive(graph * G, char *fileName) {
     /*---------------------------------------------------------------------*/
     edge *tmpEdgeList = (edge *) malloc( (2*NE+1) * sizeof(edge)); //Every edge will be stored twice; add an extra line for empty space
     assert( tmpEdgeList != NULL);
-    long Si, Ti, Wi;
+    comm_type Si, Ti, Wi;
     time1 = omp_get_wtime();
-    long i = 0;
+    comm_type i = 0;
     while(!feof(file)) {
         fscanf(file, "%ld %ld %ld", &Si, &Ti, &Wi);
         Si--; Ti--; //Numbers are One-based indices
@@ -484,7 +484,7 @@ void parse_UndirectedEdgeListDarpaHive(graph * G, char *fileName) {
     
     ///////////
     time1 = omp_get_wtime();
-    long *edgeListPtr = (long *)  malloc((NV+1) * sizeof(long));
+    comm_type *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
     assert(edgeListPtr != NULL);
     edge *edgeList = (edge *) malloc( (2*NE) * sizeof(edge)); //Every edge stored twice
     assert( edgeList != NULL);
@@ -492,16 +492,16 @@ void parse_UndirectedEdgeListDarpaHive(graph * G, char *fileName) {
     printf("Time for allocating memory for storing graph = %lf\n", time2 - time1);
     
 #pragma omp parallel for
-    for (long i=0; i <= NV; i++)
+    for (comm_type i=0; i <= NV; i++)
         edgeListPtr[i] = 0; //For first touch purposes
     
     //////Build the EdgeListPtr Array: Cumulative addition
     time1 = omp_get_wtime();
 #pragma omp parallel for
-    for(long i=0; i<(2*NE); i++) {
+    for(comm_type i=0; i<(2*NE); i++) {
         __sync_fetch_and_add(&edgeListPtr[tmpEdgeList[i].head+1], 1); //Leave 0th position intact
     }
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         edgeListPtr[i+1] += edgeListPtr[i]; //Prefix Sum:
         //printf("%d ",edgeListPtr[i]);
     }
@@ -514,22 +514,22 @@ void parse_UndirectedEdgeListDarpaHive(graph * G, char *fileName) {
     //time1 = omp_get_wtime();
     //Keep track of how many edges have been added for a vertex:
     printf("About to allocate for added vector: %ld\n", NV);
-    long  *added  = (long *)  malloc( NV  * sizeof(long));
+    comm_type  *added  = (comm_type *)  malloc( NV  * sizeof(comm_type));
     printf("Done allocating memory for added vector\n");
     assert( added != NULL);
 #pragma omp parallel for
-    for (long i = 0; i < NV; i++)
+    for (comm_type i = 0; i < NV; i++)
         added[i] = 0;
     
     printf("About to build edgeList...\n");
     //Build the edgeList from edgeListTmp:
     //#pragma omp parallel for
-    for(long i=0; i<(2*NE); i++) {
-        long head      = tmpEdgeList[i].head;
-        long tail      = tmpEdgeList[i].tail;
+    for(comm_type i=0; i<(2*NE); i++) {
+        comm_type head      = tmpEdgeList[i].head;
+        comm_type tail      = tmpEdgeList[i].tail;
         double weight  = tmpEdgeList[i].weight;
         
-        long Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
+        comm_type Where = edgeListPtr[head] + __sync_fetch_and_add(&added[head], 1);
         edgeList[Where].head = head;
         edgeList[Where].tail = tail;
         edgeList[Where].weight = weight;
@@ -568,8 +568,8 @@ void parse_UndirectedEdgeListFromJason(graph * G, char *fileName) {
         exit(1);
     }
     
-    long NV=0, NE=0;
-    long nv1, nv2, wt;
+    comm_type NV=0, NE=0;
+    comm_type nv1, nv2, wt;
     while(!feof(file))
     {
         fscanf(file, "%ld %ld %ld", &nv1, &nv2, &wt);
@@ -596,13 +596,13 @@ void parse_UndirectedEdgeListFromJason(graph * G, char *fileName) {
     /*---------------------------------------------------------------------*/
     edge *edgeListTmp = (edge *) malloc(NE * sizeof(edge)); //Every edge stored ONCE
     assert( edgeListTmp != NULL);
-    long *edgeListPtr = (long *)  malloc((NV+1) * sizeof(long));
+    comm_type *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
     assert(edgeListPtr != NULL);
     
-    long Si, Ti;
+    comm_type Si, Ti;
     double Twt;
     time1 = omp_get_wtime();
-    for (long i = 0; i < NE; i++) {
+    for (comm_type i = 0; i < NE; i++) {
         fscanf(file, "%ld %ld %lf", &Si, &Ti, &Twt);
         assert((Si >= 0)&&(Si < NV));
         assert((Ti >= 0)&&(Ti < NV));
@@ -618,7 +618,7 @@ void parse_UndirectedEdgeListFromJason(graph * G, char *fileName) {
     
     //////Build the EdgeListPtr Array: Cumulative addition
     time1 = omp_get_wtime();
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         edgeListPtr[i+1] += edgeListPtr[i]; //Prefix Sum:
     }
     //The last element of Cumulative will hold the total number of characters
@@ -633,9 +633,9 @@ void parse_UndirectedEdgeListFromJason(graph * G, char *fileName) {
     edge *edgeList = (edge *) malloc(2 * NE * sizeof(edge)); //Every edge stored twice
     assert(edgeList != 0);
     //Keep track of how many edges have been added for a vertex:
-    long  *Counter  = (long *)  malloc(NV  * sizeof(long)); assert(Counter != 0);
+    comm_type  *Counter  = (comm_type *)  malloc(NV  * sizeof(comm_type)); assert(Counter != 0);
 #pragma omp parallel for
-    for (long i = 0; i < NV; i++)
+    for (comm_type i = 0; i < NV; i++)
         Counter[i] = 0;
     time2 = omp_get_wtime();
     printf("Time for allocating memory for marks and edgeList = %lf\n", time2 - time1);
@@ -644,12 +644,12 @@ void parse_UndirectedEdgeListFromJason(graph * G, char *fileName) {
     printf("About to build edgeList...\n");
     //Build the edgeList from edgeListTmp:
 #pragma omp parallel for
-    for(long i=0; i<NE; i++) {
-        long head  = edgeListTmp[i].head;
-        long tail  = edgeListTmp[i].tail;
+    for(comm_type i=0; i<NE; i++) {
+        comm_type head  = edgeListTmp[i].head;
+        comm_type tail  = edgeListTmp[i].tail;
         double weight      = edgeListTmp[i].weight;
         if (head != tail) {
-            long Where    = edgeListPtr[head] + __sync_fetch_and_add(&Counter[head], 1);
+            comm_type Where    = edgeListPtr[head] + __sync_fetch_and_add(&Counter[head], 1);
             edgeList[Where].head = head;
             edgeList[Where].tail = tail;
             edgeList[Where].weight = weight;
@@ -659,7 +659,7 @@ void parse_UndirectedEdgeListFromJason(graph * G, char *fileName) {
             edgeList[Where].tail   = head;
             edgeList[Where].weight = weight;
         } else {
-            long Where    = edgeListPtr[head] + __sync_fetch_and_add(&Counter[head], 1);
+            comm_type Where    = edgeListPtr[head] + __sync_fetch_and_add(&Counter[head], 1);
             edgeList[Where].head = head;
             edgeList[Where].tail = tail;
             edgeList[Where].weight = weight;

@@ -1,8 +1,8 @@
 #include "input_output.h"
 void writeGraphMatrixMarketFormatSymmetric(graph* G, char *filename) {
     //Get the iterators for the graph:
-    long NVer     = G->numVertices;
-    long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
+    comm_type NVer     = G->numVertices;
+    comm_type NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
     comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     printf("NVer= %ld --  NE=%ld\n", NVer, NEdge);
@@ -26,11 +26,11 @@ void writeGraphMatrixMarketFormatSymmetric(graph* G, char *filename) {
     fprintf(fout, "%ld %ld %ld\n", NVer, NVer, NEdge);
     
     //Write the edges (lower triangle only):
-    for (long v=0; v<NVer; v++) {
-        long adj1 = verPtr[v];
-        long adj2 = verPtr[v+1];
+    for (comm_type v=0; v<NVer; v++) {
+        comm_type adj1 = verPtr[v];
+        comm_type adj2 = verPtr[v+1];
         //Edge lines: <adjacent> <weight>
-        for(long k = adj1; k < adj2; k++ ) {
+        for(comm_type k = adj1; k < adj2; k++ ) {
             if (verInd[k].tail <= v ) { //Print only once (lower triangle)
                 fprintf(fout, "%ld %ld %g\n", v+1, (verInd[k].tail+1), (verInd[k].weight) );
             }
@@ -43,11 +43,11 @@ void writeGraphMatrixMarketFormatSymmetric(graph* G, char *filename) {
 
 //This routine outputs the graph as a "reordered" symmetric matrix
 //The vector old2NewMap contains the new ids for old ids
-void writeGraphMatrixMarketFormatSymmetricReordered(graph* G, char *filename, long *old2NewMap) {
+void writeGraphMatrixMarketFormatSymmetricReordered(graph* G, char *filename, comm_type *old2NewMap) {
     printf("Within writeGraphMatrixMarketFormatSymmetricReordered()\n");
     //Get the iterators for the graph:
-    long NVer     = G->numVertices;
-    long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
+    comm_type NVer     = G->numVertices;
+    comm_type NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
     comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     printf("NVer= %ld --  NE=%ld\n", NVer, NEdge);
@@ -71,11 +71,11 @@ void writeGraphMatrixMarketFormatSymmetricReordered(graph* G, char *filename, lo
     fprintf(fout, "%ld %ld %ld\n", NVer, NVer, NEdge);
     
     //Write the edges
-    for (long v=0; v<NVer; v++) {
-        long adj1 = verPtr[v];
-        long adj2 = verPtr[v+1];
+    for (comm_type v=0; v<NVer; v++) {
+        comm_type adj1 = verPtr[v];
+        comm_type adj2 = verPtr[v+1];
         //Edge lines: <adjacent> <weight>
-        for(long k = adj1; k < adj2; k++ ) {
+        for(comm_type k = adj1; k < adj2; k++ ) {
             if (verInd[k].tail <= v ) { //Print only once (lower triangle)
                 fprintf(fout, "%ld %ld %g\n", old2NewMap[v]+1, (old2NewMap[verInd[k].tail]+1), (verInd[k].weight) );
             }
@@ -87,13 +87,13 @@ void writeGraphMatrixMarketFormatSymmetricReordered(graph* G, char *filename, lo
 
 //This routine outputs the graph as a "reordered" symmetric matrix
 //The vector old2NewMap contains the new ids for old ids
-void writeGraphMatrixMarketFormatBipartiteReordered(graph* G, char *filename, long *old2NewMap) {
+void writeGraphMatrixMarketFormatBipartiteReordered(graph* G, char *filename, comm_type *old2NewMap) {
     printf("Within writeGraphMatrixMarketFormatBipartiteReordered()\n");
     //Get the iterators for the graph:
-    long NVer     = G->numVertices;
-    long NS       = G->sVertices;
-    long NT       = NVer - NS;  assert(NT > 0); //Make sure that the graph is bipartite
-    long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
+    comm_type NVer     = G->numVertices;
+    comm_type NS       = G->sVertices;
+    comm_type NT       = NVer - NS;  assert(NT > 0); //Make sure that the graph is bipartite
+    comm_type NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
     comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd  = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     printf("NS= %ld -- NT= %ld --  NE=%ld\n", NS, NT, NEdge);
@@ -116,11 +116,11 @@ void writeGraphMatrixMarketFormatBipartiteReordered(graph* G, char *filename, lo
     fprintf(fout, "\%\%=================================================================================\n");
     fprintf(fout, "%ld %ld %ld\n", NS, NT, NEdge);
     //Write the edges (Only from the row perspective):
-    for (long v=0; v<NS; v++) {
-        long adj1 = verPtr[v];
-        long adj2 = verPtr[v+1];
+    for (comm_type v=0; v<NS; v++) {
+        comm_type adj1 = verPtr[v];
+        comm_type adj2 = verPtr[v+1];
         //Edge lines: <adjacent> <weight>
-        for(long k = adj1; k < adj2; k++ ) {
+        for(comm_type k = adj1; k < adj2; k++ ) {
             fprintf(fout, "%ld %ld %g\n", old2NewMap[v]+1, old2NewMap[verInd[k].tail]-NS+1, verInd[k].weight );
         }//End of for(k)
     }//End of for(v)

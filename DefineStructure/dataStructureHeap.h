@@ -47,19 +47,19 @@
 /*An entity: id + weight */
 typedef struct /* the edge data structure */
 {
-    long id;
+    comm_type id;
     double weight;
 } term;
 
 typedef struct
 {
-    long maxsize;            /* Maximum size       */
-    long size;               /* Current size       */
+    comm_type maxsize;            /* Maximum size       */
+    comm_type size;               /* Current size       */
     term * elements;        /* vector of elements */
 } heap;
 
 void heapInitialize(heap *); /* Initialize to HEAP_MAX_SIZE */
-void heapInitializeToN(heap *myHeap, long n); /* Initialize to n */
+void heapInitializeToN(heap *myHeap, comm_type n); /* Initialize to n */
 void heapAdd(heap *, term);
 void heapRemoveMin(heap *);
 

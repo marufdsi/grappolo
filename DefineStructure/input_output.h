@@ -2,8 +2,8 @@
 #define __input__output
 #include "defs.h"
 
-long removeEdges(long NV, long NE, edge *edgeList); //Remove duplicates
-void SortEdgesUndirected(long NV, long NE, edge *list1, edge *list2, long *ptrs);
+comm_type removeEdges(comm_type NV, comm_type NE, edge *edgeList); //Remove duplicates
+void SortEdgesUndirected(comm_type NV, comm_type NE, edge *list1, edge *list2, comm_type *ptrs);
 
 void loadMetisFileFormat(graph *G, const char* filename); //Metis (DIMACS#10)
 bool parse_MatrixMarket(graph * G, char *fileName); //Matrix-Market
@@ -21,15 +21,15 @@ void parse_SNAP_GroundTruthCommunities(char *fileVertexMap, char *fileGroundTrut
 void parse_UndirectedEdgeListFromJason(graph * G, char *fileName); //Data from Jason
 void parse_UndirectedEdgeListDarpaHive(graph * G, char *fileName); //DARPA-HIVE Challenge
 
-void writeGraphBinaryFormatNew(graph* G, char *filename, long weighted);
+void writeGraphBinaryFormatNew(graph* G, char *filename, comm_type weighted);
 void writeGraphMetisSimpleFormat(graph* G, char *filename);
 void writeGraphMatrixMarketFormatSymmetric(graph* G, char *filename);
 
 void writeGraphPajekFormat(graph* G, char *filename); //Pajek
-void writeGraphPajekFormatWithCommunityInfo(graph* G, char *filename, long *C); //Pajek+Community
+void writeGraphPajekFormatWithCommunityInfo(graph* G, char *filename, comm_type *C); //Pajek+Community
 
-void writeGraphMatrixMarketFormatSymmetricReordered(graph* G, char *filename, long *old2NewMap);
-void writeGraphMatrixMarketFormatBipartiteReordered(graph* G, char *filename, long *old2NewMap);
+void writeGraphMatrixMarketFormatSymmetricReordered(graph* G, char *filename, comm_type *old2NewMap);
+void writeGraphMatrixMarketFormatBipartiteReordered(graph* G, char *filename, comm_type *old2NewMap);
 
 void parse_EdgeListCompressedHDF5(graph * G, char *fileName);
 void parse_EdgeListCompressedHDF5NoDuplicates(graph * G, char *fileName);

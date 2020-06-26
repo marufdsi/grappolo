@@ -45,11 +45,11 @@
 #include <math.h>
 using namespace std;
 
-void updateAxForOpt(Comm* cInfo, long* currCommAss, double* vDegree, long NV)
+void updateAxForOpt(Comm* cInfo, comm_type* currCommAss, double* vDegree, comm_type NV)
 {
   //printf("NUMBER OF VERTICES: %d\n", NV);
   #pragma omp parallel for
-  for(long i = 0; i < NV; i++)
+  for(comm_type i = 0; i < NV; i++)
   {
     if(currCommAss[i] != i){
 /*    __sync_fetch_and_sub(&(cInfo[i].degree),vDegree[i]);
@@ -116,13 +116,13 @@ void updateAxForOptVec_SFP(comm_type* size, f_weight* degree, comm_type* currCom
    }
   }
 }
-void sumVertexDegree(edge* vtxInd, long* vtxPtr, double* vDegree, long NV, Comm* cInfo) {
+void sumVertexDegree(edge* vtxInd, comm_type* vtxPtr, double* vDegree, comm_type NV, Comm* cInfo) {
 #pragma omp parallel for
-  for (long i=0; i<NV; i++) {
-    long adj1 = vtxPtr[i];	    //Begin
-    long adj2 = vtxPtr[i+1];	//End
+  for (comm_type i=0; i<NV; i++) {
+    comm_type adj1 = vtxPtr[i];	    //Begin
+    comm_type adj2 = vtxPtr[i+1];	//End
     double totalWt = 0;
-    for(long j=adj1; j<adj2; j++) {
+    for(comm_type j=adj1; j<adj2; j++) {
       totalWt += vtxInd[j].weight;
     }
     vDegree[i] = totalWt;	//Degree of each node
@@ -164,10 +164,10 @@ void sumVertexDegreeVec_sfp(edge* vtxInd, comm_type* vtxPtr, f_weight* vDegree, 
   }
 }//End of sumVertexDegree()
 
-double calConstantForSecondTerm(double* vDegree, long NV) {
+double calConstantForSecondTerm(double* vDegree, comm_type NV) {
   double totalEdgeWeightTwice = 0;
   #pragma omp parallel for reduction(+:totalEdgeWeightTwice)
-  for (long i=0; i<NV; i++) {
+  for (comm_type i=0; i<NV; i++) {
       totalEdgeWeightTwice += vDegree[i];
   }
   return (double)1/totalEdgeWeightTwice;
@@ -183,9 +183,9 @@ f_weight calConstantForSecondTerm_sfp(f_weight* vDegree, comm_type NV) {
   return (f_weight)1/totalEdgeWeightTwice;
 }//End of calConstantForSecondTerm()
 
-void initCommAss(long* pastCommAss, long* currCommAss, long NV) {
+void initCommAss(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV) {
 #pragma omp parallel for
-  for (long i=0; i<NV; i++) {
+  for (comm_type i=0; i<NV; i++) {
     pastCommAss[i] = i; //Initialize each vertex to its cluster
     currCommAss[i] = i;
   }
@@ -202,29 +202,29 @@ void initCommAss_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_type N
 
 //Smart initialization assuming that each vertex is assigned to its own cluster
 //WARNING: Will ignore duplicate edge entries (multi-graph)
-void initCommAssOpt(long* pastCommAss, long* currCommAss, long NV, 
-		    mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
+void initCommAssOpt(comm_type* pastCommAss, comm_type* currCommAss, comm_type NV,
+		    mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
 		    Comm* cInfo, double constant, double* vDegree ) {
 
 #pragma omp parallel for
-  for (long v=0; v<NV; v++) {
-    long adj1  = vtxPtr[v];
-    long adj2  = vtxPtr[v+1];
-    long sPosition = vtxPtr[v]+v; //Starting position of local map for v
+  for (comm_type v=0; v<NV; v++) {
+    comm_type adj1  = vtxPtr[v];
+    comm_type adj2  = vtxPtr[v+1];
+    comm_type sPosition = vtxPtr[v]+v; //Starting position of local map for v
     
     pastCommAss[v] = v; //Initialize each vertex to its own cluster
     //currCommAss[v] = v; //Initialize with a self cluster
     
     //Step-1: Build local map counter (without a map):
-    long numUniqueClusters = 0;
+    comm_type numUniqueClusters = 0;
     double selfLoop = 0;
     clusterLocalMap[sPosition].cid     = v; //Add itself
     clusterLocalMap[sPosition].Counter = 0; //Initialize the count
     numUniqueClusters++;
     //Parse through the neighbors
-    for(long j=adj1; j<adj2; j++) {
+    for(comm_type j=adj1; j<adj2; j++) {
       if(vtxInd[j].tail == v) {	// SelfLoop need to be recorded
-	      selfLoop += (long)vtxInd[j].weight;
+	      selfLoop += (comm_type)vtxInd[j].weight;
         clusterLocalMap[sPosition].Counter = vtxInd[j].weight; //Initialize the count
         continue;
       }
@@ -236,14 +236,14 @@ void initCommAssOpt(long* pastCommAss, long* currCommAss, long NV,
     }//End of for(j)
     
     //Step 2: Find max:
-    long maxIndex = v;	//Assign the initial value as the current community
+    comm_type maxIndex = v;	//Assign the initial value as the current community
     double curGain = 0;
     double maxGain = 0;
     double eix = clusterLocalMap[sPosition].Counter - selfLoop; //NOT SURE ABOUT THIS.
     double ax  = cInfo[v].degree - vDegree[v];
     double eiy = 0;
     double ay  = 0;    
-    for(long k=0; k<numUniqueClusters; k++) {
+    for(comm_type k=0; k<numUniqueClusters; k++) {
       if(v != clusterLocalMap[sPosition + k].cid) {
         ay = cInfo[clusterLocalMap[sPosition + k].cid].degree; // degree of cluster y
         eiy = clusterLocalMap[sPosition + k].Counter; 	//Total edges incident on cluster y
@@ -396,13 +396,13 @@ void initCommAssOptVec_SFP(comm_type* pastCommAss, comm_type* currCommAss, comm_
 }//End of initCommAssOpt()
 
 
-double buildLocalMapCounter(long adj1, long adj2, map<long, long> &clusterLocalMap, 
-			 vector<double> &Counter, edge* vtxInd, long* currCommAss, long me) {
+double buildLocalMapCounter(comm_type adj1, comm_type adj2, map<comm_type, comm_type> &clusterLocalMap,
+			 vector<double> &Counter, edge* vtxInd, comm_type* currCommAss, comm_type me) {
   
-  map<long, long>::iterator storedAlready;
-  long numUniqueClusters = 1;
+  map<comm_type, comm_type>::iterator storedAlready;
+  comm_type numUniqueClusters = 1;
   double selfLoop = 0;
-  for(long j=adj1; j<adj2; j++) {
+  for(comm_type j=adj1; j<adj2; j++) {
     if(vtxInd[j].tail == me) {	// SelfLoop need to be recorded
       selfLoop += vtxInd[j].weight;
     }
@@ -421,13 +421,13 @@ double buildLocalMapCounter(long adj1, long adj2, map<long, long> &clusterLocalM
 }//End of buildLocalMapCounter()
 
 
-f_weight buildLocalMapCounter_sfp(long adj1, long adj2, map<long, long> &clusterLocalMap,
-			 vector<f_weight> &Counter, edge* vtxInd, long* currCommAss, long me) {
+f_weight buildLocalMapCounter_sfp(comm_type adj1, comm_type adj2, map<comm_type, comm_type> &clusterLocalMap,
+			 vector<f_weight> &Counter, edge* vtxInd, comm_type* currCommAss, comm_type me) {
 
-  map<long, long>::iterator storedAlready;
-  long numUniqueClusters = 1;
+  map<comm_type, comm_type>::iterator storedAlready;
+  comm_type numUniqueClusters = 1;
     f_weight selfLoop = 0;
-  for(long j=adj1; j<adj2; j++) {
+  for(comm_type j=adj1; j<adj2; j++) {
     if(vtxInd[j].tail == me) {	// SelfLoop need to be recorded
       selfLoop += vtxInd[j].weight;
     }
@@ -446,20 +446,20 @@ f_weight buildLocalMapCounter_sfp(long adj1, long adj2, map<long, long> &cluster
 }//End of buildLocalMapCounter()
 
 //Build the local-map data structure using vectors
-double buildLocalMapCounterNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, edge* vtxInd,
-                               long* currCommAss, long &numUniqueClusters) {
-    long adj1  = vtxPtr[v];
-    long adj2  = vtxPtr[v+1];
-    long sPosition = vtxPtr[v]+v; //Starting position of local map for v
+double buildLocalMapCounterNoMap(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, edge* vtxInd,
+                               comm_type* currCommAss, comm_type &numUniqueClusters) {
+    comm_type adj1  = vtxPtr[v];
+    comm_type adj2  = vtxPtr[v+1];
+    comm_type sPosition = vtxPtr[v]+v; //Starting position of local map for v
 
-    long storedAlready = 0;
+    comm_type storedAlready = 0;
     double selfLoop = 0;
-    for(long j=adj1; j<adj2; j++) {
+    for(comm_type j=adj1; j<adj2; j++) {
         if(vtxInd[j].tail == v) {	// SelfLoop need to be recorded
             selfLoop += vtxInd[j].weight;
         }
         bool storedAlready = false; //Initialize to zero
-        for(long k=0; k<numUniqueClusters; k++) { //Check if it already exists
+        for(comm_type k=0; k<numUniqueClusters; k++) { //Check if it already exists
             if(currCommAss[vtxInd[j].tail] ==  clusterLocalMap[sPosition+k].cid) {
                 storedAlready = true;
                 clusterLocalMap[sPosition + k].Counter += vtxInd[j].weight; //Increment the counter with weight
@@ -602,11 +602,11 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
     return selfLoop;
 }//End of buildLocalMapCounter()
                                                                                 
-long max(map<long, long> &clusterLocalMap, vector<double> &Counter,
-         double selfLoop, Comm* cInfo, double degree, long sc, double constant ) {
+comm_type max(map<comm_type, comm_type> &clusterLocalMap, vector<double> &Counter,
+         double selfLoop, Comm* cInfo, double degree, comm_type sc, double constant ) {
     
-    map<long, long>::iterator storedAlready;
-    long maxIndex = sc;	//Assign the initial value as self community
+    map<comm_type, comm_type>::iterator storedAlready;
+    comm_type maxIndex = sc;	//Assign the initial value as self community
     double curGain = 0;
     double maxGain = 0;
     double eix = Counter[0] - selfLoop;
@@ -674,19 +674,19 @@ comm_type max_sfp(map<comm_type, comm_type> &clusterLocalMap, vector<f_weight> &
 
 
 
-long maxNoMap(long v, mapElement* clusterLocalMap, long* vtxPtr, double selfLoop, Comm* cInfo, double degree,
-              long sc, double constant, long numUniqueClusters ) {
+comm_type maxNoMap(comm_type v, mapElement* clusterLocalMap, comm_type* vtxPtr, double selfLoop, Comm* cInfo, double degree,
+              comm_type sc, double constant, comm_type numUniqueClusters ) {
                                                                                 
-    long maxIndex = sc;	//Assign the initial value as the current community
+    comm_type maxIndex = sc;	//Assign the initial value as the current community
     double curGain = 0;
     double maxGain = 0;
-    long sPosition = vtxPtr[v]+v; //Starting position of local map for v
+    comm_type sPosition = vtxPtr[v]+v; //Starting position of local map for v
     double eix = clusterLocalMap[sPosition].Counter - selfLoop;
     double ax  = cInfo[sc].degree - degree;
     double eiy = 0;
     double ay  = 0;
     
-    for(long k=0; k<numUniqueClusters; k++) {
+    for(comm_type k=0; k<numUniqueClusters; k++) {
         if(sc != clusterLocalMap[sPosition + k].cid) {
             ay = cInfo[clusterLocalMap[sPosition + k].cid].degree; // degree of cluster y
             eiy = clusterLocalMap[sPosition + k].Counter; 	//Total edges incident on cluster y

@@ -112,10 +112,10 @@ int main(int argc, char** argv) {
     }//End of if( VF == 1 )
     
     // Datastructures to store clustering information
-    long NV = G->numVertices;
-    long NS = G->sVertices;
-    long NT = NV - NS;
-    long *C_orig = (long *) malloc (NV * sizeof(long)); assert(C_orig != 0);
+    comm_type NV = G->numVertices;
+    comm_type NS = G->sVertices;
+    comm_type NT = NV - NS;
+    comm_type *C_orig = (comm_type *) malloc (NV * sizeof(comm_type)); assert(C_orig != 0);
     
     //Retain the original copy of the graph:
     graph* G_original = (graph *) malloc (sizeof(graph)); //The original version of the graph
@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
             printf("***************************************\n");
             //Call the clustering algorithm:
 #pragma omp parallel for
-            for (long i=0; i<G->numVertices; i++) {
+            for (comm_type i=0; i<G->numVertices; i++) {
                 C_orig[i] = -1;
             }
             if(opts.coloring != 0){
@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
     } else { //No strong scaling -- run once with max threads
         
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             C_orig[i] = -1;
         }
         if(opts.coloring != 0){
@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
         sprintf(outFile,"%s_clustInfo", opts.inFile);
         printf("Cluster information will be stored in file: %s\n", outFile);
         FILE* out = fopen(outFile,"w");
-        for(long i = 0; i<NV;i++) {
+        for(comm_type i = 0; i<NV;i++) {
             fprintf(out,"%ld\n",C_orig[i]);
         }
         fclose(out);
@@ -183,10 +183,10 @@ int main(int argc, char** argv) {
     
     //Now build the old2New vertex map:
     printf("About to build the old2NewMap. \n");
-    long *commIndex  = (long *) malloc (NV * sizeof(long)); assert(commIndex != 0);
-    long *old2NewMap = (long *) malloc (NV * sizeof(long)); assert(old2NewMap != 0);
+    comm_type *commIndex  = (comm_type *) malloc (NV * sizeof(comm_type)); assert(commIndex != 0);
+    comm_type *old2NewMap = (comm_type *) malloc (NV * sizeof(comm_type)); assert(old2NewMap != 0);
 #pragma omp parallel for
-    for (long i=0; i<NV; i++) { //initialize
+    for (comm_type i=0; i<NV; i++) { //initialize
         commIndex[i] = -1;
         old2NewMap[i] = -1;
     }
@@ -197,19 +197,19 @@ int main(int argc, char** argv) {
     //Segregate the vertices in case it is a bipartite graph
     if(isSym) {
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             old2NewMap[commIndex[i]] = i;
         }
         writeGraphMatrixMarketFormatSymmetricReordered(G_original, outFileMat, old2NewMap);
     } else {
         //STEP 1: Segregate the row and column vertices
-        long rowCounter = 0;
-        long colCounter = NS;
-        long *Rprime    = (long *) malloc (NV * sizeof(long)); assert(Rprime != 0);
-        for (long i=0; i<NV; i++) {
+        comm_type rowCounter = 0;
+        comm_type colCounter = NS;
+        comm_type *Rprime    = (comm_type *) malloc (NV * sizeof(comm_type)); assert(Rprime != 0);
+        for (comm_type i=0; i<NV; i++) {
             Rprime[i]= -1;
         }
-        for (long i=0; i<NV; i++) { //Go through the list in a reverse order
+        for (comm_type i=0; i<NV; i++) { //Go through the list in a reverse order
             if(commIndex[i] < NS) { //A row vertex
                 Rprime[rowCounter] = commIndex[i];
                 rowCounter++;
@@ -220,7 +220,7 @@ int main(int argc, char** argv) {
         }//End of for(i)
         assert(rowCounter==NS); assert(colCounter==NV); //Sanity check
         //STEP 2: Now build the old2New map:
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             old2NewMap[Rprime[i]] = i; //pOrder is a old2New index mapping
         }
         //Clean up:

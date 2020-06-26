@@ -17,7 +17,7 @@
  
  **/
 void loadMetisFileFormat(graph *G, const char* filename) {
-    long i, j, value, neighbor,  mNVer=0,  mNEdge=0;
+    comm_type i, j, value, neighbor,  mNVer=0,  mNEdge=0;
     f_weight edgeWeight, vertexWeight;
     std::string oneLine, myDelimiter(" "); //Delimiter is a blank space
     ifstream fin;
@@ -48,22 +48,22 @@ void loadMetisFileFormat(graph *G, const char* filename) {
     cout<<"N Ver: "<<mNVer<<" N Edge: "<<mNEdge<<" value: "<<value<<" \n";
     //#endif
     
-    long *mVerPtr   = (long *) malloc ((mNVer+1)  * sizeof(long)); //The Pointer
+    comm_type *mVerPtr   = (comm_type *) malloc ((mNVer+1)  * sizeof(comm_type)); //The Pointer
     edge *mEdgeList = (edge *) malloc ((2*mNEdge) * sizeof(edge)); //The Indices
     assert(mVerPtr != 0); assert(mEdgeList != 0);
     // printf("hi\n");
 #pragma omp parallel for
-    for (long i=0; i<=mNVer; i++) {
+    for (comm_type i=0; i<=mNVer; i++) {
         mVerPtr[i] = 0;
     }
 #pragma omp parallel for
-    for (long i=0; i<(2*mNEdge); i++) {
+    for (comm_type i=0; i<(2*mNEdge); i++) {
         mEdgeList[i].tail   = -1;
         mEdgeList[i].weight = 0;
     }
     
     //Read the rest of the file:
-    long PtrPos = 0, IndPos = 0, cumulative = 0;
+    comm_type PtrPos = 0, IndPos = 0, cumulative = 0;
     mVerPtr[PtrPos] = cumulative; PtrPos++;
     //printf("hi %d\n",value);
     switch ( value ) {
@@ -214,7 +214,7 @@ void loadMetisFileFormat(graph *G, const char* filename) {
              neighbor = (atol( ST->GetNextToken().c_str() )- 1); //Zero-based index
              mEdgeList[IndPos].tail = neighbor; IndPos++;
              edgeWeight = atof( ST->GetNextToken().c_str() );
-             mEdgeList[IndPos].weight = (long)edgeWeight;  //Type casting
+             mEdgeList[IndPos].weight = (comm_type)edgeWeight;  //Type casting
              j++;				
              }
              delete ST; //Clear the buffer

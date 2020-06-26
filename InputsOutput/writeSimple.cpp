@@ -1,9 +1,9 @@
 #include "input_output.h"
 void writeGraphMetisSimpleFormat(graph* G, char *filename) {
     //Get the iterators for the graph:
-    long NVer     = G->numVertices;
-    long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
-    long *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type NVer     = G->numVertices;
+    comm_type NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
+    comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     
     printf("NVer= %ld --  NE=%ld\n", NVer, NEdge);
@@ -19,10 +19,10 @@ void writeGraphMetisSimpleFormat(graph* G, char *filename) {
     //First Line: #Vertices #Edges
     fprintf(fout, "%ld %ld\n", NVer, NEdge);
     //Write the edges:
-    for (long v=0; v<NVer; v++) {
-        long adj1 = verPtr[v];
-        long adj2 = verPtr[v+1];
-        for(long k = adj1; k < adj2; k++ ) {
+    for (comm_type v=0; v<NVer; v++) {
+        comm_type adj1 = verPtr[v];
+        comm_type adj2 = verPtr[v+1];
+        for(comm_type k = adj1; k < adj2; k++ ) {
             fprintf(fout, "%ld ", (verInd[k].tail+1) );
         }
         fprintf(fout, "\n");
@@ -35,11 +35,11 @@ void writeGraphMetisSimpleFormat(graph* G, char *filename) {
 //Each edge is represented twice
 void writeGraphPajekFormat(graph* G, char *filename) {
     //Get the iterators for the graph:
-    long NVer     = G->numVertices;
-    long NS       = G->sVertices;
-    long NT       = NVer - NS;
-    long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
-    long *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type NVer     = G->numVertices;
+    comm_type NS       = G->sVertices;
+    comm_type NT       = NVer - NS;
+    comm_type NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
+    comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     printf("NVer= %ld --  NE=%ld\n", NVer, NEdge);
     
@@ -55,17 +55,17 @@ void writeGraphPajekFormat(graph* G, char *filename) {
     }
     //First Line: Vertices
     fprintf(fout, "*Vertices %ld\n", NVer);
-    for (long i=0; i<NVer; i++) {
+    for (comm_type i=0; i<NVer; i++) {
         fprintf(fout, "%ld\n", i+1);
     }
     
     //Write the edges:
     fprintf(fout, "*Edges %ld\n", NEdge);
-    for (long v=0; v<NVer; v++) {
-        long adj1 = verPtr[v];
-        long adj2 = verPtr[v+1];
+    for (comm_type v=0; v<NVer; v++) {
+        comm_type adj1 = verPtr[v];
+        comm_type adj2 = verPtr[v+1];
         //Edge lines: <adjacent> <weight>
-        for(long k = adj1; k < adj2; k++ ) {
+        for(comm_type k = adj1; k < adj2; k++ ) {
             if (v <= verInd[k].tail) { //Print only once
                 fprintf(fout, "%ld %ld %g\n", v+1, (verInd[k].tail+1), (verInd[k].weight) );
             }
@@ -77,13 +77,13 @@ void writeGraphPajekFormat(graph* G, char *filename) {
 
 //Output the graph in Pajek format:
 //Each edge is represented twice
-void writeGraphPajekFormatWithCommunityInfo(graph* G, char *filename, long *C) {
+void writeGraphPajekFormatWithCommunityInfo(graph* G, char *filename, comm_type *C) {
     //Get the iterators for the graph:
-    long NVer     = G->numVertices;
-    long NS       = G->sVertices;
-    long NT       = NVer - NS;
-    long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
-    long *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type NVer     = G->numVertices;
+    comm_type NS       = G->sVertices;
+    comm_type NT       = NVer - NS;
+    comm_type NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
+    comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     
     printf("NVer= %ld --  NE=%ld\n", NVer, NEdge);
@@ -98,16 +98,16 @@ void writeGraphPajekFormatWithCommunityInfo(graph* G, char *filename, long *C) {
     }
     //First Line: Vertices
     fprintf(fout, "*Vertices %ld\n", NVer);
-    for (long i=0; i<NVer; i++) {
+    for (comm_type i=0; i<NVer; i++) {
         fprintf(fout, "%ld  \"%ld\"\n", i+1, C[i]);
     }
     //Write the edges:
     fprintf(fout, "*Edges %ld\n", NEdge);
-    for (long v=0; v<NVer; v++) {
-        long adj1 = verPtr[v];
-        long adj2 = verPtr[v+1];
+    for (comm_type v=0; v<NVer; v++) {
+        comm_type adj1 = verPtr[v];
+        comm_type adj2 = verPtr[v+1];
         //Edge lines: <adjacent> <weight>
-        for(long k = adj1; k < adj2; k++ ) {
+        for(comm_type k = adj1; k < adj2; k++ ) {
             if (v <= verInd[k].tail) { //Print only once
                 fprintf(fout, "%ld %ld %g\n", v+1, (verInd[k].tail+1), (verInd[k].weight) );
             }

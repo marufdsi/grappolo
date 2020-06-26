@@ -15,10 +15,10 @@ int algoColoringMultiHashMaxMin(graph *G, int *vtxColor, int nThreads, double *t
 int vBaseRedistribution(graph* G, int* vtxColor, int ncolors, int type);
 
 // In equtiableColoringDistanceOne.cpp
-void buildColorSize(long NVer, int *vtxColor, int numColors, long *colorSize);
-void computeVariance(long NVer, int numColors, long *colorSize);
+void buildColorSize(comm_type NVer, int *vtxColor, int numColors, comm_type *colorSize);
+void computeVariance(comm_type NVer, int numColors, comm_type *colorSize);
 
-void equitableDistanceOneColorBased(graph *G, int *vtxColor, int numColors, long *colorSize, 
+void equitableDistanceOneColorBased(graph *G, int *vtxColor, int numColors, comm_type *colorSize,
 				    int nThreads, double *totTime, int type);
 
 int algoColoringMultiHashMaxMin(graph *G, int *vtxColor, int nThreads, double *totTime, int nHash, int nItrs);

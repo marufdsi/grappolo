@@ -84,8 +84,8 @@ bool parse_MatrixMarket(graph * G, char *fileName) {
     } while ( line[0] == '%' );
     
     /* Read the matrix parameters */
-    long NS=0, NT=0, NV = 0;
-    long NE=0;
+    comm_type NS=0, NT=0, NV = 0;
+    comm_type NE=0;
     if (sscanf(line, "%ld %ld %ld", &NS, &NT, &NE ) != 3) {
         printf("parse_MatrixMarket(): bad file format - 02");
         exit(1);
@@ -104,21 +104,21 @@ bool parse_MatrixMarket(graph * G, char *fileName) {
     /* T vertices: NS to NS+NT-1                                           */
     /*---------------------------------------------------------------------*/
     //Allocate for Edge Pointer and keep track of degree for each vertex
-    long  *edgeListPtr = (long *)  malloc((NV+1) * sizeof(long));
+    comm_type  *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
 #pragma omp parallel for
-    for (long i=0; i <= NV; i++)
+    for (comm_type i=0; i <= NV; i++)
         edgeListPtr[i] = 0; //For first touch purposes
     
     edge *edgeListTmp; //Read the data in a temporary list
-    long newNNZ = 0;    //New edges because of symmetric matrices
-    long Si, Ti;
+    comm_type newNNZ = 0;    //New edges because of symmetric matrices
+    comm_type Si, Ti;
     double weight = 1;
     if( isSymmetric == 1 ) {
         printf("Matrix is of type: Symmetric Real or Complex\n");
         //printf("Weights will be converted to positive numbers.\n");
         printf("Weights will be retianed as-is.\n");
         edgeListTmp = (edge *) malloc(2 * NE * sizeof(edge));
-        for (long i = 0; i < NE; i++) {
+        for (comm_type i = 0; i < NE; i++) {
             if (isPattern == 1)
                 fscanf(file, "%ld %ld", &Si, &Ti);
             else
@@ -153,7 +153,7 @@ bool parse_MatrixMarket(graph * G, char *fileName) {
         //printf("Weights will be converted to positive numbers.\n");
         printf("Weights will be retained as-is.\n");
         edgeListTmp = (edge *) malloc( NE * sizeof(edge));
-        for (long i = 0; i < NE; i++) {
+        for (comm_type i = 0; i < NE; i++) {
             if (isPattern == 1)
                 fscanf(file, "%ld %ld", &Si, &Ti);
             else
@@ -175,7 +175,7 @@ bool parse_MatrixMarket(graph * G, char *fileName) {
     
     //////Build the EdgeListPtr Array: Cumulative addition
     time1 = omp_get_wtime();
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         edgeListPtr[i+1] += edgeListPtr[i]; //Prefix Sum:
     }
     //The last element of Cumulative will hold the total number of characters
@@ -190,9 +190,9 @@ bool parse_MatrixMarket(graph * G, char *fileName) {
     edge *edgeList = (edge *) malloc( 2*NE * sizeof(edge)); //Every edge stored twice
     assert(edgeList != 0);
     //Keep track of how many edges have been added for a vertex:
-    long  *Counter    = (long *)  malloc( NV  * sizeof(long)); assert(Counter != 0);
+    comm_type  *Counter    = (comm_type *)  malloc( NV  * sizeof(comm_type)); assert(Counter != 0);
 #pragma omp parallel for
-    for (long i = 0; i < NV; i++)
+    for (comm_type i = 0; i < NV; i++)
         Counter[i] = 0;
     time2 = omp_get_wtime();
     printf("Time for allocating memory for marks and edgeList = %lf\n", time2 - time1);
@@ -201,12 +201,12 @@ bool parse_MatrixMarket(graph * G, char *fileName) {
     printf("About to build edgeList...\n");
     //Build the edgeList from edgeListTmp:
 #pragma omp parallel for
-    for(long i=0; i<NE; i++) {
-        long head  = edgeListTmp[i].head;
-        long tail  = edgeListTmp[i].tail;
+    for(comm_type i=0; i<NE; i++) {
+        comm_type head  = edgeListTmp[i].head;
+        comm_type tail  = edgeListTmp[i].tail;
         double weight      = edgeListTmp[i].weight;
         if (head != tail) {
-            long Where    = edgeListPtr[head] + __sync_fetch_and_add(&Counter[head], 1);
+            comm_type Where    = edgeListPtr[head] + __sync_fetch_and_add(&Counter[head], 1);
             edgeList[Where].head = head;
             edgeList[Where].tail = tail;
             edgeList[Where].weight = weight;
@@ -216,7 +216,7 @@ bool parse_MatrixMarket(graph * G, char *fileName) {
             edgeList[Where].tail   = head;
             edgeList[Where].weight = weight;
         } else {
-            long Where    = edgeListPtr[head] + __sync_fetch_and_add(&Counter[head], 1);
+            comm_type Where    = edgeListPtr[head] + __sync_fetch_and_add(&Counter[head], 1);
             edgeList[Where].head = head;
             edgeList[Where].tail = tail;
             edgeList[Where].weight = weight;
@@ -319,8 +319,8 @@ void parse_MatrixMarket_Sym_AsGraph(graph * G, char *fileName) {
     } while ( line[0] == '%' );
     
     /* Read the matrix parameters */
-    long NS=0, NT=0, NV = 0;
-    long NE=0;
+    comm_type NS=0, NT=0, NV = 0;
+    comm_type NE=0;
     if (sscanf(line, "%ld %ld %ld",&NS, &NT, &NE ) != 3) {
         printf("parse_MatrixMarket(): bad file format - 02");
         exit(1);
@@ -334,14 +334,14 @@ void parse_MatrixMarket_Sym_AsGraph(graph * G, char *fileName) {
     /* T vertices: NS to NS+NT-1                                           */
     /*---------------------------------------------------------------------*/
     //Allocate for Edge Pointer and keep track of degree for each vertex
-    long *edgeListPtr = (long *)  malloc((NV+1) * sizeof(long));
+    comm_type *edgeListPtr = (comm_type *)  malloc((NV+1) * sizeof(comm_type));
 #pragma omp parallel for
-    for (long i=0; i <= NV; i++)
+    for (comm_type i=0; i <= NV; i++)
         edgeListPtr[i] = 0; //For first touch purposes
     
     edge *edgeListTmp; //Read the data in a temporary list
-    long newNNZ = 0;    //New edges because of symmetric matrices
-    long Si, Ti;
+    comm_type newNNZ = 0;    //New edges because of symmetric matrices
+    comm_type Si, Ti;
     double weight = 1;
     printf("Weights will be converted to positive numbers.\n");
     edgeListTmp = (edge *) malloc(NE * sizeof(edge));
@@ -373,7 +373,7 @@ void parse_MatrixMarket_Sym_AsGraph(graph * G, char *fileName) {
     
     //////Build the EdgeListPtr Array: Cumulative addition
     time1 = omp_get_wtime();
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         edgeListPtr[i+1] += edgeListPtr[i]; //Prefix Sum:
     }
     //The last element of Cumulative will hold the total number of characters
@@ -389,9 +389,9 @@ void parse_MatrixMarket_Sym_AsGraph(graph * G, char *fileName) {
     edge *edgeList = (edge *) malloc( 2*NE * sizeof(edge)); //Every edge stored twice
     assert(edgeList != 0);
     //Keep track of how many edges have been added for a vertex:
-    long  *Counter = (long *) malloc (NV  * sizeof(long)); assert(Counter != 0);
+    comm_type  *Counter = (comm_type *) malloc (NV  * sizeof(comm_type)); assert(Counter != 0);
 #pragma omp parallel for
-    for (long i = 0; i < NV; i++) {
+    for (comm_type i = 0; i < NV; i++) {
         Counter[i] = 0;
     }
     time2 = omp_get_wtime();
@@ -401,11 +401,11 @@ void parse_MatrixMarket_Sym_AsGraph(graph * G, char *fileName) {
     time1 = omp_get_wtime();
     //Build the edgeList from edgeListTmp:
 #pragma omp parallel for
-    for(long i=0; i<NE; i++) {
-        long head     = edgeListTmp[i].head;
-        long tail     = edgeListTmp[i].tail;
+    for(comm_type i=0; i<NE; i++) {
+        comm_type head     = edgeListTmp[i].head;
+        comm_type tail     = edgeListTmp[i].tail;
         double weight = edgeListTmp[i].weight;
-        long Where    = edgeListPtr[head] + __sync_fetch_and_add(&Counter[head], 1);
+        comm_type Where    = edgeListPtr[head] + __sync_fetch_and_add(&Counter[head], 1);
         edgeList[Where].head = head;
         edgeList[Where].tail = tail;
         edgeList[Where].weight = weight;

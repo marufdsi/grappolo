@@ -45,26 +45,26 @@
 #include "coloring.h"
 //Compute the size of each color class
 //Return: pointer to a vector that stores the size of each color class
-void buildColorSize(long NVer, int *vtxColor, int numColors, long *colorSize) {
+void buildColorSize(comm_type NVer, int *vtxColor, int numColors, comm_type *colorSize) {
   assert(colorSize != 0);
   //Count the frequency of each color
 #pragma omp parallel for 
-  for(long i =0; i<NVer; i++) {
+  for(comm_type i =0; i<NVer; i++) {
     __sync_fetch_and_add(&colorSize[vtxColor[i]], 1);
   }
 }//end of buildColorSize()
 
 /**********************************************************************************/
 //double calVariance(GraphElem nv, ColorElem ncolors, ColorVector freq, std::string output)
-void computeVariance(long NVer, int numColors, long *colorSize) {
+void computeVariance(comm_type NVer, int numColors, comm_type *colorSize) {
   double avg = (double)NVer/(double)numColors;
   double variance = 0;
-  long max = 0;    //Initialize to zero
-  long min = NVer; //Initialize to some large number
+  comm_type max = 0;    //Initialize to zero
+  comm_type min = NVer; //Initialize to some large number
   
     printf("ci= ");
 //#pragma omp parallel for reduction(+:variance), reduction(max:max), reduction(min:min)
-  for(long ci=0; ci<numColors; ci++) {
+  for(comm_type ci=0; ci<numColors; ci++) {
       printf("%ld, ", ci);
     variance  += (avg - (double)colorSize[ci])*(avg - (double)colorSize[ci]);
     if(colorSize[ci] > max)
@@ -87,7 +87,7 @@ void computeVariance(long NVer, int numColors, long *colorSize) {
 
 //Perform recoloring based on the CFF & CLU schemes
 //type: Specifies the type for First-Fit (1 -- default) or Least-Used (2) 
-void equitableDistanceOneColorBased(graph *G, int *vtxColor, int numColors, long *colorSize, 
+void equitableDistanceOneColorBased(graph *G, int *vtxColor, int numColors, comm_type *colorSize,
 				    int nThreads, double *totTime, int type) {
 
   printf("Within equitableColorBasedFirstFit(numColors=%d -- nT = %d)\n", numColors, nThreads);
@@ -106,9 +106,9 @@ void equitableDistanceOneColorBased(graph *G, int *vtxColor, int numColors, long
 
   double time1=0, time2=0, totalTime=0;
   //Get the iterators for the graph:
-  long NVer    = G->numVertices;
-  long NEdge   = G->numEdges;  
-  long *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+  comm_type NVer    = G->numVertices;
+  comm_type NEdge   = G->numEdges;
+    comm_type *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
   edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
 #ifdef PRINT_DETAILED_STATS_
   printf("Vertices: %ld  Edges: %ld  Num Colors= %ld\n", NVer, NEdge, numColors);
@@ -117,20 +117,20 @@ void equitableDistanceOneColorBased(graph *G, int *vtxColor, int numColors, long
   //STEP-1: Create a CSR-like data structure for vertex-colors
   time1 = omp_get_wtime();
  
-  long *colorIndex = (long *) malloc (NVer * sizeof(long)); assert(colorIndex != 0);
-  long *colorAdded = (long *) malloc (numColors * sizeof(long)); assert(colorAdded != 0);
+  comm_type *colorIndex = (comm_type *) malloc (NVer * sizeof(comm_type)); assert(colorIndex != 0);
+  comm_type *colorAdded = (comm_type *) malloc (numColors * sizeof(comm_type)); assert(colorAdded != 0);
   printf("Reached here...1\n");  
 
 #pragma omp parallel for
-  for(long i = 0; i < numColors; i++) {	
+  for(comm_type i = 0; i < numColors; i++) {
     colorAdded[i] = 0;
   }
 
   printf("Reached here...2\n"); 
 
- long *colorPtr = (long *) malloc ((numColors+1) * sizeof(long)); assert(colorPtr != 0);
+ comm_type *colorPtr = (comm_type *) malloc ((numColors+1) * sizeof(comm_type)); assert(colorPtr != 0);
 #pragma omp parallel for
-  for(long i = 0; i <= numColors; i++) {	
+  for(comm_type i = 0; i <= numColors; i++) {
     colorPtr[i] = 0;
   }
   printf("\nReached here... 0.5\n"); 
@@ -139,50 +139,50 @@ void equitableDistanceOneColorBased(graph *G, int *vtxColor, int numColors, long
 
   // Count the size of each color
 //#pragma omp parallel for
-  for(long i = 0; i < NVer; i++) {
-    __sync_fetch_and_add(&colorPtr[(long)vtxColor[i]+1],1);
+  for(comm_type i = 0; i < NVer; i++) {
+    __sync_fetch_and_add(&colorPtr[(comm_type)vtxColor[i]+1],1);
   }
   printf("Reached here...2.5\n"); 
   //Prefix sum:
-  for(long i=0; i<numColors; i++) {
+  for(comm_type i=0; i<numColors; i++) {
     colorPtr[i+1] += colorPtr[i];
   }	
   printf("Reached here...3\n");  
 
   //Group vertices with the same color in particular order
 //#pragma omp parallel for
-  for (long i=0; i<NVer; i++) {
-    long tc = (long)vtxColor[i];
-    long Where = colorPtr[tc] + __sync_fetch_and_add(&(colorAdded[tc]), 1);
+  for (comm_type i=0; i<NVer; i++) {
+    comm_type tc = (comm_type)vtxColor[i];
+    comm_type Where = colorPtr[tc] + __sync_fetch_and_add(&(colorAdded[tc]), 1);
     colorIndex[Where] = i;
   }
   time2 = omp_get_wtime();
   totalTime += time2 - time1;
   printf("Time to initialize: %3.3lf\n", time2-time1);
   
-  //long avgColorSize = (long)ceil( (double)NVer/(double)numColor );
-  long avgColorSize = (NVer + numColors - 1) / numColors;
+  //comm_type avgColorSize = (comm_type)ceil( (double)NVer/(double)numColor );
+  comm_type avgColorSize = (NVer + numColors - 1) / numColors;
   
   printf("Reached here...3\n");  
 
   //STEP-2: Start moving the vertices from one color bin to another
   time1 = omp_get_wtime();
-  for (long ci=0; ci<numColors; ci++) {
+  for (comm_type ci=0; ci<numColors; ci++) {
     if(colorSize[ci] <= avgColorSize)
       continue;  //Dont worry if the size is less than the average
     //Now move the vertices to bring the size to average
-    long adjC1 = colorPtr[ci];
-    long adjC2 = colorPtr[ci+1];
+    comm_type adjC1 = colorPtr[ci];
+    comm_type adjC2 = colorPtr[ci+1];
 #pragma omp parallel for
-    for (long vi=adjC1; vi<adjC2; vi++) {
+    for (comm_type vi=adjC1; vi<adjC2; vi++) {
       if(colorSize[ci] <= avgColorSize)
 	continue; //break the loop when enough vertices have been moved
       //Now recolor the vertex:
-      long v = colorIndex[vi];
+      comm_type v = colorIndex[vi];
       
-      long adj1 = verPtr[v];
-      long adj2 = verPtr[v+1];
-      long myDegree = verPtr[v+1] - verPtr[v];
+      comm_type adj1 = verPtr[v];
+      comm_type adj2 = verPtr[v+1];
+      comm_type myDegree = verPtr[v+1] - verPtr[v];
       bool *Mark = (bool *) malloc ( numColors * sizeof(bool) );
       assert(Mark != 0);
       for (int i=0; i<numColors; i++) {
@@ -192,7 +192,7 @@ void equitableDistanceOneColorBased(graph *G, int *vtxColor, int numColors, long
 	  Mark[i] = false; //Else, It is okay to use
       }
       //Browse the adjacency set of vertex v
-      for(long k = adj1; k < adj2; k++ ) {
+      for(comm_type k = adj1; k < adj2; k++ ) {
         if ( v == verInd[k].tail ) //Self-loops
 	  continue;
 	int adjColor = vtxColor[verInd[k].tail];
@@ -231,11 +231,11 @@ void equitableDistanceOneColorBased(graph *G, int *vtxColor, int numColors, long
   //Verify Results and Cleanup 
   int myConflicts = 0;
 #pragma omp parallel for
-  for (long v=0; v < NVer; v++ ) {
-    long adj1 = verPtr[v];
-    long adj2 = verPtr[v+1];
+  for (comm_type v=0; v < NVer; v++ ) {
+    comm_type adj1 = verPtr[v];
+    comm_type adj2 = verPtr[v+1];
     //Browse the adjacency set of vertex v
-    for(long k = adj1; k < adj2; k++ ) {
+    for(comm_type k = adj1; k < adj2; k++ ) {
       if ( v == verInd[k].tail ) //Self-loops
         continue;
       if ( vtxColor[v] == vtxColor[verInd[k].tail] ) {

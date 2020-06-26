@@ -48,26 +48,26 @@ using namespace std;
 // Return: C_orig will hold the cluster ids for vertices in the original graph
 //         Assume C_orig is initialized appropriately
 //WARNING: Graph G will be destroyed at the end of this routine
-void runMultiPhaseSyncType(graph *G, long *C_orig, int syncType, long minGraphSize,
+void runMultiPhaseSyncType(graph *G, comm_type *C_orig, int syncType, comm_type minGraphSize,
                            double threshold, double C_threshold, int numThreads, int threadsOpt)
 {
     double totTimeClustering=0, totTimeBuildingPhase=0, totTimeColoring=0, tmpTime=0;
     int tmpItr=0, totItr = 0;
-    long NV = G->numVertices;
+    comm_type NV = G->numVertices;
     
     
     /* Step 1: Find communities */
     double prevMod = -1;
     double currMod = -1;
-    long phase = 1;
+    comm_type phase = 1;
     int freedom = 0;
     
     graph *Gnew; //To build new hierarchical graphs
-    long numClusters;
-    long *C = (long *) malloc (NV * sizeof(long));
+    comm_type numClusters;
+    comm_type *C = (comm_type *) malloc (NV * sizeof(comm_type));
     assert(C != 0);
 #pragma omp parallel for
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         C[i] = -1;
     }
     
@@ -121,12 +121,12 @@ void runMultiPhaseSyncType(graph *G, long *C_orig, int syncType, long minGraphSi
         //Keep track of clusters in C_orig
         if(phase == 1) {
 #pragma omp parallel for
-            for (long i=0; i<NV; i++) {
+            for (comm_type i=0; i<NV; i++) {
                 C_orig[i] = C[i]; //After the first phase
             }
         } else {
 #pragma omp parallel for
-            for (long i=0; i<NV; i++) {
+            for (comm_type i=0; i<NV; i++) {
                 assert(C_orig[i] < G->numVertices);
                 if (C_orig[i] >=0)
                     C_orig[i] = C[C_orig[i]]; //Each cluster in a previous phase becomes a vertex
@@ -155,10 +155,10 @@ void runMultiPhaseSyncType(graph *G, long *C_orig, int syncType, long minGraphSi
             
             //Free up the previous cluster & create new one of a different size
             free(C);
-            C = (long *) malloc (numClusters * sizeof(long)); assert(C != 0);
+            C = (comm_type *) malloc (numClusters * sizeof(comm_type)); assert(C != 0);
             
 #pragma omp parallel for
-            for (long i=0; i<numClusters; i++) {
+            for (comm_type i=0; i<numClusters; i++) {
                 C[i] = -1;
             }
             phase++; //Increment phase number

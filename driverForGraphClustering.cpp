@@ -111,13 +111,13 @@ int main(int argc, char** argv) {
     if( opts.VF ) {
         printf("Vertex following is enabled.\n");
         time1 = omp_get_wtime();
-        long numVtxToFix = 0; //Default zero
-        long *C = (long *) malloc (G->numVertices * sizeof(long)); assert(C != 0);
+        comm_type numVtxToFix = 0; //Default zero
+        comm_type *C = (comm_type *) malloc (G->numVertices * sizeof(comm_type)); assert(C != 0);
         numVtxToFix = vertexFollowing(G,C); //Find vertices that follow other vertices
         if( numVtxToFix > 0) {  //Need to fix things: build a new graph
             printf("Graph will be modified -- %ld vertices need to be fixed.\n", numVtxToFix);
             graph *Gnew = (graph *) malloc (sizeof(graph));
-            long numClusters = renumberClustersContiguously(C, G->numVertices);
+            comm_type numClusters = renumberClustersContiguously(C, G->numVertices);
             buildNewGraphVF(G, Gnew, C, numClusters);
             //Get rid of the old graph and store the new graph
             free(G->edgeListPtrs);
@@ -132,8 +132,8 @@ int main(int argc, char** argv) {
     
     
     // Datastructures to store clustering information
-    long NV = G->numVertices;
-    long *C_orig = (long *) malloc (NV * sizeof(long)); assert(C_orig != 0);
+    comm_type NV = G->numVertices;
+    comm_type *C_orig = (comm_type *) malloc (NV * sizeof(comm_type)); assert(C_orig != 0);
     graph* G_orig = (graph *) malloc (sizeof(graph)); //The original version of the graph
     duplicateGivenGraph(G, G_orig);
     
@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
             printf("***************************************\n");
             //Call the clustering algorithm:
 #pragma omp parallel for
-            for (long i=0; i<G->numVertices; i++) {
+            for (comm_type i=0; i<G->numVertices; i++) {
                 C_orig[i] = -1;
             }
             if(opts.coloring != 0){
@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
     } else { //No strong scaling -- run once with max threads
 
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             C_orig[i] = -1;
         }
         if(opts.coloring != 0){
@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
         sprintf(outFile,"%s_clustInfo", opts.inFile);
         printf("Cluster information will be stored in file: %s\n", outFile);
         FILE* out = fopen(outFile,"w");
-        for(long i = 0; i<NV;i++) {
+        for(comm_type i = 0; i<NV;i++) {
             fprintf(out,"%ld\n",C_orig[i]);
         }
         fclose(out);
@@ -206,8 +206,8 @@ int main(int argc, char** argv) {
     /*
     //Cluster Analysis:
     //Count the frequency of colors:
-    long numClusters = 0;
-    for(long i = 0; i < NV; i++) {
+    comm_type numClusters = 0;
+    for(comm_type i = 0; i < NV; i++) {
         if(C_orig[i] > numClusters)
             numClusters = C_orig[i];
     }
@@ -215,19 +215,19 @@ int main(int argc, char** argv) {
     printf("********************************************\n");
     printf("Number of clusters = %ld\n", numClusters);
     printf("********************************************\n");
-    long *colorFreq = (long *) malloc (numClusters * sizeof(long)); assert(colorFreq != 0);
+    comm_type *colorFreq = (comm_type *) malloc (numClusters * sizeof(comm_type)); assert(colorFreq != 0);
 #pragma omp parallel for
-    for(long i = 0; i < numClusters; i++) {
+    for(comm_type i = 0; i < numClusters; i++) {
         colorFreq[i] = 0;
     }
 #pragma omp parallel for
-    for(long i = 0; i < NV; i++) {
+    for(comm_type i = 0; i < NV; i++) {
         assert(C_orig[i] < numClusters);
         if(C_orig[i] >= 0) {
             __sync_fetch_and_add(&colorFreq[C_orig[i]],1);
         }
     }
-    for(long i=0; i < numClusters; i++) {
+    for(comm_type i=0; i < numClusters; i++) {
         printf("%ld \t %ld\n", i, colorFreq[i]);
     }
     printf("********************************************\n");

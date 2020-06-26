@@ -2,28 +2,28 @@
 #define __UTILITLY__
 
 // Define in buildNextPhase.cpp
-long renumberClustersContiguously(long *C, long size);
-double buildNextLevelGraphOpt(graph *Gin, graph *Gout, long *C, long numUniqueClusters, int nThreads);
-double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, long *C, long numUniqueClusters, int nThreads);
-void buildNextLevelGraph(graph *Gin, graph *Gout, long *C, long numUniqueClusters);
-long buildCommunityBasedOnVoltages(graph *G, long *Volts, long *C, long *Cvolts);
-void segregateEdgesBasedOnVoltages(graph *G, long *Volts);
-inline void Visit(long v, long myCommunity, short *Visited, long *Volts, 
-				  long* vtxPtr, edge* vtxInd, long *C);
+comm_type renumberClustersContiguously(comm_type *C, comm_type size);
+double buildNextLevelGraphOpt(graph *Gin, graph *Gout, comm_type *C, comm_type numUniqueClusters, int nThreads);
+double buildNextLevelGraphOpt_SFP(graph *Gin, graph *Gout, comm_type *C, comm_type numUniqueClusters, int nThreads);
+void buildNextLevelGraph(graph *Gin, graph *Gout, comm_type *C, comm_type numUniqueClusters);
+comm_type buildCommunityBasedOnVoltages(graph *G, comm_type *Volts, comm_type *C, comm_type *Cvolts);
+void segregateEdgesBasedOnVoltages(graph *G, comm_type *Volts);
+inline void Visit(comm_type v, comm_type myCommunity, short *Visited, comm_type *Volts,
+				  comm_type* vtxPtr, edge* vtxInd, comm_type *C);
 inline void Visit(comm_type v, comm_type myCommunity, short *Visited, comm_type *Volts,
                   comm_type* vtxPtr, edge* vtxInd, comm_type *C);
 inline void Visit(comm_type v, comm_type myCommunity, comm_type *Visited, comm_type *Volts,
                   comm_type* vtxPtr, edge* vtxInd, comm_type *C);
-inline void Visit(comm_type v, comm_type myCommunity, short *Visited, long *Volts,
-                  comm_type* vtxPtr, edge* vtxInd, long *C);
+inline void Visit(comm_type v, comm_type myCommunity, short *Visited, comm_type *Volts,
+                  comm_type* vtxPtr, edge* vtxInd, comm_type *C);
 				  
 // Define in vertexFollowing.cpp
-long vertexFollowing(graph *G, long *C);
-double buildNewGraphVF(graph *Gin, graph *Gout, long *C, long numUniqueClusters);
+comm_type vertexFollowing(graph *G, comm_type *C);
+double buildNewGraphVF(graph *Gin, graph *Gout, comm_type *C, comm_type numUniqueClusters);
 
 // Define in utilityFunctions.cpp
-double computeGiniCoefficient(long *colorSize, int numColors);
-void generateRandomNumbers(double *RandVec, long size);
+double computeGiniCoefficient(comm_type *colorSize, int numColors);
+void generateRandomNumbers(double *RandVec, comm_type size);
 void displayGraph(graph *G);
 void duplicateGivenGraph(graph *Gin, graph *Gout);
 void displayGraphEdgeList(graph *G);

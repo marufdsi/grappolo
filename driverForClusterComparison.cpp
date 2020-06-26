@@ -54,17 +54,17 @@ int main(int argc, char** argv) {
     }
     ifstream File;
     //Parse file with ground truth communities:
-    long N1=0;
-    vector<long> truthCommunity;
+    comm_type N1=0;
+    vector<comm_type> truthCommunity;
     File.open(argv[1]);
-    long temp1, temp2;
+    comm_type temp1, temp2;
     // TODO FIXME provide choices for 1-based 
     // and whether to read 1/2 tokens per line 
     while(!File.eof()) {
         File >> temp1 >> temp2;
         //cout<< temp2 << " ";
         //File >> temp2;
-        truthCommunity.push_back((long)(temp2-1));
+        truthCommunity.push_back((comm_type)(temp2-1));
     }
     cout << "\n";
     File.close();
@@ -73,14 +73,14 @@ int main(int argc, char** argv) {
     cout<< "Parsed ground truth file with " << N1 << " elements\n";
     
     //Parse file with output community:
-    long N2=0;
-    vector<long> outputCommunity;
+    comm_type N2=0;
+    vector<comm_type> outputCommunity;
     File.open(argv[2]);
     while(!File.eof()) {
         //File >> temp1 >> temp2;
         File >> temp2;
         //cout<< temp2 << " ";
-        outputCommunity.push_back((long)temp2);
+        outputCommunity.push_back((comm_type)temp2);
     }
      cout << "\n";
     File.close();

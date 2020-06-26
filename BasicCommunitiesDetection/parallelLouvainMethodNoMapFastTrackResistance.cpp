@@ -45,7 +45,7 @@
 
 using namespace std;
 
-double parallelLouvianMethodNoMapFastTrackResistance(graph *G, long *C, int nThreads, double Lower,
+double parallelLouvianMethodNoMapFastTrackResistance(graph *G, comm_type *C, int nThreads, double Lower,
         double thresh, double *totTime, int *numItr, int phase, double* rmin, double* finMod) {
 #ifdef PRINT_DETAILED_STATS_
     printf("Within parallelLouvianMethodNoMapFastTrackResistance()\n");
@@ -65,14 +65,14 @@ double parallelLouvianMethodNoMapFastTrackResistance(graph *G, long *C, int nThr
     double time1, time2, time3, time4; //For timing purposes
     double total = 0, totItr = 0;
     
-    long    NV        = G->numVertices;
-    long    NS        = G->sVertices;
-    long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    NV        = G->numVertices;
+    comm_type    NS        = G->sVertices;
+    comm_type    NE        = G->numEdges;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     
     /* Variables for computing modularity */
-    long totalEdgeWeightTwice;
+    comm_type totalEdgeWeightTwice;
     double constantForSecondTerm;
     double prevMod=-1;
     double currMod=-1;
@@ -99,11 +99,11 @@ double parallelLouvianMethodNoMapFastTrackResistance(graph *G, long *C, int nThr
     
     //Community assignments:
     //Store previous iteration's community assignment
-    long* pastCommAss = (long *) malloc (NV * sizeof(long)); assert(pastCommAss != 0);
+    comm_type* pastCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(pastCommAss != 0);
     //Store current community assignment
-    long* currCommAss = (long *) malloc (NV * sizeof(long)); assert(currCommAss != 0);
+    comm_type* currCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(currCommAss != 0);
     //Store the target of community assignment
-    long* targetCommAss = (long *) malloc (NV * sizeof(long)); assert(targetCommAss != 0);
+    comm_type* targetCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(targetCommAss != 0);
     
     //Vectors used in place of maps: Total size = |V|+2*|E| -- The |V| part takes care of self loop
     mapElement* clusterLocalMap = (mapElement *) malloc ((NV + 2*NE) * sizeof(mapElement)); assert(clusterLocalMap != 0);
@@ -131,26 +131,26 @@ double parallelLouvianMethodNoMapFastTrackResistance(graph *G, long *C, int nThr
         time1 = omp_get_wtime();
         /* Re-initialize datastructures */
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             clusterWeightInternal[i] = 0;
             cUpdate[i].degree =0;
             cUpdate[i].size =0;
         }
         
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
-            long adj1 = vtxPtr[i];
-            long adj2 = vtxPtr[i+1];
+        for (comm_type i=0; i<NV; i++) {
+            comm_type adj1 = vtxPtr[i];
+            comm_type adj2 = vtxPtr[i+1];
             double selfLoop = 0;
             //Build a datastructure to hold the cluster structure of its neighbors
-            //map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
-            //map<long, long>::iterator storedAlready;
+            //map<comm_type, comm_type> clusterLocalMap; //Map each neighbor's cluster to a local number
+            //map<comm_type, comm_type>::iterator storedAlready;
             // vector<double> Counter; //Number of edges in each unique cluster
-            long numUniqueClusters = 0;
+            comm_type numUniqueClusters = 0;
             //Add v's current cluster:
             if(adj1 != adj2){
                 //Add the current cluster of i to the local map
-                long sPosition = vtxPtr[i]+i; //Starting position of local map for i
+                comm_type sPosition = vtxPtr[i]+i; //Starting position of local map for i
                 clusterLocalMap[sPosition].Counter = 0;          //Initialize the counter to ZERO (no edges incident yet)
                 clusterLocalMap[sPosition].cid = currCommAss[i]; //Initialize with current community
                 numUniqueClusters++; //Added the first entry
@@ -191,7 +191,7 @@ double parallelLouvianMethodNoMapFastTrackResistance(graph *G, long *C, int nThr
         
 #pragma omp parallel for \
         reduction(+:e_xx) reduction(+:a2_x)
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             e_xx += clusterWeightInternal[i];
             a2_x += (cInfo[i].degree)*(cInfo[i].degree);
         }
@@ -201,7 +201,7 @@ double parallelLouvianMethodNoMapFastTrackResistance(graph *G, long *C, int nThr
  
         // Calculate r_min(C) and Q_AFG
         if (phase > 1) {
-            long n_c = 0;
+            comm_type n_c = 0;
             
             // total weight twice (2m) 
             double w_2 = ((double)1.0 / (double)constantForSecondTerm);
@@ -209,7 +209,7 @@ double parallelLouvianMethodNoMapFastTrackResistance(graph *G, long *C, int nThr
             double Nrecp = ((double)1.0/(double)NV);
 
 #pragma omp parallel for reduction(+:n_c)
-            for (long i=0; i<NV; i++) {
+            for (comm_type i=0; i<NV; i++) {
                 n_c += (cInfo[i].size)*(cInfo[i].size);
             }
 
@@ -257,13 +257,13 @@ double parallelLouvianMethodNoMapFastTrackResistance(graph *G, long *C, int nThr
         }
 
 #pragma omp parallel for
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             cInfo[i].size += cUpdate[i].size;
             cInfo[i].degree += cUpdate[i].degree;
         }
         
         //Do pointer swaps to reuse memory:
-        long* tmp;
+        comm_type* tmp;
         tmp = pastCommAss;
         pastCommAss = currCommAss; //Previous holds the current
         currCommAss = targetCommAss; //Current holds the chosen assignment
@@ -291,7 +291,7 @@ double parallelLouvianMethodNoMapFastTrackResistance(graph *G, long *C, int nThr
     //Store back the community assignments in the input variable:
     //Note: No matter when the while loop exits, we are interested in the previous assignment
 #pragma omp parallel for 
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         C[i] = pastCommAss[i];
     }
     //Cleanup

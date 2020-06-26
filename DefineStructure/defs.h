@@ -96,13 +96,13 @@ typedef struct /* the graph data structure */
 
 typedef struct /* the graph data structure for directed graph */
 {
-    long numVertices;        /* Number of vertices                                */
-    long numEdges;           /* Each edge is stored only once (u --> v)           */
+    comm_type numVertices;        /* Number of vertices                                */
+    comm_type numEdges;           /* Each edge is stored only once (u --> v)           */
     //Outgoing edges
-    long *edgeListPtrsOut;            /* Edge pointer vector O(|V|)    */
+    comm_type *edgeListPtrsOut;            /* Edge pointer vector O(|V|)    */
     edge * edgeListOut;        /* Edge weight vector O(|E|)     */
     //Incoming edges
-    long *edgeListPtrsIn;             /* Edge pointer vector O(|V|)    */
+    comm_type *edgeListPtrsIn;             /* Edge pointer vector O(|V|)    */
     edge * edgeListIn;         /* Edge weight vector O(|E|)     */
 } dGraph;
 
@@ -121,7 +121,7 @@ struct clustering_parameters
     int basicOpt; //If map data structure is replaced with a vector
     bool threadsOpt;
     f_weight C_thresh; //Threshold with coloring on
-    long minGraphSize; //Min |V| to enable coloring
+    comm_type minGraphSize; //Min |V| to enable coloring
     f_weight threshold; //Value of threshold
     int percentage;
     bool compute_metrics;
@@ -135,7 +135,7 @@ struct clustering_parameters
 };
 
 //Reverse Cuthill-McKee Algorithm
-void algoReverseCuthillMcKee( graph *G, long *pOrder, int nThreads );
-void algoReverseCuthillMcKeeStrict( graph *G, long *pOrder, int nThreads );
+void algoReverseCuthillMcKee( graph *G, comm_type *pOrder, int nThreads );
+void algoReverseCuthillMcKeeStrict( graph *G, comm_type *pOrder, int nThreads );
 
 #endif

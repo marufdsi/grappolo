@@ -102,13 +102,13 @@ int main(int argc, char** argv) {
     threadsOpt =1;
     
     // Datastructures to store clustering information
-    long NV = G->numVertices;
-    long NS = G->sVertices;
-    long NT = NV - NS;
-    long *old2NewMap = (long *) malloc (NV * sizeof(long)); assert(old2NewMap != 0);
+    comm_type NV = G->numVertices;
+    comm_type NS = G->sVertices;
+    comm_type NT = NV - NS;
+    comm_type *old2NewMap = (comm_type *) malloc (NV * sizeof(comm_type)); assert(old2NewMap != 0);
     //Initialize the Vectors:
 #pragma omp parallel for
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         old2NewMap[i] = -1; //Initialize the rank as -1
     }
     
@@ -116,7 +116,7 @@ int main(int argc, char** argv) {
     MetisNDReorder(G, old2NewMap);
     /*
     printf("*********************************\n");
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         printf("%ld ", old2NewMap[i]+1); //Initialize the rank as -1
     }
     printf("*********************************\n");
@@ -130,13 +130,13 @@ int main(int argc, char** argv) {
     } else { //A bipartite graph:
         //STEP 1: Segregate the row and column vertices
         assert(NT > 0);
-        long rowCounter = 0;
-        long colCounter = NS;
-        long *Rprime    = (long *) malloc (NV * sizeof(long)); assert(Rprime != 0);
-        for (long i=0; i<NV; i++) {
+        comm_type rowCounter = 0;
+        comm_type colCounter = NS;
+        comm_type *Rprime    = (comm_type *) malloc (NV * sizeof(comm_type)); assert(Rprime != 0);
+        for (comm_type i=0; i<NV; i++) {
             Rprime[i]= -1;
         }
-        for (long i=(NV-1); i>=0; i--) { //Go through the list in a reverse order
+        for (comm_type i=(NV-1); i>=0; i--) { //Go through the list in a reverse order
             if(old2NewMap[i] < NS) { //A row vertex
                 Rprime[rowCounter] = old2NewMap[i];
                 rowCounter++;
@@ -147,7 +147,7 @@ int main(int argc, char** argv) {
         }//End of for(i)
         assert(rowCounter==NS); assert(colCounter==NV); //Sanity check
         //STEP 3.2: Now build the old2New map:
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             old2NewMap[Rprime[i]] = i; //pOrder is a old2New index mapping
         }
         //Clean up:

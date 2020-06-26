@@ -45,7 +45,7 @@
 
 using namespace std;
 
-double parallelLouvainMethodFullSyncEarly(graph *G, long *C, int nThreads, double Lower,
+double parallelLouvainMethodFullSyncEarly(graph *G, comm_type *C, int nThreads, double Lower,
                                           double thresh, double *totTime, int *numItr,int ytype, int freedom) {
 #ifdef PRINT_DETAILED_STATS_
     printf("Within parallelLouvainMethodFullSyncEarly()\n");
@@ -65,14 +65,14 @@ double parallelLouvainMethodFullSyncEarly(graph *G, long *C, int nThreads, doubl
     double time1, time2, time3, time4; //For timing purposes
     double total = 0, totItr = 0;
     
-    long    NV        = G->numVertices;
-    long    NS        = G->sVertices;
-    long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    NV        = G->numVertices;
+    comm_type    NS        = G->sVertices;
+    comm_type    NE        = G->numEdges;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     
     /* Variables for computing modularity */
-    long totalEdgeWeightTwice;
+    comm_type totalEdgeWeightTwice;
     double constantForSecondTerm;
     double prevMod=-1;
     double currMod=-1;
@@ -101,9 +101,9 @@ double parallelLouvainMethodFullSyncEarly(graph *G, long *C, int nThreads, doubl
     
     
     //Store previous iteration's community assignment
-    long* pastCommAss = (long *) malloc (NV * sizeof(long)); assert(pastCommAss != 0);
+    comm_type* pastCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(pastCommAss != 0);
     //Store current community assignment
-    long* currCommAss = (long *) malloc (NV * sizeof(long)); assert(currCommAss != 0);
+    comm_type* currCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(currCommAss != 0);
     //Store the target of community assignment
     
     //Initialize each vertex to its own cluster
@@ -114,10 +114,10 @@ double parallelLouvainMethodFullSyncEarly(graph *G, long *C, int nThreads, doubl
     // Store the termination node
     bool* verT = (bool *) malloc (NV * sizeof(bool)); assert(verT != 0);
 #pragma omp parallel for
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         verT[i] = false;
     }
-    long termNodes = 0;
+    comm_type termNodes = 0;
     
     time2 = omp_get_wtime();
     printf("Time to initialize: %3.3lf\n", time2-time1);
@@ -125,7 +125,7 @@ double parallelLouvainMethodFullSyncEarly(graph *G, long *C, int nThreads, doubl
     
     // Set up locks for full sync
 #pragma omp parallel for
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         omp_init_lock(&vlocks[i]);
         omp_init_lock(&clocks[i]);
     }
@@ -147,22 +147,22 @@ double parallelLouvainMethodFullSyncEarly(graph *G, long *C, int nThreads, doubl
         time1 = omp_get_wtime();
         /* Re-initialize datastructures */
         
-        long totalEdgeTravel= 0;
-        long totalUniqueComm = 0;
+        comm_type totalEdgeTravel= 0;
+        comm_type totalUniqueComm = 0;
         
 #pragma omp parallel for reduction(+:totalEdgeTravel), reduction(+:totalUniqueComm)
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             if(verT[i])
                 continue;
-            long adj1 = vtxPtr[i];
-            long adj2 = vtxPtr[i+1];
-            long selfLoop = 0;
+            comm_type adj1 = vtxPtr[i];
+            comm_type adj2 = vtxPtr[i+1];
+            comm_type selfLoop = 0;
             totalEdgeTravel += (adj2-adj1);
-            long numUniqueClusters = 0;
+            comm_type numUniqueClusters = 0;
             //Add v's current cluster:
             if(adj1 != adj2){
                 //Add the current cluster of i to the local map
-                long sPosition = vtxPtr[i]+i; //Starting position of local map for i
+                comm_type sPosition = vtxPtr[i]+i; //Starting position of local map for i
                 double eix;
                 clusterLocalMap[sPosition].Counter = 0;          //Initialize the counter to ZERO (no edges incident yet)
                 clusterLocalMap[sPosition].cid = C[i]; //Initialize with current community
@@ -198,21 +198,21 @@ double parallelLouvainMethodFullSyncEarly(graph *G, long *C, int nThreads, doubl
         
         // Calculate Modularity
 #pragma omp parallel for  //Parallelize on each vertex
-        for (long i =0; i<NV;i++){
+        for (comm_type i =0; i<NV;i++){
             clusterWeightInternal[i] = 0;
         }
 #pragma omp parallel for  //Parallelize on each vertex
-        for (long i=0; i<NV; i++) {
-            long adj1 = vtxPtr[i];
-            long adj2 = vtxPtr[i+1];
-            for(long j=adj1; j<adj2; j++) {
+        for (comm_type i=0; i<NV; i++) {
+            comm_type adj1 = vtxPtr[i];
+            comm_type adj2 = vtxPtr[i+1];
+            for(comm_type j=adj1; j<adj2; j++) {
                 if(C[vtxInd[j].tail] == C[i]){
                     clusterWeightInternal[i] += vtxInd[j].weight;
                 }
             }
         }
 #pragma omp parallel for reduction(+:e_xx) reduction(+:a2_x)
-        for (long i=0; i<NV; i++) {
+        for (comm_type i=0; i<NV; i++) {
             e_xx += clusterWeightInternal[i];
             a2_x += (cInfo[i].degree)*(cInfo[i].degree);
         }

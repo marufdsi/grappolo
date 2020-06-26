@@ -49,15 +49,15 @@
 class GraphHOST {
 public:
     unsigned int nb_nodes;
-    unsigned long nb_links;
+    unsigned comm_type nb_links;
     double total_weight;
     /*
-     thrust::host_vector<unsigned long> degrees;
+     thrust::host_vector<unsigned comm_type> degrees;
      thrust::host_vector<unsigned int> links;
      thrust::host_vector<float> weights;
      */
     
-    std::vector<unsigned long> degrees;
+    std::vector<unsigned comm_type> degrees;
     std::vector<unsigned int> links;
     std::vector<float> weights;
     

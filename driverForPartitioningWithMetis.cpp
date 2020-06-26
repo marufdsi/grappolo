@@ -100,8 +100,8 @@ int main(int argc, char** argv) {
         threadsOpt = 1;
     threadsOpt =1;
     
-  long NV = G->numVertices;
-  long *vPart = (long *) malloc (NV * sizeof(long)); assert(vPart != 0);
+  comm_type NV = G->numVertices;
+  comm_type *vPart = (comm_type *) malloc (NV * sizeof(comm_type)); assert(vPart != 0);
   
   int myVec[7]={2,4,8,16,24,32,36};
   for (int i=0; i<7; i++) {       
@@ -110,11 +110,11 @@ int main(int argc, char** argv) {
        printf("Processing with %d partitions; will be stored in file: %s\n", myVec[i], outFile);
        MetisGraphPartitioner( G, vPart, myVec[i]);
        FILE* out = fopen(outFile,"w");
-       for(long i = 0; i<NV;i++) {
+       for(comm_type i = 0; i<NV;i++) {
           fprintf(out,"%ld\n",vPart[i]);
        }		
        fclose(out);
-       for (long j=0; j<NV; j++ )
+       for (comm_type j=0; j<NV; j++ )
           vPart[j] = -1;
   }
 

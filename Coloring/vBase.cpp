@@ -11,9 +11,9 @@ int vBaseRedistribution(graph* G, int* vtxColor, int ncolors, int type)
 	
   double time1=0, time2=0, totalTime=0;
   //Get the iterators for the graph:
-  long NVer    = G->numVertices;
-  long NEdge   = G->numEdges;  
-  long *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+  comm_type NVer    = G->numVertices;
+  comm_type NEdge   = G->numEdges;
+    comm_type *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
   edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
 
 #ifdef PRINT_DETAILED_STATS_
@@ -25,9 +25,9 @@ int vBaseRedistribution(graph* G, int* vtxColor, int ncolors, int type)
   assert(randValues != 0);
   generateRandomNumbers(randValues, NVer);
 
-	long *Q    = (long *) malloc (NVer * sizeof(long)); assert(Q != 0);
-  long *Qtmp = (long *) malloc (NVer * sizeof(long)); assert(Qtmp != 0);
-  long *Qswap;    
+	comm_type *Q    = (comm_type *) malloc (NVer * sizeof(comm_type)); assert(Q != 0);
+  comm_type *Qtmp = (comm_type *) malloc (NVer * sizeof(comm_type)); assert(Qtmp != 0);
+  comm_type *Qswap;
   if( (Q == NULL) || (Qtmp == NULL) ) {
     printf("Not enough memory to allocate for the two queues \n");
     exit(1);
@@ -37,16 +37,16 @@ int vBaseRedistribution(graph* G, int* vtxColor, int ncolors, int type)
 	// initialize the color to baseColor
 	int *baseColors = (int *) malloc (NVer * sizeof(int)); assert (baseColors != 0);
 	#pragma omp parallel for
-	for(long i = 0; i<NVer;i++)
+	for(comm_type i = 0; i<NVer;i++)
 		baseColors[i]=vtxColor[i];
 
 	// Put uncolor vertices in the queue
-	long QTail=0;    //Tail of the queue 
-  long QtmpTail=0; //Tail of the queue (implicitly will represent the size)
-  long realMaxDegree = 0;
+	comm_type QTail=0;    //Tail of the queue
+  comm_type QtmpTail=0; //Tail of the queue (implicitly will represent the size)
+  comm_type realMaxDegree = 0;
 	
 	#pragma omp parallel for
-  for (long i=0; i<NVer; i++) {
+  for (comm_type i=0; i<NVer; i++) {
       Q[i]= i;     //Natural order
       Qtmp[i]= -1; //Empty queue
   }
@@ -55,8 +55,8 @@ int vBaseRedistribution(graph* G, int* vtxColor, int ncolors, int type)
 	
 	// Cal real Maximum degree, no used
 	#pragma omp parallel for reduction(max: realMaxDegree)
-	for (long i = 0; i < NVer; i++) {
-		long adj1, adj2, de;
+	for (comm_type i = 0; i < NVer; i++) {
+		comm_type adj1, adj2, de;
 		adj1 = verPtr[i];
 		adj2 = verPtr[i+1];
 		de = adj2-adj1;
@@ -67,13 +67,13 @@ int vBaseRedistribution(graph* G, int* vtxColor, int ncolors, int type)
 	/////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////// START THE WHILE LOOP ///////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////////////////
-  long nConflicts = 0; //Number of conflicts 
+  comm_type nConflicts = 0; //Number of conflicts
   int nLoops = 0;     //Number of rounds of conflict resolution
 
 	// Holder for frequency, could use realMaxDegree here
 	ColorVector freq(ncolors,0);
 	BitVector overSize(ncolors,false);
-	long avg = (long)ceil((double)NVer/(double)ncolors);
+	comm_type avg = (comm_type)ceil((double)NVer/(double)ncolors);
 
 	// calculate the frequency 
 	computeBinSizes(freq,baseColors,NVer,ncolors);
@@ -92,8 +92,8 @@ int vBaseRedistribution(graph* G, int* vtxColor, int ncolors, int type)
 	do{
 		time1 = omp_get_wtime();
 		#pragma omp parallel for
-    for (long Qi=0; Qi<QTail; Qi++) {
-      long v = Q[Qi]; //Q.pop_front();
+    for (comm_type Qi=0; Qi<QTail; Qi++) {
+      comm_type v = Q[Qi]; //Q.pop_front();
 			int maxColor = 0;
 			
 			if( overSize[baseColors[v]] == false)
@@ -140,8 +140,8 @@ int vBaseRedistribution(graph* G, int* vtxColor, int ncolors, int type)
 		time2 = omp_get_wtime();
 		
 		#pragma omp parallel for
-		for (long Qi=0; Qi<QTail; Qi++) {
-			long v = Q[Qi]; //Q.pop_front();
+		for (comm_type Qi=0; Qi<QTail; Qi++) {
+			comm_type v = Q[Qi]; //Q.pop_front();
 			distanceOneConfResolution(G, v, vtxColor, randValues, &QtmpTail, Qtmp, freq, 1);
 		} //End of outer for loop: for each vertex
   

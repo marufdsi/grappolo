@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
   int *colors = (int *) malloc (G->numVertices * sizeof(int)); assert (colors != 0);
 
 	#pragma omp parallel for
-  for (long i=0; i<G->numVertices; i++) {
+  for (comm_type i=0; i<G->numVertices; i++) {
 	colors[i] = -1;
   }
   double tmpTime;
@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
 	fprintf(out2, "*******************************\n");
 				
 #pragma omp parallel for
-	for (long i=0; i<G->numVertices; i++) {
+	for (comm_type i=0; i<G->numVertices; i++) {
 		colors[i] = -1;
 	}
 	numColors = algoDistanceOneVertexColoringOpt(G, colors, curThread, &tmpTime);
@@ -139,18 +139,18 @@ int main(int argc, char** argv) {
   }//End of while()
 */	
   //Count the frequency of colors:
-  long *colorFreq = (long *) malloc (numColors * sizeof(long)); assert(colorFreq != 0);
+  comm_type *colorFreq = (comm_type *) malloc (numColors * sizeof(comm_type)); assert(colorFreq != 0);
 #pragma omp parallel for
-  for(long i = 0; i < numColors; i++) {
+  for(comm_type i = 0; i < numColors; i++) {
 	colorFreq[i] = 0;
   }
 	
   #pragma omp parallel for
-  for(long i = 0; i < G->numVertices; i++) {
+  for(comm_type i = 0; i < G->numVertices; i++) {
 	__sync_fetch_and_add(&colorFreq[colors[i]],1);
   }
 	
-  for(long i=0; i < numColors; i++) {
+  for(comm_type i=0; i < numColors; i++) {
  	printf("%ld \t %ld\n", i, colorFreq[i]);
   }
 	

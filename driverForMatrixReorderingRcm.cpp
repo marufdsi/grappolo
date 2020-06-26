@@ -102,11 +102,11 @@ int main(int argc, char** argv) {
     threadsOpt =1;
     
     // Datastructures to store clustering information
-    long NV = G->numVertices;
-    long *old2NewMap = (long *) malloc (NV * sizeof(long)); assert(old2NewMap != 0);
+    comm_type NV = G->numVertices;
+    comm_type *old2NewMap = (comm_type *) malloc (NV * sizeof(comm_type)); assert(old2NewMap != 0);
     //Initialize the Vectors:
 #pragma omp parallel for
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         old2NewMap[i] = -1; //Initialize the rank as -1
     }
     

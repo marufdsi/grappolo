@@ -85,13 +85,13 @@ int main(int argc, char** argv) {
   //displayGraph(G);
  
   //Clean up the file:
-  long numVtxToFix = 0; //Default zero
-  long *C = (long *) malloc (G->numVertices * sizeof(long)); assert(C != 0);
+  comm_type numVtxToFix = 0; //Default zero
+  comm_type *C = (comm_type *) malloc (G->numVertices * sizeof(comm_type)); assert(C != 0);
   numVtxToFix = vertexFollowing(G,C); //Find vertices that follow other vertices
   if( numVtxToFix > 0) {  //Need to fix things: build a new graph		      
     printf("Graph will be modified -- %ld vertices need to be fixed.\n", numVtxToFix);          
     graph *Gnew = (graph *) malloc (sizeof(graph));
-    long numClusters = renumberClustersContiguously(C, G->numVertices);		         
+    comm_type numClusters = renumberClustersContiguously(C, G->numVertices);
     buildNewGraphVF(G, Gnew, C, numClusters);
     //Get rid of the old graph and store the new graph
     free(G->edgeListPtrs);

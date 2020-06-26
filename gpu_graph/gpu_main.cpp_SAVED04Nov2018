@@ -138,9 +138,9 @@ int main(int argc, char** argv) {
     // first we read to GraphHOST if that works ok
     // then we read to GraphGPU object
     GraphHOST input_graph_grappolo; // GPU code graph in Host Memory
-    input_graph_grappolo.nb_nodes = (long) G->numVertices;
-    // input_graph_grappolo.nb_links = (long) G->sVertices;
-    input_graph_grappolo.nb_links = ((long) G->numEdges) * 2;
+    input_graph_grappolo.nb_nodes = (comm_type) G->numVertices;
+    // input_graph_grappolo.nb_links = (comm_type) G->sVertices;
+    input_graph_grappolo.nb_links = ((comm_type) G->numEdges) * 2;
     std::cout << "Number of Vertices/nodes: " << input_graph_grappolo.nb_nodes
     << std::endl;
     std::cout << "Number of Edges/links: " << input_graph_grappolo.nb_links
@@ -148,8 +148,8 @@ int main(int argc, char** argv) {
     
     input_graph_grappolo.degrees.resize(input_graph_grappolo.nb_nodes);
     
-    long    NV        = G->numVertices;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    NV        = G->numVertices;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     
     double* vDegree = (double *) malloc (NV * sizeof(double));
@@ -163,11 +163,11 @@ int main(int argc, char** argv) {
     input_graph_grappolo.degrees.resize(input_graph_grappolo.nb_nodes);
     
 #if 1
-    long kk = 0;
-    for(long i = 0; i < NV; i++) {
-        long adj1 = vtxPtr[i];
-        long adj2 = vtxPtr[i+1];
-        for (long j = adj1; j < adj2; j++) {
+    comm_type kk = 0;
+    for(comm_type i = 0; i < NV; i++) {
+        comm_type adj1 = vtxPtr[i];
+        comm_type adj2 = vtxPtr[i+1];
+        for (comm_type j = adj1; j < adj2; j++) {
             // std::cout << "edgeList[" << i << "]: " <<
             //    G->edgeList[i].tail << std::endl;
             // input_graph_grappolo.links[kk] = (int)G->edgeList[j].tail;
@@ -178,10 +178,10 @@ int main(int argc, char** argv) {
     input_graph_grappolo.nb_links = kk;
     input_graph_grappolo.links.resize(input_graph_grappolo.nb_links);
     kk = 0;
-    for(long i = 0; i < NV; i++) {
-        long adj1 = vtxPtr[i];
-        long adj2 = vtxPtr[i+1];
-        for (long j = adj1; j < adj2; j++) {
+    for(comm_type i = 0; i < NV; i++) {
+        comm_type adj1 = vtxPtr[i];
+        comm_type adj2 = vtxPtr[i+1];
+        for (comm_type j = adj1; j < adj2; j++) {
             // std::cout << "edgeList[" << i << "]: " <<
             //    G->edgeList[i].tail << std::endl;
             // input_graph_grappolo.links[kk] = (int)G->edgeList[j].tail;
@@ -195,12 +195,12 @@ int main(int argc, char** argv) {
     assert(kk == input_graph_grappolo.nb_links);
 #else
     
-    for(long i = 0; i < input_graph_grappolo.nb_links; i++) {
+    for(comm_type i = 0; i < input_graph_grappolo.nb_links; i++) {
         input_graph_grappolo.links[i] = (int)vtxInd[i].tail;
     }
 #endif
     
-    for(long i = 0; i <= input_graph_grappolo.nb_nodes; i++) {
+    for(comm_type i = 0; i <= input_graph_grappolo.nb_nodes; i++) {
         // std::cout << "vDegree[" << i << "]: " <<
         //   vDegree[i] << std::endl;
         input_graph_grappolo.degrees[i] = (int)vtxPtr[i];

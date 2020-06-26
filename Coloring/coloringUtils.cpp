@@ -11,9 +11,9 @@
 }*/
 
 
-void computeBinSizes(ColorVector &binSizes, int* colors, long nv, int numColors)
+void computeBinSizes(ColorVector &binSizes, int* colors, comm_type nv, int numColors)
 {
-	long*  bigHolder;
+	comm_type*  bigHolder;
 	#pragma omp parallel default(none), shared(binSizes, colors, bigHolder,numColors, nv)
 	{
 		const int nthreads = omp_get_num_threads();
@@ -22,11 +22,11 @@ void computeBinSizes(ColorVector &binSizes, int* colors, long nv, int numColors)
 
 		#pragma omp single 
 		{
-			bigHolder = new long[numColors*nthreads]() ;
+			bigHolder = new comm_type[numColors*nthreads]() ;
 		}
 
 		#pragma omp for schedule(guided)
-		for (long ci = 0; ci < nv; ci++){
+		for (comm_type ci = 0; ci < nv; ci++){
 			bigHolder[colors[ci]+ipost]++;
 		}
 
@@ -41,15 +41,15 @@ void computeBinSizes(ColorVector &binSizes, int* colors, long nv, int numColors)
 }
 
 // Loop to mark the used colors
-int distanceOneMarkArray(BitVector &mark, graph *G, long v, int *vtxColor)
+int distanceOneMarkArray(BitVector &mark, graph *G, comm_type v, int *vtxColor)
 {
-	long *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
   edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
 	int maxColor = -1, adjColor = -1;
-	long adj1 = verPtr[v];
-	long adj2 = verPtr[v+1];
+	comm_type adj1 = verPtr[v];
+	comm_type adj2 = verPtr[v+1];
 	
-	for (long k = adj1; k < adj2; k++) {
+	for (comm_type k = adj1; k < adj2; k++) {
 		if(verInd[k].tail == v)
 			continue;
 		adjColor = vtxColor[verInd[k].tail];
@@ -67,21 +67,21 @@ int distanceOneMarkArray(BitVector &mark, graph *G, long v, int *vtxColor)
 }
 
 
-void distanceOneConfResolution(graph* G, long v, int* vtxColor, double* randValues, long* QtmpTail, long* Qtmp, ColorVector& freq, int type)
+void distanceOneConfResolution(graph* G, comm_type v, int* vtxColor, double* randValues, comm_type* QtmpTail, comm_type* Qtmp, ColorVector& freq, int type)
 {
-	long *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
   edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
 	int maxColor = -1, adjColor = -1;
-	long adj1 = verPtr[v];
-	long adj2 = verPtr[v+1];
+	comm_type adj1 = verPtr[v];
+	comm_type adj2 = verPtr[v+1];
 	
 	//Browse the adjacency set of vertex v
-	for(long k = adj1; k < adj2; k++ ) {
+	for(comm_type k = adj1; k < adj2; k++ ) {
 		if ( v == verInd[k].tail ) //Self-loops
 			continue;
 		if ( vtxColor[v] == vtxColor[verInd[k].tail] ) {
 			if ( (randValues[v] < randValues[verInd[k].tail]) || ((randValues[v] == randValues[verInd[k].tail])&&(v < verInd[k].tail)) ) {
-				long whereInQ = __sync_fetch_and_add(QtmpTail, 1);
+				comm_type whereInQ = __sync_fetch_and_add(QtmpTail, 1);
 				Qtmp[whereInQ] = v;//Add to the queue
 				if(type!= 0 &&  vtxColor[v] != -1 )
 				{
@@ -123,15 +123,15 @@ void distanceOneConfResolutionWeighted(const Graph &g, const GraphElem &sv,  Col
 }
 */
 
-void distanceOneChecked(graph* G, long nv ,int* colors)
+void distanceOneChecked(graph* G, comm_type nv ,int* colors)
 {
-	long *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type *verPtr = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
   edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
 
-	for (long ci = 0U; ci < nv; ci++){
-		long adj1 = verPtr[ci];
-        long adj2 = verPtr[ci+1];
-		for (long k = adj1; k < adj2; k++) {
+	for (comm_type ci = 0U; ci < nv; ci++){
+		comm_type adj1 = verPtr[ci];
+        comm_type adj2 = verPtr[ci+1];
+		for (comm_type k = adj1; k < adj2; k++) {
 			if(ci != verInd[k].tail && colors[ci] == colors[verInd[k].tail]){
 				std::cout<<"Fail"<<std::endl;
 				exit(1);
@@ -181,7 +181,7 @@ void computeBinSizesWeighted(ColorVector &binSizes,const ColorVector &colors, co
         delete bigHolder;
 }
 */
-/*void buildColorsIndex(int* colors, const int numColors, const long nv, ColorVector& colorPtr,  ColorVector& colorIndex, ColorVector& binSizes)
+/*void buildColorsIndex(int* colors, const int numColors, const comm_type nv, ColorVector& colorPtr,  ColorVector& colorIndex, ColorVector& binSizes)
 {
 	ColorVector colorAdded(numColors,0);
 	computeBinSizes(freq,colors,nv,numColors);
@@ -194,9 +194,9 @@ void computeBinSizesWeighted(ColorVector &binSizes,const ColorVector &colors, co
 	}
 	// Fill in vertices
 	#pragma omp parallel for
-	for(long vi = 0;vi<nv;vi++){
+	for(comm_type vi = 0;vi<nv;vi++){
 		const int color = colors[vi];
-		long where;
+		comm_type where;
 		where =  colorPtr[color] + __sync_fetch_and_add(&(colorAdded[color]), 1);
 		colorIndex[where]=vi;
 	}

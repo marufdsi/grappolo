@@ -62,7 +62,7 @@ GraphHOST::GraphHOST(char* filename, char* filename_w, int type) {
     // Read links: 4 bytes for each link (each link is counted twice)
     nb_links = degrees[nb_nodes - 1];
     links.resize(nb_links);
-    finput.read((char *) (&links[0]), (long) nb_links * 4);
+    finput.read((char *) (&links[0]), (comm_type) nb_links * 4);
 
     // IF WEIGHTED : read weights: 4 bytes for each link (each link is counted twice)
     weights.resize(0);
@@ -71,7 +71,7 @@ GraphHOST::GraphHOST(char* filename, char* filename_w, int type) {
         ifstream finput_w;
         finput_w.open(filename_w, fstream::in | fstream::binary);
         weights.resize(nb_links);
-        finput_w.read((char *) &weights[0], (long) nb_links * 4);
+        finput_w.read((char *) &weights[0], (comm_type) nb_links * 4);
 
     }
 

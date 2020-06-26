@@ -45,7 +45,7 @@
 
 using namespace std;
 
-double parallelLouvianMethodNoMap(graph *G, long *C, int nThreads, double Lower,
+double parallelLouvianMethodNoMap(graph *G, comm_type *C, int nThreads, double Lower,
                                   double thresh, double *totTime, int *numItr) {
 #ifdef PRINT_DETAILED_STATS_
     printf("Within parallelLouvianMethodNoMap()\n");
@@ -143,8 +143,8 @@ double parallelLouvianMethodNoMap(graph *G, long *C, int nThreads, double Lower,
             comm_type adj2 = vtxPtr[i+1];
             double selfLoop = 0;
             //Build a datastructure to hold the cluster structure of its neighbors
-            //map<long, long> clusterLocalMap; //Map each neighbor's cluster to a local number
-            //map<long, long>::iterator storedAlready;
+            //map<comm_type, comm_type> clusterLocalMap; //Map each neighbor's cluster to a local number
+            //map<comm_type, comm_type>::iterator storedAlready;
             // vector<double> Counter; //Number of edges in each unique cluster
             comm_type numUniqueClusters = 0;
             //Add v's current cluster:
@@ -251,7 +251,7 @@ reduction(+:e_xx) reduction(+:a2_x)
     //Store back the community assignments in the input variable:
     //Note: No matter when the while loop exits, we are interested in the previous assignment
 #pragma omp parallel for 
-    for (long i=0; i<NV; i++) {
+    for (comm_type i=0; i<NV; i++) {
         C[i] = pastCommAss[i];
     }
     //Cleanup
