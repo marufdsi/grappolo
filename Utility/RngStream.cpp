@@ -197,7 +197,7 @@ void MatPowModM (const double A[3][3], double B[3][3], double m, comm_type n)
 // Check that the seeds are legitimate values. Returns 0 if legal seeds,
 // -1 otherwise.
 //
-int CheckSeed (const unsigned comm_type seed[6])
+int CheckSeed (const unsigned long seed[6])
 {
     int i;
 
@@ -354,7 +354,7 @@ void RngStream::ResetNextSubstream ()
 
 
 //-------------------------------------------------------------------------
-bool RngStream::SetPackageSeed (const unsigned comm_type seed[6])
+bool RngStream::SetPackageSeed (const unsigned long seed[6])
 {
    if (CheckSeed (seed))
       return false;                   // FAILURE     
@@ -365,7 +365,7 @@ bool RngStream::SetPackageSeed (const unsigned comm_type seed[6])
 
 
 //-------------------------------------------------------------------------
-bool RngStream::SetSeed (const unsigned comm_type seed[6])
+bool RngStream::SetSeed (const unsigned long seed[6])
 {
    if (CheckSeed (seed))
       return false;                   // FAILURE     
@@ -412,7 +412,7 @@ void RngStream::AdvanceState (comm_type e, comm_type c)
 
 
 //-------------------------------------------------------------------------
-void RngStream::GetState (unsigned comm_type seed[6]) const
+void RngStream::GetState (unsigned long seed[6]) const
 {
    for (int i = 0; i < 6; ++i)
       seed[i] = static_cast<unsigned comm_type> (Cg[i]);

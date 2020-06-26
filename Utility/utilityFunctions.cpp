@@ -54,7 +54,7 @@ void generateRandomNumbers(double *RandVec, comm_type size) {
     printf("Within generateRandomNumbers() -- Number of threads: %d\n", nT);
 #endif
     //Initialize parallel pseudo-random number generator
-    unsigned comm_type seed[6] = {1, 2, 3, 4, 5, 6};
+    unsigned long seed[6] = {1, 2, 3, 4, 5, 6};
     RngStream::SetPackageSeed(seed);
     RngStream RngArray[nT]; //array of RngStream Objects
     
