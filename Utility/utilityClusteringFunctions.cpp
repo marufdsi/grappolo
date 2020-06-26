@@ -526,7 +526,7 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
     comm_type storedAlready = 0;
     f_weight selfLoop = 0;
     comm_type vector_op = (adj2-adj1)/16;
-    cout << "vector_op : " << vector_op << " adj1: " << adj1 << " adj2: " << adj2 << " start: " << vector_op *16 << endl;
+//    cout << "vector_op : " << vector_op << " adj1: " << adj1 << " adj2: " << adj2 << " start: " << vector_op *16 << endl;
 //    cout << "Neighbors: " << adj2-adj1  << " numUniqueClusters: " << (*numUniqueClusters) << endl;
     /// perform intrinsic on the neighbors that are multiple of 16
     const   __m512i check_self_loop = _mm512_set1_epi32(v);
