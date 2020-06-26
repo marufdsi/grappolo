@@ -528,6 +528,7 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
     comm_type vector_op = (adj2-adj1)/16;
     /// perform intrinsic on the neighbors that are multiple of 16
     const   __m512i check_self_loop = _mm512_set1_epi32(v);
+    cout << "Perform vector operation" << endl;
     for(comm_type j=adj1; j<(vector_op * 16); j+=16) {
         /// Load at most 16 tail of the neighbors.
         __m512i tail_vec = _mm512_loadu_si512((__m512i *) &tail[j]);
@@ -581,6 +582,7 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
             }*/
         }
     }//End of for(j)
+    cout << "End vector operation" << endl;
     for(comm_type j=(vector_op * 16); j<adj2; j++) {
         if(tail[j] == v) {	// SelfLoop need to be recorded
             selfLoop += weights[j];
