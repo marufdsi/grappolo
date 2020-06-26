@@ -33,7 +33,7 @@ void IncreasedPrecis (bool incp);
 bool SetSeed (const unsigned long seed[6]);
 
 
-void AdvanceState (comm_type e, comm_type c);
+void AdvanceState (long e, comm_type c);
 
 
 void GetState (unsigned long seed[6]) const;
