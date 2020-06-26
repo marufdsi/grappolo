@@ -571,7 +571,7 @@ long buildCommunityBasedOnVoltages(graph *G, long *Volts, long *C, long *Cvolts)
     /* Graph data structure */
     long    NV        = G->numVertices;
     long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("|V|=%ld,  |E|=%ld\n", NV, NE);
     
@@ -624,7 +624,7 @@ void segregateEdgesBasedOnVoltages(graph *G, long *Volts) {
     /* Graph data structure */
     long    NV        = G->numVertices;
     long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("|V|=%ld,  |E|=%ld\n", NV, NE);
     

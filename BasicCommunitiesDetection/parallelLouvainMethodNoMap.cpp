@@ -68,7 +68,7 @@ double parallelLouvianMethodNoMap(graph *G, long *C, int nThreads, double Lower,
     long    NV        = G->numVertices;
     long    NS        = G->sVertices;
     long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     
     /* Variables for computing modularity */

@@ -3,7 +3,7 @@ void writeGraphMatrixMarketFormatSymmetric(graph* G, char *filename) {
     //Get the iterators for the graph:
     long NVer     = G->numVertices;
     long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
-    long *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     printf("NVer= %ld --  NE=%ld\n", NVer, NEdge);
     
@@ -48,7 +48,7 @@ void writeGraphMatrixMarketFormatSymmetricReordered(graph* G, char *filename, lo
     //Get the iterators for the graph:
     long NVer     = G->numVertices;
     long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
-    long *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     printf("NVer= %ld --  NE=%ld\n", NVer, NEdge);
     
@@ -94,7 +94,7 @@ void writeGraphMatrixMarketFormatBipartiteReordered(graph* G, char *filename, lo
     long NS       = G->sVertices;
     long NT       = NVer - NS;  assert(NT > 0); //Make sure that the graph is bipartite
     long NEdge    = G->numEdges;       //Returns the correct number of edges (not twice)
-    long *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
+    comm_type *verPtr  = G->edgeListPtrs;   //Vertex Pointer: pointers to endV
     edge *verInd  = G->edgeList;       //Vertex Index: destination id of an edge (src -> dest)
     printf("NS= %ld -- NT= %ld --  NE=%ld\n", NS, NT, NEdge);
     

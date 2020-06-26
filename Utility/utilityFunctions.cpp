@@ -77,7 +77,7 @@ void generateRandomNumbers(double *RandVec, long size) {
 void displayGraph(graph *G) {
     long    NV        = G->numVertices;
     long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("***********************************");
     printf("|V|= %ld, |E|= %ld \n", NV, NE);
@@ -137,7 +137,7 @@ void duplicateGivenGraph(graph *Gin, graph *Gout) {
 void displayGraphEdgeList(graph *G) {
     long    NV        = G->numVertices;
     long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("***********************************");
     printf("|V|= %ld, |E|= %ld \n", NV, NE);
@@ -154,7 +154,7 @@ void displayGraphEdgeList(graph *G) {
 void displayGraphEdgeList(graph *G, FILE* out) {
     long    NV        = G->numVertices;
     long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     printf("********PRINT OUTPUT********************");
     fprintf(out,"p sp %ld %ld \n", NV, NE/2);
@@ -172,7 +172,7 @@ void displayGraphEdgeList(graph *G, FILE* out) {
 
 void writeEdgeListToFile(graph *G, FILE* out) {
     long    NV        = G->numVertices;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     for (long i = 0; i < NV; i++) {
         long adj1 = vtxPtr[i];
@@ -196,7 +196,7 @@ void displayGraphCharacteristics(graph *G) {
     long    NV        = G->numVertices;
     long    NT        = NV - NS;
     long    NE        = G->numEdges;
-    long    *vtxPtr   = G->edgeListPtrs;
+    comm_type    *vtxPtr   = G->edgeListPtrs;
     long    tNV       = NV; //Number of vertices
     
     if ( (NS == 0)||(NS == NV) ) {  //Nonbiparite graph
