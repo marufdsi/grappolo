@@ -88,18 +88,18 @@ const double A2p127[3][3] = {
 double MultModM (double a, double s, double c, double m)
 {
     double v;
-    comm_type a1;
+    long a1;
 
     v = a * s + c;
 
     if (v >= two53 || v <= -two53) {
-        a1 = static_cast<comm_type> (a / two17);    a -= a1 * two17;
+        a1 = static_cast<long> (a / two17);    a -= a1 * two17;
         v  = a1 * s;
-        a1 = static_cast<comm_type> (v / m);     v -= a1 * m;
+        a1 = static_cast<long> (v / m);     v -= a1 * m;
         v = v * two17 + a * s + c;
     }
 
-    a1 = static_cast<comm_type> (v / m);
+    a1 = static_cast<long> (v / m);
     /* in case v < 0)*/
     if ((v -= a1 * m) < 0.0) return v += m;   else return v;
 }
@@ -151,7 +151,7 @@ void MatMatModM (const double A[3][3], const double B[3][3],
 //-------------------------------------------------------------------------
 // Compute the matrix B = (A^(2^e) Mod m);  works also if A = B. 
 //
-void MatTwoPowModM (const double A[3][3], double B[3][3], double m, comm_type e)
+void MatTwoPowModM (const double A[3][3], double B[3][3], double m, long e)
 {
    int i, j;
 
@@ -170,7 +170,7 @@ void MatTwoPowModM (const double A[3][3], double B[3][3], double m, comm_type e)
 //-------------------------------------------------------------------------
 // Compute the matrix B = (A^n Mod m);  works even if A = B.
 //
-void MatPowModM (const double A[3][3], double B[3][3], double m, comm_type n)
+void MatPowModM (const double A[3][3], double B[3][3], double m, long n)
 {
     int i, j;
     double W[3][3];
@@ -241,19 +241,19 @@ int CheckSeed (const unsigned long seed[6])
 //
 double RngStream::U01 ()
 {
-    comm_type k;
+    long k;
     double p1, p2, u;
 
     /* Component 1 */
     p1 = a12 * Cg[1] - a13n * Cg[0];
-    k = static_cast<comm_type> (p1 / m1);
+    k = static_cast<long> (p1 / m1);
     p1 -= k * m1;
     if (p1 < 0.0) p1 += m1;
     Cg[0] = Cg[1]; Cg[1] = Cg[2]; Cg[2] = p1;
 
     /* Component 2 */
     p2 = a21 * Cg[5] - a23n * Cg[3];
-    k = static_cast<comm_type> (p2 / m2);
+    k = static_cast<long> (p2 / m2);
     p2 -= k * m2;
     if (p2 < 0.0) p2 += m2;
     Cg[3] = Cg[4]; Cg[4] = Cg[5]; Cg[5] = p2;
@@ -381,7 +381,7 @@ bool RngStream::SetSeed (const unsigned long seed[6])
 // if e = 0, let n = c.
 // Jump n steps forward if n > 0, backwards if n < 0.
 //
-void RngStream::AdvanceState (comm_type e, comm_type c)
+void RngStream::AdvanceState (long e, long c)
 {
     double B1[3][3], C1[3][3], B2[3][3], C2[3][3];
 
@@ -415,7 +415,7 @@ void RngStream::AdvanceState (comm_type e, comm_type c)
 void RngStream::GetState (unsigned long seed[6]) const
 {
    for (int i = 0; i < 6; ++i)
-      seed[i] = static_cast<unsigned comm_type> (Cg[i]);
+      seed[i] = static_cast<unsigned long> (Cg[i]);
 }
 
 
@@ -428,9 +428,9 @@ void RngStream::WriteState () const
     cout << ":\n   Cg = { ";
 
     for (int i = 0; i < 5; i++) {
-        cout << static_cast<unsigned comm_type> (Cg [i]) << ", ";
+        cout << static_cast<unsigned long> (Cg [i]) << ", ";
     }
-    cout << static_cast<unsigned comm_type> (Cg [5]) << " }\n\n";
+    cout << static_cast<unsigned long> (Cg [5]) << " }\n\n";
 }
 
 
@@ -447,21 +447,21 @@ void RngStream::WriteStateFull () const
 
     cout << "   Ig = { ";
     for (i = 0; i < 5; i++) {
-        cout << static_cast<unsigned comm_type> (Ig [i]) << ", ";
+        cout << static_cast<unsigned long> (Ig [i]) << ", ";
     }
-    cout << static_cast<unsigned comm_type> (Ig [5]) << " }\n";
+    cout << static_cast<unsigned long> (Ig [5]) << " }\n";
 
     cout << "   Bg = { ";
     for (i = 0; i < 5; i++) {
-        cout << static_cast<unsigned comm_type> (Bg [i]) << ", ";
+        cout << static_cast<unsigned long> (Bg [i]) << ", ";
     }
-    cout << static_cast<unsigned comm_type> (Bg [5]) << " }\n";
+    cout << static_cast<unsigned long> (Bg [5]) << " }\n";
 
     cout << "   Cg = { ";
     for (i = 0; i < 5; i++) {
-        cout << static_cast<unsigned comm_type> (Cg [i]) << ", ";
+        cout << static_cast<unsigned long> (Cg [i]) << ", ";
     }
-    cout << static_cast<unsigned comm_type> (Cg [5]) << " }\n\n";
+    cout << static_cast<unsigned long> (Cg [5]) << " }\n\n";
 }
 
 
