@@ -64,15 +64,15 @@ double parallelLouvianMethodNoMap(graph *G, long *C, int nThreads, double Lower,
 #endif
     double time1, time2, time3, time4; //For timing purposes
     double total = 0, totItr = 0;
-    
-    long    NV        = G->numVertices;
-    long    NS        = G->sVertices;
-    long    NE        = G->numEdges;
+
+    comm_type    NV        = G->numVertices;
+    comm_type    NS        = G->sVertices;
+    comm_type    NE        = G->numEdges;
     comm_type    *vtxPtr   = G->edgeListPtrs;
     edge    *vtxInd   = G->edgeList;
     
     /* Variables for computing modularity */
-    long totalEdgeWeightTwice;
+    comm_type totalEdgeWeightTwice;
     double constantForSecondTerm;
     double prevMod=-1;
     double currMod=-1;
@@ -98,11 +98,11 @@ double parallelLouvianMethodNoMap(graph *G, long *C, int nThreads, double Lower,
     
     //Community assignments:
     //Store previous iteration's community assignment
-    long* pastCommAss = (long *) malloc (NV * sizeof(long)); assert(pastCommAss != 0);
+    comm_type* pastCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(pastCommAss != 0);
     //Store current community assignment
-    long* currCommAss = (long *) malloc (NV * sizeof(long)); assert(currCommAss != 0);
+    comm_type* currCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(currCommAss != 0);
     //Store the target of community assignment
-    long* targetCommAss = (long *) malloc (NV * sizeof(long)); assert(targetCommAss != 0);
+    comm_type* targetCommAss = (comm_type *) malloc (NV * sizeof(comm_type)); assert(targetCommAss != 0);
     
     //Vectors used in place of maps: Total size = |V|+2*|E| -- The |V| part takes care of self loop
     mapElement* clusterLocalMap = (mapElement *) malloc ((NV + 2*NE) * sizeof(mapElement)); assert(clusterLocalMap != 0);
