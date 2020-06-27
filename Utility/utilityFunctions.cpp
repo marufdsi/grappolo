@@ -187,7 +187,7 @@ void writeEdgeListToFile(graph *G, FILE* out) {
 
 void displayGraphCharacteristics(graph *G) {
     printf("Within displayGraphCharacteristics()\n");
-    comm_type    sum = 0, sum_sq = 0;
+    long    sum = 0, sum_sq = 0;
     double  average, avg_sq, variance, std_dev;
     comm_type    maxDegree = 0;
     comm_type    isolated  = 0;
