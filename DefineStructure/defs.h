@@ -57,6 +57,7 @@
 #include <vector>
 #include <unistd.h> //For getopts()
 
+#include <immintrin.h>
 #define MilanRealMax HUGE_VAL       // +INFINITY
 #define MilanRealMin -MilanRealMax  // -INFINITY
 
