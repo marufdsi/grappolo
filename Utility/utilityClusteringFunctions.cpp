@@ -573,12 +573,12 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
             }*/
         }
     }//End of for(j)
-    for (comm_type j = adj1 + (vector_op * 16); j < adj2; j++) {
+    for (comm_type j = adj1 + (vector_op * 16); j < adj2; ++j) {
         if (tail[j] == v) {    // SelfLoop need to be recorded
             selfLoop += weights[j];
         }
         bool storedAlready = false; //Initialize to zero
-        for (comm_type k = 0; k < numUniqueClusters; k++) { //Check if it already exists
+        for (comm_type k = 0; k < numUniqueClusters; ++k) { //Check if it already exists
             if (currCommAss[tail[j]] == cid[sPosition + k]) {
                 storedAlready = true;
                 Counter[sPosition + k] += weights[j]; //Increment the counter with weight

@@ -506,6 +506,19 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
 //    initCommAss_SFP(pastCommAss, currCommAss, NV);
     initCommAssOptVec_SFP(pastCommAss, currCommAss, NV, cid, Counter, vtxPtr, head, tail, weights, cInfo_size, cInfo_degree, constantForSecondTerm, vDegree);
     time2 = omp_get_wtime();
+
+
+    comm_type* test_cid;
+    posix_memalign((void **) &test_cid, alignment, ((NV + 2*NE) * sizeof(comm_type)));
+    assert(test_cid != 0);
+    f_weight* test_Counter;
+    posix_memalign((void **) &test_Counter, alignment, ((NV + 2*NE) * sizeof(f_weight)));
+    assert(test_Counter != 0);
+
+    for (int i = 0; i < (NV + 2*NE); ++i) {
+        test_cid[i] = cid[i];
+        test_Counter[i] = Counter[i];
+    }
     printf("Time to initialize: %3.3lf\n", time2-time1);
 
 #ifdef PRINT_DETAILED_STATS_
@@ -540,6 +553,7 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
             comm_type adj1 = vtxPtr[i];
             comm_type adj2 = vtxPtr[i+1];
             f_weight selfLoop = 0;
+            f_weight selfLoop2 = 0;
             //Build a datastructure to hold the cluster structure of its neighbors
 //            map<comm_type, comm_type> clusterLocalMap; //Map each neighbor's cluster to a local number
 //            map<comm_type, comm_type>::iterator storedAlready;
@@ -559,8 +573,12 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
 //                selfLoop = buildLocalMapCounterVec_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
 
 //                comm_type* tmp_ptr = &track_cid[tid][0];
-                selfLoop = buildLocalMapCounterNoMap_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
-//                selfLoop = buildLocalMapCounterVec2nd_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters, &track_cid[tid][0]);
+                selfLoop2 = buildLocalMapCounterNoMap_SFP(i, test_cid, test_Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
+                selfLoop = buildLocalMapCounterVec2nd_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters, &track_cid[tid][0]);
+                if(selfLoop2 != selfLoop){
+                    cout << "Problem: " << " parallel self-loop: " << selfLoop2 << " vectorized self-loop: " << selfLoop << endl;
+                    break;
+                }
                 // Update delta Q calculation
 //                clusterWeightInternal[i] += Counter[0]; //(e_ix)
                 clusterWeightInternal[i] += Counter[sPosition]; //(e_ix)
