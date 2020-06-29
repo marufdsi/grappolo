@@ -413,13 +413,15 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
     assert(vDegree != 0);
 
     /// pointer to track existing community
+    cout << "Error check pint " << endl;
     comm_type** track_cid;
-    posix_memalign((void **) track_cid, alignment, nThreads * sizeof(comm_type));
+    posix_memalign((void **) track_cid, alignment, nThreads * sizeof(comm_type *));
     assert(track_cid != 0);
     for (int k = 0; k < nThreads; ++k) {
         posix_memalign((void **) &track_cid[k], alignment, NV * sizeof(comm_type));
         assert(track_cid[k] != 0);
     }
+    cout << "Initialization okay " << endl;
 
     //Community info. (ai and size)
     /*Comm *cInfo; // = (Comm *) malloc (NV * sizeof(Comm));
