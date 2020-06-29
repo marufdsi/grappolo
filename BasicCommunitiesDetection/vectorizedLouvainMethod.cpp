@@ -535,8 +535,8 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
 #pragma omp parallel for
         for (comm_type i=0; i<NV; i++) {
             comm_type tid = omp_get_thread_num();
-            if(numItrs == 1)
-                cout << "Tid: " << tid << endl;
+//            if(numItrs == 1)
+//                cout << "Tid: " << tid << endl;
             comm_type adj1 = vtxPtr[i];
             comm_type adj2 = vtxPtr[i+1];
             f_weight selfLoop = 0;
@@ -556,10 +556,10 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
 
                 //Find unique cluster ids and #of edges incident (eicj) to them
 //                selfLoop = buildLocalMapCounter_sfp(adj1, adj2, clusterLocalMap, Counter, vtxInd, currCommAss, i);
-                selfLoop = buildLocalMapCounterVec_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
+//                selfLoop = buildLocalMapCounterVec_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
 
 //                comm_type* tmp_ptr = &track_cid[tid][0];
-//                selfLoop = buildLocalMapCounterVec2nd_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters, &track_cid[tid][0]);
+                selfLoop = buildLocalMapCounterVec2nd_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters, &track_cid[tid][0]);
                 // Update delta Q calculation
 //                clusterWeightInternal[i] += Counter[0]; //(e_ix)
                 clusterWeightInternal[i] += Counter[sPosition]; //(e_ix)
