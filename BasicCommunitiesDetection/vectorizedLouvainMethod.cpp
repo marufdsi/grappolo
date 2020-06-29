@@ -546,7 +546,7 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
 
         bool moved = false;
 #pragma omp parallel for
-        for (comm_type i=0; i<1/*NV*/; i++) {
+        for (comm_type i=0; i<NV; i++) {
             comm_type tid = omp_get_thread_num();
 //            if(numItrs == 1)
 //                cout << "Tid: " << tid << endl;
