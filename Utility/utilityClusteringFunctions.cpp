@@ -631,7 +631,7 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
             __m512i trackComm_vec = _mm512_i32gather_epi32(currCommAss_vec, &track_cid[0], 4);
             __mmask16 check_existing_mask = _mm512_cmpneq_epi32_mask(set_minus_1, trackComm_vec);
             __m512i existing_comm_index = _mm512_mask_compress_epi32(set0, check_existing_mask, trackComm_vec);
-            __m512 existing_comm_w = _mm512_mask_compress_ps(set0, check_existing_mask, w_vec);
+            __m512 existing_comm_w = _mm512_mask_compress_ps(fl_set0, check_existing_mask, w_vec);
             comm_type *existing_comm = (comm_type *) &existing_comm_index;
             f_weight *existing_w = (f_weight *) &existing_comm_w;
             int count_existing_cluster = _mm_popcnt_u32((unsigned) check_existing_mask);
