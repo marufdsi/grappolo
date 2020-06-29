@@ -559,14 +559,15 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
 //                selfLoop = buildLocalMapCounterVec_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
 
 //                comm_type* tmp_ptr = &track_cid[tid][0];
-                selfLoop = buildLocalMapCounterVec2nd_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters, &track_cid[tid][0]);
+                selfLoop = buildLocalMapCounterNoMap_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
+//                selfLoop = buildLocalMapCounterVec2nd_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters, &track_cid[tid][0]);
                 // Update delta Q calculation
 //                clusterWeightInternal[i] += Counter[0]; //(e_ix)
                 clusterWeightInternal[i] += Counter[sPosition]; //(e_ix)
                 //Calculate the max
 //                targetCommAss[i] = max_sfp(clusterLocalMap, Counter, selfLoop, cInfo, vDegree[i], currCommAss[i], constantForSecondTerm);
-                targetCommAss[i] = maxNoMap_SFP(i, cid, Counter, vtxPtr, selfLoop, cInfo_size, cInfo_degree, vDegree[i], currCommAss[i], constantForSecondTerm, numUniqueClusters);
-//                targetCommAss[i] = maxNoMapVec_SFP(i, cid, Counter, vtxPtr, selfLoop, cInfo_size, cInfo_degree, vDegree[i], currCommAss[i], constantForSecondTerm, numUniqueClusters);
+//                targetCommAss[i] = maxNoMap_SFP(i, cid, Counter, vtxPtr, selfLoop, cInfo_size, cInfo_degree, vDegree[i], currCommAss[i], constantForSecondTerm, numUniqueClusters);
+                targetCommAss[i] = maxNoMapVec_SFP(i, cid, Counter, vtxPtr, selfLoop, cInfo_size, cInfo_degree, vDegree[i], currCommAss[i], constantForSecondTerm, numUniqueClusters);
                 //assert((targetCommAss[i] >= 0)&&(targetCommAss[i] < NV));
             } else {
                 targetCommAss[i] = -1;
