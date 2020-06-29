@@ -577,7 +577,7 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
                 selfLoop = buildLocalMapCounterVec2nd_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters, &track_cid[tid][0]);
                 if(selfLoop2 != selfLoop){
                     cout << "Problem: " << " parallel self-loop: " << selfLoop2 << " vectorized self-loop: " << selfLoop << endl;
-                    break;
+//                    break;
                 }
                 // Update delta Q calculation
 //                clusterWeightInternal[i] += Counter[0]; //(e_ix)
