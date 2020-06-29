@@ -521,6 +521,7 @@ buildLocalMapCounterNoMap2nd_SFP(comm_type v, comm_type *cid, f_weight *Counter,
     for (comm_type j = adj1; j < adj2; ++j) {
         track_cid[currCommAss[tail[j]]] = -1;
     }
+    track_cid[currCommAss[v]] = sPosition;
     for (comm_type j = adj1; j < adj2; j++) {
         if (tail[j] == v) {    // SelfLoop need to be recorded
             selfLoop += weights[j];
@@ -643,8 +644,8 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
     for (comm_type j = adj1 + (vector_op * 16); j < adj2; ++j) {
         track_cid[currCommAss[tail[j]]] = -1;
     }
+    track_cid[currCommAss[v]] = sPosition;
     if(vector_op > 0) {
-        track_cid[currCommAss[v]] = sPosition;
         /// perform intrinsic on the neighbors that are multiple of 16
         const __m512i check_self_loop = _mm512_set1_epi32(v);
         for (comm_type j = adj1; j < adj1 + (vector_op * 16); j += 16) {
