@@ -519,18 +519,18 @@ buildLocalMapCounterNoMap2nd_SFP(comm_type v, comm_type *cid, f_weight *Counter,
     comm_type storedAlready = 0;
     f_weight selfLoop = 0;
     for (comm_type j = adj1; j < adj2; ++j) {
-        track_cid[currCommAss[tail[j]] = -1;
+        track_cid[currCommAss[tail[j]]] = -1;
     }
     for (comm_type j = adj1; j < adj2; j++) {
         if (tail[j] == v) {    // SelfLoop need to be recorded
             selfLoop += weights[j];
         }
         if(track_cid[currCommAss[tail[j]] != -1){
-            Counter[track_cid[currCommAss[tail[j]]] += weights[j];
+            Counter[track_cid[currCommAss[tail[j]]]] += weights[j];
         } else {
             cid[sPosition + numUniqueClusters] = currCommAss[tail[j]];
             Counter[sPosition + numUniqueClusters] = weights[j]; //Initialize the count
-            track_cid[currCommAss[tail[j]] = sPosition + numUniqueClusters;
+            track_cid[currCommAss[tail[j]]] = sPosition + numUniqueClusters;
             numUniqueClusters++;
         }
     }//End of for(j)
@@ -641,7 +641,7 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
         _mm512_i32scatter_epi32(&track_cid[0], currCommAss_vec, set_minus_1, 4);
     }
     for (comm_type j = adj1 + (vector_op * 16); j < adj2; ++j) {
-        track_cid[currCommAss[tail[j]] = -1;
+        track_cid[currCommAss[tail[j]]] = -1;
     }
     if(vector_op > 0) {
         track_cid[currCommAss[v]] = sPosition;
@@ -695,11 +695,11 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
             selfLoop += weights[j];
         }
         if(track_cid[currCommAss[tail[j]] != -1){
-            Counter[track_cid[currCommAss[tail[j]]] += weights[j];
+            Counter[track_cid[currCommAss[tail[j]]]] += weights[j];
         } else {
             cid[sPosition + numUniqueClusters] = currCommAss[tail[j]];
             Counter[sPosition + numUniqueClusters] = weights[j]; //Initialize the count
-            track_cid[currCommAss[tail[j]] = sPosition + numUniqueClusters;
+            track_cid[currCommAss[tail[j]]] = sPosition + numUniqueClusters;
             numUniqueClusters++;
         }
     }/// End of for(j)
