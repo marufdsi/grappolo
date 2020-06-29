@@ -321,10 +321,10 @@ void runMultiPhaseBasic_sfp(graph *G, comm_type *C_orig, int basicOpt, comm_type
                 << std::endl;
     }
     infile.close();
-    resultCSV << split(parts[parts.size()-1], '.')[0] << "," << "Vectorized" << "," << numThreads << "," << phase << ","
+    /*resultCSV << split(parts[parts.size()-1], '.')[0] << "," << "Vectorized" << "," << numThreads << "," << phase << ","
             << totItr << "," << numClusters << "," << prevMod << "," << totTimeClustering << "," << totTimeBuildingPhase
             << "," << totTimeClustering + totTimeBuildingPhase + totTimeColoring << "," << threshold << "," <<
-            sizeof(f_weight) << std::endl;
+            sizeof(f_weight) << std::endl;*/
     resultCSV.close();
     printf("********************************************\n");
     printf("*********    Compact Summary   *************\n");
