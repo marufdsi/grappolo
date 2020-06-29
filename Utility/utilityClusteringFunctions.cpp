@@ -561,7 +561,7 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
             for (int k = 0; k < _mm_popcnt_u32((unsigned) mask); ++k) {
                 const __m512i comm = _mm512_set1_epi32(remaining_comm[k]);
                 __mmask16 comm_mask = _mm512_cmpeq_epi32_mask(comm, currCommAss_vec);
-                Counter[sPosition + numUniqueClusters] += _mm512_mask_reduce_add_ps(comm_mask, w_vec);
+                Counter[sPosition + numUniqueClusters] = _mm512_mask_reduce_add_ps(comm_mask, w_vec);
                 cid[sPosition + numUniqueClusters] = remaining_comm[k];
                 numUniqueClusters++;
             }
@@ -601,7 +601,7 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
 
     comm_type adj1 = vtxPtr[v];
     comm_type adj2 = vtxPtr[v + 1];
-    comm_type sPosition = vtxPtr[v] + v; //Starting position of local map for v
+    comm_type sPosition = vtxPtr[v] + v; /// Starting position of local map for v
     f_weight selfLoop = 0;
     comm_type vector_op = (adj2 - adj1) / 16;
     if(vector_op > 0) {
@@ -609,7 +609,6 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
         for (comm_type j = adj1; j < adj1 + (vector_op * 16); j += 16) {
             __m512i tail_vec = _mm512_loadu_si512((__m512i * ) & tail[j]);
             __m512i currCommAss_vec = _mm512_i32gather_epi32(tail_vec, &currCommAss[0], 4);
-//            track_cid[currCommAss[tail[j]]] = -1;
             _mm512_i32scatter_epi32(&track_cid[0], currCommAss_vec, set_minus_1, 4);
         }
         track_cid[currCommAss[v]] = sPosition;
@@ -655,27 +654,6 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
                     numUniqueClusters++;
                 }
             }
-
-
-
-            /*int index = 0;
-            for (int l = j; l < j + 16; ++l) {
-                bool storedAlready = false;
-                for (comm_type k = 0; k < numUniqueClusters; k++) {
-                    if (currCommAss[tail[l]] == cid[sPosition + k]) {
-                        storedAlready = true;
-                        break;
-                    }
-                }
-                if (storedAlready == false) {    //Does not exist, add to the map
-                    if(remaining_comm[index++] != currCommAss[tail[l]])
-                        cout << "Problem occured for " <<  remaining_comm[index-1] << " with " << currCommAss[tail[l]] << endl;
-                    cid[sPosition + numUniqueClusters] = currCommAss[tail[l]];
-                    Counter[sPosition + numUniqueClusters] = weights[l]; //Initialize the count
-                    track_cid[currCommAss[tail[l]]] = sPosition + numUniqueClusters;
-                    numUniqueClusters++;
-                }
-            }*/
         }//End of for(j)
     }
     for (comm_type j = adj1 + (vector_op * 16); j < adj2; ++j) {
