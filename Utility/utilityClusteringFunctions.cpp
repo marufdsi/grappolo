@@ -637,7 +637,26 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
             for (int k = 0; k < count_existing_cluster; ++k) {
                 Counter[existing_comm[k]] += existing_w[k];
             }
-
+            comm_type *remaining_comm;
+            /// Insert weight of the new community
+            if (count_existing_cluster < 16) {
+                __mmask16 comm_mask = _mm512_knot(check_existing_mask);
+                __m512i C_conflict = _mm512_mask_conflict_epi32(set_plus_1, comm_mask, currCommAss_vec);
+                /// Calculate mask using NAND of C_conflict and set1
+                const __mmask16 mask = _mm512_mask_cmpeq_epi32_mask(comm_mask, C_conflict, set0);
+                /// It will find out the distinct community.
+                __m512i distinct_comm = _mm512_mask_compress_epi32(set0, mask, currCommAss_vec);
+                remaining_comm = (comm_type *) &distinct_comm;
+                /*for (int k = 0; k < _mm_popcnt_u32((unsigned) mask); ++k) {
+                    const __m512i comm = _mm512_set1_epi32(remaining_comm[k]);
+                    __mmask16 comm_mask = _mm512_cmpeq_epi32_mask(comm, currCommAss_vec);
+//                    Counter[sPosition + numUniqueClusters] += _mm512_mask_reduce_add_ps(comm_mask, w_vec);
+//                    cid[sPosition + numUniqueClusters] = remaining_comm[k];
+//                    track_cid[remaining_comm[k]] = sPosition + numUniqueClusters;
+//                    numUniqueClusters++;
+                }*/
+            }
+            int index = 0;
             for (int l = j; l < j + 16; ++l) {
                 bool storedAlready = false;
                 for (comm_type k = 0; k < numUniqueClusters; k++) {
@@ -647,30 +666,14 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
                     }
                 }
                 if (storedAlready == false) {    //Does not exist, add to the map
+                    if(remaining_comm[index++] != currCommAss[tail[l]])
+                        cout << "Problem occured for " <<  remaining_comm[index-1] << " with " << currCommAss[tail[l]] << endl;
                     cid[sPosition + numUniqueClusters] = currCommAss[tail[l]];
                     Counter[sPosition + numUniqueClusters] = weights[l]; //Initialize the count
+                    track_cid[currCommAss[tail[l]]] = sPosition + numUniqueClusters;
                     numUniqueClusters++;
                 }
             }
-
-            /// Insert weight of the new community
-            /*if (count_existing_cluster < 16) {
-                __mmask16 comm_mask = _mm512_knot(check_existing_mask);
-                __m512i C_conflict = _mm512_mask_conflict_epi32(set_plus_1, comm_mask, currCommAss_vec);
-                /// Calculate mask using NAND of C_conflict and set1
-                const __mmask16 mask = _mm512_mask_cmpeq_epi32_mask(comm_mask, C_conflict, set0);
-                /// It will find out the distinct community.
-                __m512i distinct_comm = _mm512_mask_compress_epi32(set0, mask, currCommAss_vec);
-                comm_type *remaining_comm = (comm_type *) &distinct_comm;
-                for (int k = 0; k < _mm_popcnt_u32((unsigned) mask); ++k) {
-                    const __m512i comm = _mm512_set1_epi32(remaining_comm[k]);
-                    __mmask16 comm_mask = _mm512_cmpeq_epi32_mask(comm, currCommAss_vec);
-                    Counter[sPosition + numUniqueClusters] += _mm512_mask_reduce_add_ps(comm_mask, w_vec);
-                    cid[sPosition + numUniqueClusters] = remaining_comm[k];
-                    track_cid[remaining_comm[k]] = sPosition + numUniqueClusters;
-                    numUniqueClusters++;
-                }
-            }*/
         }//End of for(j)
     }
     for (comm_type j = adj1 + (vector_op * 16); j < adj2; ++j) {
