@@ -528,11 +528,13 @@ f_weight vectorizedLouvianMethod(graph *G, comm_type *C, int nThreads, f_weight 
             cUpdate_size[i] =0;
         }
 
-        cout << "Tid: " << tid << endl;
+
         bool moved = false;
 #pragma omp parallel for
         for (comm_type i=0; i<NV; i++) {
             comm_type tid = omp_get_thread_num();
+            if(numItrs == 1)
+                cout << "Tid: " << tid << endl;
             comm_type adj1 = vtxPtr[i];
             comm_type adj2 = vtxPtr[i+1];
             f_weight selfLoop = 0;
