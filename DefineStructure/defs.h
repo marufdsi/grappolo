@@ -74,9 +74,13 @@ const __m512 fl_set_plus_1 = _mm512_set1_ps(1.0);
 /// 512 bit integer register initialize by all 1
 const __m512i set_plus_1 = _mm512_set1_epi32(1);
 /// 512 bit integer register initialize by all -1
+const __m512i set_minus_1 = _mm512_set1_epi32(-1);
+/// 512 bit integer register initialize by bit wise 1
 const __m512i set1 = _mm512_set1_epi32(0xFFFFFFFF);
 /// 512 bit integer register initialize by all 0
 const __m512i set0 = _mm512_set1_epi32(0x00000000);
+/// 512 bit floating register initialize by all 0.0
+const   __m512 fl_set0 = _mm512_set1_ps(0.0);
 
 typedef struct comm
 {

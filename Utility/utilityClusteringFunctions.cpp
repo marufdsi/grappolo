@@ -525,7 +525,7 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
         __m512i tail_vec = _mm512_loadu_si512((__m512i * ) & tail[j]);
         /// Load at most 16 neighbors edge weight.
         __m512 w_vec = _mm512_loadu_ps((__m512 * ) & weights[j]);
-        /// Mask to find u != v
+        /// Mask to find u == v
         __mmask16 self_loop_mask = _mm512_cmpeq_epi32_mask(check_self_loop, tail_vec);
         selfLoop += _mm512_mask_reduce_add_ps(self_loop_mask, w_vec);
         /*if(tail[j] == v) {	// SelfLoop need to be recorded
@@ -593,6 +593,92 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
     }//End of for(j)
     return selfLoop;
 }//End of buildLocalMapCounterVec_SFP()
+
+//Build the local-map data structure using vectors
+f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type *vtxPtr, comm_type *head,
+                                     comm_type *tail, f_weight *weights, comm_type *currCommAss,
+                                     comm_type &numUniqueClusters, comm_type* track_cid) {
+
+
+    comm_type adj1 = vtxPtr[v];
+    comm_type adj2 = vtxPtr[v + 1];
+    comm_type sPosition = vtxPtr[v] + v; //Starting position of local map for v
+    f_weight selfLoop = 0;
+    comm_type vector_op = (adj2 - adj1) / 16;
+    if(vector_op > 0) {
+        /// Initialize track_cid
+        for (comm_type j = adj1; j < adj1 + (vector_op * 16); j += 16) {
+            __m512i tail_vec = _mm512_loadu_si512((__m512i * ) & tail[j]);
+            __m512i currCommAss_vec = _mm512_i32gather_epi32(tail_vec, &currCommAss[0], 4);
+//            track_cid[currCommAss[tail[j]]] = -1;
+            _mm512_i32scatter_epi32(&track_cid[0], currCommAss_vec, set_minus_1, 4);
+        }
+        track_cid[currCommAss[v]] = sPosition;
+        /// perform intrinsic on the neighbors that are multiple of 16
+        const __m512i check_self_loop = _mm512_set1_epi32(v);
+        for (comm_type j = adj1; j < adj1 + (vector_op * 16); j += 16) {
+            /// Summ all the self-loop weight
+            /// Load at most 16 tail of the neighbors.
+            __m512i tail_vec = _mm512_loadu_si512((__m512i * ) & tail[j]);
+            /// Load at most 16 neighbors edge weight.
+            __m512 w_vec = _mm512_loadu_ps((__m512 * ) & weights[j]);
+            /// Mask to find u == v
+            __mmask16 self_loop_mask = _mm512_cmpeq_epi32_mask(check_self_loop, tail_vec);
+            selfLoop += _mm512_mask_reduce_add_ps(self_loop_mask, w_vec);
+
+            /// Add weight to the existing community
+            __m512i currCommAss_vec = _mm512_i32gather_epi32(tail_vec, &currCommAss[0], 4);
+            __m512i trackComm_vec = _mm512_i32gather_epi32(currCommAss_vec, &track_cid[0], 4);
+            __mmask16 check_existing_mask = _mm512_cmpneq_epi32_mask(set_minus_1, trackComm_vec);
+            __m512i existing_comm_index = _mm512_mask_compress_epi32(set0, check_existing_mask, trackComm_vec);
+            __m512 existing_comm_w = _mm512_mask_compress_ps(set0, check_existing_mask, w_vec);
+            comm_type *existing_comm = (comm_type *) &existing_comm_index;
+            f_weight *existing_w = (f_weight *) &existing_comm_w;
+            int count_existing_cluster = _mm_popcnt_u32((unsigned) check_existing_mask);
+            for (int k = 0; k < count_existing_cluster; ++k) {
+                Counter[existing_comm[k]] += existing_w[k];
+            }
+
+            /// Insert weight of the new community
+            if (count_existing_cluster < 16) {
+                __mmask16 comm_mask = _mm512_knot(check_existing_mask);
+                __m512i C_conflict = _mm512_mask_conflict_epi32(set_plus_1, comm_mask, currCommAss_vec);
+                /// Calculate mask using NAND of C_conflict and set1
+                const __mmask16 mask = _mm512_mask_cmpeq_epi32_mask(comm_mask, C_conflict, set0);
+                /// It will find out the distinct community.
+                __m512i distinct_comm = _mm512_mask_compress_epi32(set0, mask, currCommAss_vec);
+                comm_type *remaining_comm = (comm_type *) &distinct_comm;
+                for (int k = 0; k < _mm_popcnt_u32((unsigned) mask); ++k) {
+                    const __m512i comm = _mm512_set1_epi32(remaining_comm[k]);
+                    __mmask16 comm_mask = _mm512_cmpeq_epi32_mask(comm, currCommAss_vec);
+                    Counter[sPosition + numUniqueClusters] += _mm512_mask_reduce_add_ps(comm_mask, w_vec);
+                    cid[sPosition + numUniqueClusters] = remaining_comm[k];
+                    track_cid[remaining_comm[k]] = sPosition + numUniqueClusters;
+                    numUniqueClusters++;
+                }
+            }
+        }//End of for(j)
+    }
+    for (comm_type j = adj1 + (vector_op * 16); j < adj2; ++j) {
+        if (tail[j] == v) {    // SelfLoop need to be recorded
+            selfLoop += weights[j];
+        }
+        bool storedAlready = false; //Initialize to zero
+        for (comm_type k = 0; k < numUniqueClusters; k++) { //Check if it already exists
+            if (currCommAss[tail[j]] == cid[sPosition + k]) {
+                storedAlready = true;
+                Counter[sPosition + k] += weights[j]; //Increment the counter with weight
+                break;
+            }
+        }
+        if (storedAlready == false) {    //Does not exist, add to the map
+            cid[sPosition + numUniqueClusters] = currCommAss[tail[j]];
+            Counter[sPosition + numUniqueClusters] = weights[j]; //Initialize the count
+            numUniqueClusters++;
+        }
+    }//End of for(j)
+    return selfLoop;
+}//End of buildLocalMapCounterVec2nd_SFP()
 
 comm_type max(map <comm_type, comm_type> &clusterLocalMap, vector<double> &Counter,
               double selfLoop, Comm *cInfo, double degree, comm_type sc, double constant) {

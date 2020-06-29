@@ -107,6 +107,10 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
                                      comm_type* tail, f_weight* weights, comm_type* currCommAss,
                                      comm_type &numUniqueClusters);
 
+f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type *vtxPtr, comm_type *head,
+                                        comm_type *tail, f_weight *weights, comm_type *currCommAss,
+                                        comm_type &numUniqueClusters, comm_type* track_cid);
+
 comm_type max(map<comm_type, comm_type> &clusterLocalMap, vector<double> &Counter,
 		 double selfLoop, Comm* cInfo, double degree, comm_type sc, double constant ) ;
 
