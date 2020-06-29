@@ -515,7 +515,6 @@ f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Coun
     comm_type adj1 = vtxPtr[v];
     comm_type adj2 = vtxPtr[v + 1];
     comm_type sPosition = vtxPtr[v] + v; //Starting position of local map for v
-    comm_type storedAlready = 0;
     f_weight selfLoop = 0;
     comm_type vector_op = (adj2 - adj1) / 16;
     /// perform intrinsic on the neighbors that are multiple of 16
@@ -639,8 +638,23 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
                 Counter[existing_comm[k]] += existing_w[k];
             }
 
+            for (int l = j; l < j + 16; ++l) {
+                bool storedAlready = false;
+                for (comm_type k = 0; k < numUniqueClusters; k++) {
+                    if (currCommAss[tail[l]] == cid[sPosition + k]) {
+                        storedAlready = true;
+                        break;
+                    }
+                }
+                if (storedAlready == false) {    //Does not exist, add to the map
+                    cid[sPosition + numUniqueClusters] = currCommAss[tail[l]];
+                    Counter[sPosition + numUniqueClusters] = weights[l]; //Initialize the count
+                    numUniqueClusters++;
+                }
+            }
+
             /// Insert weight of the new community
-            if (count_existing_cluster < 16) {
+            /*if (count_existing_cluster < 16) {
                 __mmask16 comm_mask = _mm512_knot(check_existing_mask);
                 __m512i C_conflict = _mm512_mask_conflict_epi32(set_plus_1, comm_mask, currCommAss_vec);
                 /// Calculate mask using NAND of C_conflict and set1
@@ -656,7 +670,7 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
                     track_cid[remaining_comm[k]] = sPosition + numUniqueClusters;
                     numUniqueClusters++;
                 }
-            }
+            }*/
         }//End of for(j)
     }
     for (comm_type j = adj1 + (vector_op * 16); j < adj2; ++j) {
