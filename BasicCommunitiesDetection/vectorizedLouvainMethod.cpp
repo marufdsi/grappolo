@@ -102,6 +102,13 @@ f_weight parallelLouvianMethod_SFP(graph *G, comm_type *C, int nThreads, f_weigh
     posix_memalign((void **) &vDegree, alignment, NV * sizeof(f_weight));
     assert(vDegree != 0);
 
+    /// pointer to track existing community
+    comm_type** track_cid = (comm_type **) malloc (nThreads * sizeof(comm_type *));
+    assert(track_cid != 0);
+    for (int k = 0; k < nThreads; ++k) {
+        posix_memalign((void **) &track_cid[k], alignment, NV * sizeof(comm_type));
+        assert(track_cid[k] != 0);
+    }
     //Community info. (ai and size)
     /*Comm *cInfo; // = (Comm *) malloc (NV * sizeof(Comm));
     posix_memalign((void **) &cInfo, alignment, NV * sizeof(Comm));
@@ -212,6 +219,7 @@ f_weight parallelLouvianMethod_SFP(graph *G, comm_type *C, int nThreads, f_weigh
         bool moved = false;
 #pragma omp parallel for
         for (comm_type i=0; i<NV; i++) {
+            comm_type tid = omp_get_thread_num();
             comm_type adj1 = vtxPtr[i];
             comm_type adj2 = vtxPtr[i+1];
             f_weight selfLoop = 0;
@@ -231,7 +239,8 @@ f_weight parallelLouvianMethod_SFP(graph *G, comm_type *C, int nThreads, f_weigh
 
                 //Find unique cluster ids and #of edges incident (eicj) to them
 //                selfLoop = buildLocalMapCounter_sfp(adj1, adj2, clusterLocalMap, Counter, vtxInd, currCommAss, i);
-                selfLoop = buildLocalMapCounterNoMap_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
+//                selfLoop = buildLocalMapCounterNoMap_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters);
+                selfLoop = buildLocalMapCounterNoMap2nd_SFP(i, cid, Counter, vtxPtr, head, tail, weights, currCommAss, numUniqueClusters, &track_cid[tid][0]);
                 // Update delta Q calculation
 //                clusterWeightInternal[i] += Counter[0]; //(e_ix)
                 clusterWeightInternal[i] += Counter[sPosition]; //(e_ix)
@@ -339,6 +348,10 @@ reduction(+:e_xx) reduction(+:a2_x)
         vtxInd[i].weight = weights[i];
     }
     //Cleanup
+    for (int l = 0; l < nThreads; ++l) {
+        free(track_cid[l]);
+    }
+    free(track_cid);
     free(pastCommAss);
     free(currCommAss);
     free(targetCommAss);

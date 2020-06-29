@@ -474,9 +474,9 @@ double buildLocalMapCounterNoMap(comm_type v, mapElement *clusterLocalMap, comm_
         }
     }//End of for(j)
     return selfLoop;
-}//End of buildLocalMapCounter()
+}/// End of buildLocalMapCounter()
 
-//Build the local-map data structure using vectors
+/// Build the local-map data structure using vectors
 f_weight
 buildLocalMapCounterNoMap_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type *vtxPtr, comm_type *head,
                               comm_type *tail, f_weight *weights, comm_type *currCommAss,
@@ -502,6 +502,35 @@ buildLocalMapCounterNoMap_SFP(comm_type v, comm_type *cid, f_weight *Counter, co
         if (storedAlready == false) {    //Does not exist, add to the map
             cid[sPosition + numUniqueClusters] = currCommAss[tail[j]];
             Counter[sPosition + numUniqueClusters] = weights[j]; //Initialize the count
+            numUniqueClusters++;
+        }
+    }//End of for(j)
+    return selfLoop;
+}//End of buildLocalMapCounter()
+/// Build the local-map data structure using vectors
+f_weight
+buildLocalMapCounterNoMap2nd_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type *vtxPtr, comm_type *head,
+                              comm_type *tail, f_weight *weights, comm_type *currCommAss,
+                              comm_type &numUniqueClusters, comm_type* track_cid) {
+    comm_type adj1 = vtxPtr[v];
+    comm_type adj2 = vtxPtr[v + 1];
+    comm_type sPosition = vtxPtr[v] + v; //Starting position of local map for v
+
+    comm_type storedAlready = 0;
+    f_weight selfLoop = 0;
+    for (comm_type j = adj1; j < adj2; ++j) {
+        track_cid[currCommAss[tail[j]] = -1;
+    }
+    for (comm_type j = adj1; j < adj2; j++) {
+        if (tail[j] == v) {    // SelfLoop need to be recorded
+            selfLoop += weights[j];
+        }
+        if(track_cid[currCommAss[tail[j]] != -1){
+            Counter[track_cid[currCommAss[tail[j]]] += weights[j];
+        } else {
+            cid[sPosition + numUniqueClusters] = currCommAss[tail[j]];
+            Counter[sPosition + numUniqueClusters] = weights[j]; //Initialize the count
+            track_cid[currCommAss[tail[j]] = sPosition + numUniqueClusters;
             numUniqueClusters++;
         }
     }//End of for(j)
@@ -604,13 +633,17 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
     comm_type sPosition = vtxPtr[v] + v; /// Starting position of local map for v
     f_weight selfLoop = 0;
     comm_type vector_op = (adj2 - adj1) / 16;
+
+    /// Initialize track_cid
+    for (comm_type j = adj1; j < adj1 + (vector_op * 16); j += 16) {
+        __m512i tail_vec = _mm512_loadu_si512((__m512i * ) & tail[j]);
+        __m512i currCommAss_vec = _mm512_i32gather_epi32(tail_vec, &currCommAss[0], 4);
+        _mm512_i32scatter_epi32(&track_cid[0], currCommAss_vec, set_minus_1, 4);
+    }
+    for (comm_type j = adj1 + (vector_op * 16); j < adj2; ++j) {
+        track_cid[currCommAss[tail[j]] = -1;
+    }
     if(vector_op > 0) {
-        /// Initialize track_cid
-        for (comm_type j = adj1; j < adj1 + (vector_op * 16); j += 16) {
-            __m512i tail_vec = _mm512_loadu_si512((__m512i * ) & tail[j]);
-            __m512i currCommAss_vec = _mm512_i32gather_epi32(tail_vec, &currCommAss[0], 4);
-            _mm512_i32scatter_epi32(&track_cid[0], currCommAss_vec, set_minus_1, 4);
-        }
         track_cid[currCommAss[v]] = sPosition;
         /// perform intrinsic on the neighbors that are multiple of 16
         const __m512i check_self_loop = _mm512_set1_epi32(v);
@@ -654,9 +687,24 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
                     numUniqueClusters++;
                 }
             }
-        }//End of for(j)
+        }/// End of for(j)
     }
+
     for (comm_type j = adj1 + (vector_op * 16); j < adj2; ++j) {
+        if (tail[j] == v) {    // SelfLoop need to be recorded
+            selfLoop += weights[j];
+        }
+        if(track_cid[currCommAss[tail[j]] != -1){
+            Counter[track_cid[currCommAss[tail[j]]] += weights[j];
+        } else {
+            cid[sPosition + numUniqueClusters] = currCommAss[tail[j]];
+            Counter[sPosition + numUniqueClusters] = weights[j]; //Initialize the count
+            track_cid[currCommAss[tail[j]] = sPosition + numUniqueClusters;
+            numUniqueClusters++;
+        }
+    }/// End of for(j)
+
+    /*for (comm_type j = adj1 + (vector_op * 16); j < adj2; ++j) {
         if (tail[j] == v) {    // SelfLoop need to be recorded
             selfLoop += weights[j];
         }
@@ -673,7 +721,7 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
             Counter[sPosition + numUniqueClusters] = weights[j]; //Initialize the count
             numUniqueClusters++;
         }
-    }//End of for(j)
+    }//End of for(j)*/
     return selfLoop;
 }//End of buildLocalMapCounterVec2nd_SFP()
 

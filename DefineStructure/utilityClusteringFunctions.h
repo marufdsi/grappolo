@@ -103,6 +103,10 @@ f_weight buildLocalMapCounterNoMap_SFP(comm_type v, comm_type *cid, f_weight *Co
                                        comm_type* tail, f_weight* weights, comm_type* currCommAss,
                                        comm_type &numUniqueClusters);
 /// Single floating point version
+f_weight buildLocalMapCounterNoMap2nd_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, comm_type* head,
+                                       comm_type* tail, f_weight* weights, comm_type* currCommAss,
+                                       comm_type &numUniqueClusters, comm_type* track_cid);
+/// Single floating point version
 f_weight buildLocalMapCounterVec_SFP(comm_type v, comm_type *cid, f_weight *Counter, comm_type* vtxPtr, comm_type* head,
                                      comm_type* tail, f_weight* weights, comm_type* currCommAss,
                                      comm_type &numUniqueClusters);
