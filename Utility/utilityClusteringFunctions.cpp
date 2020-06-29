@@ -525,7 +525,7 @@ buildLocalMapCounterNoMap2nd_SFP(comm_type v, comm_type *cid, f_weight *Counter,
         if (tail[j] == v) {    // SelfLoop need to be recorded
             selfLoop += weights[j];
         }
-        if(track_cid[currCommAss[tail[j]] != -1){
+        if(track_cid[currCommAss[tail[j]]] != -1){
             Counter[track_cid[currCommAss[tail[j]]]] += weights[j];
         } else {
             cid[sPosition + numUniqueClusters] = currCommAss[tail[j]];
@@ -694,7 +694,7 @@ f_weight buildLocalMapCounterVec2nd_SFP(comm_type v, comm_type *cid, f_weight *C
         if (tail[j] == v) {    // SelfLoop need to be recorded
             selfLoop += weights[j];
         }
-        if(track_cid[currCommAss[tail[j]] != -1){
+        if(track_cid[currCommAss[tail[j]]] != -1){
             Counter[track_cid[currCommAss[tail[j]]]] += weights[j];
         } else {
             cid[sPosition + numUniqueClusters] = currCommAss[tail[j]];
