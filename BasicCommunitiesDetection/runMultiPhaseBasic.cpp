@@ -162,7 +162,7 @@ void runMultiPhaseBasic(graph *G, comm_type *C_orig, int basicOpt, comm_type min
     std::vector<std::string> parts = split(std::string(graphName), '/');
     std::ofstream resultCSV;
     std::string folderName = "Results/";
-    std::string fileName = "Grappolo_Lovain_Result.csv";
+    std::string fileName = "Grappolo_Lovain_Result_Org.csv";
     if (mkdir(folderName.c_str(), 0777) == -1)
         std::cout << "Directory " << folderName << " is already exist" << std::endl;
     else
@@ -307,7 +307,7 @@ void runMultiPhaseBasic_sfp(graph *G, comm_type *C_orig, int basicOpt, comm_type
     std::vector<std::string> parts = split(std::string(graphName), '/');
     std::ofstream resultCSV;
     std::string folderName = "Results/";
-    std::string fileName = "Grappolo_Lovain_Result.csv";
+    std::string fileName = "Grappolo_Lovain_Result_Org.csv";
     if (mkdir(folderName.c_str(), 0777) == -1)
         std::cout << "Directory " << folderName << " is already exist" << std::endl;
     else
